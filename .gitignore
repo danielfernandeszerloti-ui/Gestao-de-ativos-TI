@@ -1,0 +1,17 @@
+# dependências e gerados
+node_modules/
+android/
+ios/
+www/vendor/
+*.apk
+*.aab
+*.jks
+*.keystore
+
+# dados reais não vão para o repositório
+*.xlsx
+*.xls
+*.csv
+backups/
+.DS_Store
+Thumbs.db

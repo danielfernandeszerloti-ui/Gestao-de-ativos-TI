@@ -1,0 +1,28 @@
+{
+  "name": "gestao-ativos-ti",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Gestão de Ativos de TI — web (PWA) e app Android",
+  "scripts": {
+    "vendor": "node scripts/vendor.mjs",
+    "serve": "npm run vendor && npx --yes http-server www -p 8080 -c-1",
+    "android:add": "npm run vendor && npx cap add android",
+    "android:sync": "npm run vendor && npx cap sync android",
+    "android:assets": "npx capacitor-assets generate --android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "@supabase/supabase-js": "^2.57.0",
+    "jspdf": "2.5.1",
+    "qrcode-generator": "1.4.4",
+    "xlsx": "0.18.5"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0"
+  }
+}

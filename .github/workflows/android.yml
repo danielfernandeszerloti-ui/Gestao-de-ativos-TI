@@ -1,0 +1,93 @@
+name: App Android (APK)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "www/**"
+      - "assets/**"
+      - "capacitor.config.json"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    env:
+      TEM_CHAVE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Preparar o projeto Android
+        run: |
+          npm run vendor
+          npx cap add android
+          npx capacitor-assets generate --android \
+            --iconBackgroundColor '#1aa9e0' --iconBackgroundColorDark '#1aa9e0' \
+            --splashBackgroundColor '#f1f8fc' --splashBackgroundColorDark '#0a1320' || echo "Ícones padrão mantidos"
+          npx cap sync android
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"2.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
+      - name: Compilar (release assinado)
+        if: env.TEM_CHAVE == 'true'
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          cd android && ./gradlew assembleRelease --no-daemon && cd ..
+          echo "$KS" | base64 -d > release.jks
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/zipalign" -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          "$BT/apksigner" sign --ks release.jks --ks-pass env:KS_PASS --key-pass env:KS_PASS --ks-key-alias "$KS_ALIAS" --out AtivosTI.apk aligned.apk
+          "$BT/apksigner" verify AtivosTI.apk
+          rm -f release.jks aligned.apk
+
+      - name: Compilar (debug, sem chave configurada)
+        if: env.TEM_CHAVE != 'true'
+        run: |
+          echo "::warning::Chave de assinatura não configurada. Gerando APK de teste (debug); atualizações futuras exigirão desinstalar o app."
+          cd android && ./gradlew assembleDebug --no-daemon && cd ..
+          cp android/app/build/outputs/apk/debug/app-debug.apk AtivosTI.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AtivosTI-apk
+          path: AtivosTI.apk
+
+      - name: Publicar na página de releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-latest
+          name: App Android — versão 2.0.${{ github.run_number }}
+          body: |
+            APK gerado automaticamente a partir do commit ${{ github.sha }}.
+            Baixe **AtivosTI.apk** no celular ou coletor Android e instale (permita "instalar apps desconhecidos" para o navegador ou o gerenciador de arquivos).
+          files: AtivosTI.apk
+          make_latest: true
+          overwrite_files: true

@@ -1,0 +1,1088 @@
+<title>Gestão de Ativos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+/* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
+:root{
+  --bg:#f1f8fc; --glow:#dff4fb; --surface:#ffffff; --surface-2:#f6fafd; --border:#dce7f0; --row:#edf3f8;
+  --ink:#16223b; --heading:#1c2f6b; --muted:#5d6c86; --faint:#8a98ae;
+  --accent:#0aa3d6; --accent-2:#2563eb; --accent-soft:#e2f4fb; --accent-ink:#ffffff;
+  --use-bg:#e4edff; --use-fg:#1f3fa6; --use-bd:#b9cdf7;
+  --avail-bg:#daf6f5; --avail-fg:#0a7a80; --avail-bd:#9fe3e0;
+  --maint-bg:#fff2da; --maint-fg:#955800; --maint-bd:#f3d49a;
+  --disc-bg:#eff0f4; --disc-fg:#646a78; --disc-bd:#d5d8e0;
+  --danger:#cf3535; --danger-soft:#fdecec; --shadow:0 6px 24px rgba(28,47,107,.07);
+  --f-ui:"Nunito","Segoe UI",system-ui,-apple-system,sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0a1320; --glow:#0e2233; --surface:#111c2c; --surface-2:#152338; --border:#223350; --row:#1a2940;
+  --ink:#e3ebf7; --heading:#cddcff; --muted:#93a4c0; --faint:#6f819e;
+  --accent:#36bdf2; --accent-2:#5b9bff; --accent-soft:#0f2e42; --accent-ink:#04121c;
+  --use-bg:#172a52; --use-fg:#b8ceff; --use-bd:#2b467c;
+  --avail-bg:#0e3336; --avail-fg:#6fe0dd; --avail-bd:#1c5a5c;
+  --maint-bg:#3a2a0e; --maint-fg:#f3c66e; --maint-bd:#654a1b;
+  --disc-bg:#20242d; --disc-fg:#a4a9b6; --disc-bd:#343a47;
+  --danger:#f07575; --danger-soft:#3a1a1d; --shadow:0 6px 24px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1320; --glow:#0e2233; --surface:#111c2c; --surface-2:#152338; --border:#223350; --row:#1a2940;
+  --ink:#e3ebf7; --heading:#cddcff; --muted:#93a4c0; --faint:#6f819e;
+  --accent:#36bdf2; --accent-2:#5b9bff; --accent-soft:#0f2e42; --accent-ink:#04121c;
+  --use-bg:#172a52; --use-fg:#b8ceff; --use-bd:#2b467c;
+  --avail-bg:#0e3336; --avail-fg:#6fe0dd; --avail-bd:#1c5a5c;
+  --maint-bg:#3a2a0e; --maint-fg:#f3c66e; --maint-bd:#654a1b;
+  --disc-bg:#20242d; --disc-fg:#a4a9b6; --disc-bd:#343a47;
+  --danger:#f07575; --danger-soft:#3a1a1d; --shadow:0 6px 24px rgba(0,0,0,.3); color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);background-image:radial-gradient(1200px 500px at 85% -10%,var(--glow),transparent 70%);background-attachment:fixed;color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100%}
+.side{border-right:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,transparent);display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
+.brand{display:flex;gap:12px;align-items:center;padding:22px 18px;border-bottom:1px solid var(--border)}
+.logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#1aa9e0,#3b6cf0 60%,#b34fd8);box-shadow:0 6px 16px rgba(37,99,235,.25)}
+.logo svg.i{width:22px;height:22px}
+.brand b{display:block;color:var(--heading);font-size:19px;font-weight:800;line-height:1.1}
+.brand small{color:var(--accent-2);font-size:12.5px}
+.navlabel{padding:22px 20px 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+nav.menu{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:0;background:none;cursor:pointer;color:var(--heading);font-weight:600;text-align:left;border-left:3px solid transparent}
+.nav:hover{background:var(--surface-2)}
+.nav.on{background:var(--accent-soft);border-left-color:var(--accent)}
+.nav .n{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:700}
+.sync{margin-top:auto;padding:16px 20px;font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--border)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--faint);margin-top:6px;flex:none}
+.dot.ok{background:#22b573}.dot.local{background:#e0a100}
+
+main{padding-block:34px 60px;padding-inline:clamp(16px,3.5vw,52px);min-width:0}
+.head{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+h1{margin:0;color:var(--heading);font-size:clamp(28px,3.4vw,40px);font-weight:800;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:17px;margin-top:4px}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:11px 18px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--accent-2);font-weight:700;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:linear-gradient(90deg,#0ea5e9,#2563eb);border-color:transparent;color:#fff;box-shadow:0 6px 16px rgba(14,165,233,.25)}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.danger{background:var(--danger);border-color:transparent;color:#fff}
+.btn.ghost{color:var(--muted)}
+.btn:disabled{opacity:.55;cursor:wait}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.filters{display:flex;flex-wrap:wrap;gap:14px;padding:26px 28px;margin-bottom:30px}
+.search{flex:1 1 320px;display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:9px;padding:0 14px;background:var(--surface);min-width:0}
+.search svg{color:var(--accent)}
+.search input{border:0;outline:0;background:none;padding:12px 0;width:100%;min-width:0}
+.search:focus-within{border-color:var(--accent)}
+.sel{position:relative;display:flex;align-items:center;border:1px solid var(--border);border-radius:9px;background:var(--surface);flex:0 1 190px}
+.sel svg{position:absolute;left:14px;color:var(--accent);pointer-events:none}
+.sel select{appearance:none;border:0;background:none;padding:12px 34px 12px 42px;width:100%;cursor:pointer;font-weight:600}
+.sel::after{content:"";position:absolute;right:14px;width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:rotate(45deg) translateY(-3px);pointer-events:none}
+
+.tablewrap{overflow-x:auto;border-radius:16px}
+table{width:100%;border-collapse:collapse;min-width:880px}
+th{text-align:left;font-weight:700;color:var(--muted);font-size:15px;padding:16px 12px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+th:first-child,td:first-child{padding-left:10px}
+td{padding:9px 12px;border-bottom:1px solid var(--row);color:var(--heading);vertical-align:middle}
+tbody tr:hover td{background:var(--surface-2)}
+td.dev{font-weight:800;color:var(--heading)}
+td.set{color:var(--accent-2)}
+.th-r{text-align:right}
+.thumb{width:54px;height:54px;border-radius:8px;border:2px solid var(--accent-soft);object-fit:cover;display:block;background:var(--accent-soft)}
+.thumb.ph{display:grid;place-items:center;color:var(--accent)}
+.thumb.ph svg.i{width:24px;height:24px}
+.rowacts{display:flex;gap:6px;justify-content:flex-end}
+.ib{width:38px;height:38px;border-radius:8px;border:0;background:none;display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.ib:hover{background:var(--accent-soft);color:var(--accent-2)}
+.ib.del:hover{background:var(--danger-soft);color:var(--danger)}
+.pill{display:inline-block;padding:3px 12px;border-radius:7px;font-size:13px;font-weight:700;border:1px solid;white-space:nowrap}
+.st-uso{background:var(--use-bg);color:var(--use-fg);border-color:var(--use-bd)}
+.st-disp{background:var(--avail-bg);color:var(--avail-fg);border-color:var(--avail-bd)}
+.st-man{background:var(--maint-bg);color:var(--maint-fg);border-color:var(--maint-bd)}
+.st-desc{background:var(--disc-bg);color:var(--disc-fg);border-color:var(--disc-bd)}
+.empty{padding:56px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--heading);font-size:18px;margin-bottom:6px}
+.muted{color:var(--faint)}
+
+/* dashboard */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.tile{padding:18px 20px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:6px;color:inherit}
+.tile:hover{border-color:var(--accent)}
+.tile .ti{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:700}
+.tile .ti span{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent-2);display:grid;place-items:center}
+.tile .big{font-size:34px;font-weight:800;color:var(--heading);font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .mini{font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.panel{padding:22px 24px;min-width:0}
+.panel h2{margin:0 0 16px;font-size:17px;color:var(--heading);font-weight:800}
+.stack{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--row);gap:2px}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px;font-size:14px}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend em{width:10px;height:10px;border-radius:3px;display:inline-block}
+.legend b{font-variant-numeric:tabular-nums}
+.catrow{display:grid;grid-template-columns:110px minmax(0,1fr) 34px;gap:12px;align-items:center;margin-top:12px;font-size:14px}
+.catrow .stack{height:10px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:120px minmax(0,1fr) 30px;gap:12px;align-items:center;font-size:14px}
+.bar .track{height:10px;border-radius:6px;background:var(--row);overflow:hidden}
+.bar .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:6px}
+.bar b,.catrow b{text-align:right;font-variant-numeric:tabular-nums;color:var(--heading)}
+.bar span,.catrow span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--row);cursor:pointer}
+.li:last-child{border-bottom:0}
+.li b{min-width:70px;color:var(--heading)}
+.li span{color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:6px;background:var(--accent-soft);color:var(--accent-2)}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(8,18,35,.45);display:flex;align-items:flex-start;justify-content:center;padding:max(24px,env(safe-area-inset-top,0px)) 16px 24px;overflow-y:auto;z-index:50}
+.modal{background:var(--surface);border-radius:16px;width:min(1180px,100%);padding:26px clamp(18px,2.5vw,32px);position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal.sm{width:min(520px,100%)}
+.modal.md{width:min(860px,100%)}
+.modal h2{margin:0;font-size:clamp(22px,2.6vw,32px);font-weight:800;color:var(--heading);padding-bottom:18px;border-bottom:1px solid var(--border);padding-right:44px;text-wrap:balance}
+.close{position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:8px;border:1.6px solid var(--muted);background:none;display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.close svg.i{width:15px;height:15px}
+.detail{display:grid;grid-template-columns:350px minmax(0,1fr);gap:38px;padding-top:30px}
+.photo{border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:24px 0;display:grid;place-items:center;min-height:320px;overflow:hidden}
+.photo img{width:100%;display:block}
+.photo .ph{color:var(--faint);display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px}
+.photo .ph svg.i{width:48px;height:48px;stroke-width:1.3}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 40px;align-content:start}
+.kv.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kv div{min-width:0}
+.kv label,.obs label{display:block;color:var(--muted);font-weight:600;font-size:14.5px;margin-bottom:6px}
+.kv p,.obs p{margin:0;font-size:18px;color:var(--ink);overflow-wrap:anywhere}
+.kv .pill{font-size:18px;font-weight:500;padding:6px 14px;border-radius:8px}
+.obs{border-top:1px solid var(--border);padding-top:20px;margin-top:4px;grid-column:1/-1}
+.obs p{white-space:pre-wrap}
+.split{display:contents}
+
+form.f{padding-top:22px;display:flex;flex-direction:column;gap:22px}
+fieldset{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px 18px}
+legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;padding:0;margin-bottom:2px;float:left;width:100%}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld span{font-size:13.5px;font-weight:700;color:var(--muted)}
+.fld span i{color:var(--danger);font-style:normal}
+.fld input,.fld select,.fld textarea{border:1px solid var(--border);border-radius:9px;padding:10px 12px;background:var(--surface);width:100%;min-width:0}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.fld.wide{grid-column:1/-1}
+.fld textarea{min-height:80px;resize:vertical}
+.upl{grid-column:1/-1;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.upl .prev{width:110px;height:110px;border-radius:10px;border:1px dashed var(--border);display:grid;place-items:center;overflow:hidden;background:var(--surface-2);color:var(--faint)}
+.upl .prev img{width:100%;height:100%;object-fit:cover}
+.foot{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:18px}
+.msg{padding-top:18px;color:var(--ink)}
+.msg p{margin:0 0 10px}
+.note{font-size:13.5px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.hdrs{font-family:ui-monospace,Consolas,monospace;font-size:12.5px;word-break:break-word}
+
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--heading);color:var(--surface);padding:12px 20px;border-radius:10px;font-weight:700;z-index:80;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+
+.navsep{padding:18px 14px 6px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+/* etiquetas */
+.etq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start}
+.opt{display:flex;flex-direction:column;gap:18px}
+.opt fieldset{grid-template-columns:repeat(2,minmax(0,1fr))}
+.seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden}
+.seg label{flex:1;text-align:center;padding:9px 10px;cursor:pointer;font-weight:700;color:var(--muted);font-size:14px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent-soft);color:var(--accent-2)}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
+.pick{border:1px solid var(--border);border-radius:10px;max-height:300px;overflow-y:auto}
+.pick label{display:grid;grid-template-columns:20px 72px minmax(0,1fr);gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--row);cursor:pointer;font-size:14px}
+.pick label:last-child{border-bottom:0}
+.pick label b{color:var(--heading)}
+.pick label span{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick input{accent-color:var(--accent-2);width:16px;height:16px}
+.pickbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+.linkbtn{border:0;background:none;color:var(--accent-2);font-weight:700;cursor:pointer;padding:4px}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink);cursor:pointer}
+.check.fld{flex-direction:row}
+.check input{accent-color:var(--accent-2);width:16px;height:16px;margin-top:2px}
+.stage{--paper:#ffffff;--paper-ink:#000000;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:28px 18px;display:grid;place-items:center;gap:12px}
+.stage svg{width:100%;max-width:440px;height:auto;background:var(--paper);border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.18);display:block}
+.stage small{color:var(--muted);font-size:13px}
+.bigcount{font-size:28px;font-weight:800;color:var(--heading);font-variant-numeric:tabular-nums}
+.dl{display:flex;flex-direction:column;gap:10px}
+.dl .btn{justify-content:flex-start}
+.dl .btn small{margin-left:auto;color:var(--muted);font-weight:600}
+.req{font-size:14px;color:var(--ink);display:flex;flex-direction:column;gap:6px}
+.req ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.req li b{color:var(--heading)}
+/* inventário */
+.scan{display:flex;gap:14px;align-items:center;padding:22px 24px;flex-wrap:wrap}
+.scanbox{flex:1 1 360px;display:flex;align-items:center;gap:12px;border:2px solid var(--accent);border-radius:12px;padding:0 16px;background:var(--surface);min-width:0}
+.scanbox svg.i{width:26px;height:26px;color:var(--accent)}
+.scanbox input{border:0;outline:0;background:none;padding:16px 0;font-size:22px;font-weight:800;letter-spacing:.04em;width:100%;min-width:0;text-transform:uppercase;color:var(--heading)}
+.fb{flex:1 1 280px;padding:12px 16px;border-radius:10px;font-weight:700;border:1px solid var(--border);color:var(--muted);min-width:0}
+.fb.ok{background:var(--avail-bg);color:var(--avail-fg);border-color:var(--avail-bd)}
+.fb.dup{background:var(--use-bg);color:var(--use-fg);border-color:var(--use-bd)}
+.fb.bad{background:var(--maint-bg);color:var(--maint-fg);border-color:var(--maint-bd)}
+.prog{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center;margin-bottom:6px}
+.prog .pct{font-size:40px;font-weight:800;color:var(--heading);font-variant-numeric:tabular-nums;line-height:1}
+.track2{height:12px;border-radius:7px;background:var(--row);overflow:hidden}
+.track2 i{display:block;height:100%;background:linear-gradient(90deg,#22b573,var(--avail-fg))}
+.li.done b{color:var(--avail-fg)}
+.panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.panelhead h2{margin:0}
+.panelhead select{border:1px solid var(--border);border-radius:8px;padding:6px 10px;background:var(--surface)}
+.scroll{max-height:420px;overflow-y:auto}
+@media (max-width:1100px){.etq{grid-template-columns:1fr}}
+@media (max-width:1000px){.grid2{grid-template-columns:1fr}.detail{grid-template-columns:1fr}.photo{max-width:380px}}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;z-index:20;border-right:0;border-bottom:1px solid var(--border);background:var(--surface)}
+  .brand{padding:12px 16px;border-bottom:0}
+  .logo{width:36px;height:36px}
+  .navlabel,.sync,.navsep{display:none}
+  nav.menu{flex-direction:row;overflow-x:auto;padding:0 12px 10px;gap:4px}
+  .nav{border-left:0;border-bottom:3px solid transparent;border-radius:8px;padding:8px 12px;white-space:nowrap}
+  .nav.on{border-bottom-color:var(--accent)}
+  .nav .n{display:none}
+  main{padding-block:22px 48px}
+  .filters{padding:16px}
+  .sel{flex:1 1 150px}
+  .kv{gap:18px 20px}
+  .kv.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:480px){.actions .btn{flex:1 1 auto;justify-content:center}.kv{grid-template-columns:1fr}.bar,.catrow{grid-template-columns:90px minmax(0,1fr) 28px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><svg class="i"><use href="#i-laptop"/></svg></div>
+      <div><b>Gestão de Ativos</b><small>Sistema de TI</small></div>
+    </div>
+    <div class="navlabel">Menu principal</div>
+    <nav class="menu" id="menu"></nav>
+    <div class="sync"><span class="dot" id="syncdot"></span><span id="synctxt">Conectando ao banco de dados…</span></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<input type="file" id="importFile" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="photoFile" accept="image/*" hidden>
+<div id="modalRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="7" y="14" width="10" height="7"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/><rect x="9" y="9" width="6" height="6"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="13" rx="2"/><path d="M8 21h8M12 16v5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 2h6v4H9zM9 14l2 2 4-4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+</svg>
+
+<script>
+(() => {
+const ICON = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
+
+const STATUS = ["Em uso","Disponível","Manutenção","Descartado"];
+const STCLS = {"Em uso":"st-uso","Disponível":"st-disp","Manutenção":"st-man","Descartado":"st-desc"};
+const STCOLOR = {"Em uso":"var(--accent-2)","Disponível":"var(--avail-fg)","Manutenção":"var(--maint-fg)","Descartado":"var(--disc-fg)"};
+const SETORES_BASE = ["Comercial","Compras","Controladoria","Diretoria","Estoque","Expedição","Financeiro","Logística","Recepção","RH","TI"];
+const SIMNAO = ["Sim","Não"];
+
+const COMMON = [
+  {k:"dispositivo", l:"Nome do Dispositivo", req:true},
+  {k:"status", l:"Status", opts:STATUS},
+  {k:"usuario", l:"Usuário", list:"usuarios"},
+  {k:"setor", l:"Setor", list:"setores"},
+  {k:"fabricante", l:"Fabricante"},
+  {k:"modelo", l:"Modelo"},
+  {k:"serie", l:"Nº de Série"},
+];
+const TYPES = {
+  notebook:{label:"Notebooks", one:"Notebook", prefix:"LAP", icon:"laptop", extra:[
+    {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
+    {k:"so",l:"Sistema Operacional"},{k:"bateria",l:"Duração da Bateria"},
+    {k:"teclado",l:"Teclado",opts:SIMNAO,trio:true},{k:"mouse",l:"Mouse",opts:SIMNAO,trio:true},{k:"monitor",l:"Monitor",opts:SIMNAO,trio:true}]},
+  celular:{label:"Celulares", one:"Celular", prefix:"CEL", icon:"phone", extra:[
+    {k:"linha",l:"Número / Linha"},{k:"operadora",l:"Operadora"},{k:"imei",l:"IMEI"},{k:"armazenamento",l:"Armazenamento"},
+    {k:"so",l:"Sistema Operacional"},{k:"capa",l:"Capa / Película",opts:SIMNAO}]},
+  impressora:{label:"Impressoras", one:"Impressora", prefix:"IMP", icon:"printer", extra:[
+    {k:"tipoImp",l:"Tipo",opts:["Laser","Jato de tinta","Térmica (etiquetas)","Multifuncional"]},{k:"ip",l:"Endereço IP"},
+    {k:"conexao",l:"Conexão",opts:["Rede","USB","Wi-Fi"]},{k:"suprimento",l:"Toner / Ribbon"}]},
+  coletor:{label:"Coletores", one:"Coletor", prefix:"COL", icon:"scan", extra:[
+    {k:"so",l:"Sistema Operacional"},{k:"mac",l:"Endereço MAC"},{k:"ip",l:"Endereço IP"},{k:"bateria",l:"Bateria"},
+    {k:"base",l:"Base carregadora",opts:SIMNAO}]},
+  monitor:{label:"Monitores", one:"Monitor", prefix:"MON", icon:"monitor", extra:[
+    {k:"polegadas",l:"Tamanho (pol.)"},{k:"resolucao",l:"Resolução"},{k:"entradas",l:"Entradas (HDMI, VGA…)"}]},
+};
+const OBS = {k:"obs", l:"Observações"};
+const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
+
+// ---------- estado ----------
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const cap = { db:null, assets:null, downloads:null };
+let pendingPhoto = null; // {blob, dataUrl}
+let importRows = null;
+
+// modo local (quando o banco não está disponível nesta visualização)
+const LKEY = "gestao-ativos-local-v1";
+const LOCAL_SEED = {items:[],users:[]};
+function loadLocal(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(LKEY)||"null"); }catch(e){}
+  d = d || JSON.parse(JSON.stringify(LOCAL_SEED));
+  S.items=d.items||[]; S.users=d.users||[];
+}
+function saveLocal(){ try{ localStorage.setItem(LKEY, JSON.stringify({items:S.items,users:S.users})); }catch(e){} }
+
+const store = {
+  async put(col, id, data){
+    if (cap.db){
+      const ref = id ? cap.db.collection(col).doc(id) : cap.db.collection(col).doc();
+      await ref.set(data); return ref.id;
+    }
+    const arr = col==="ativos" ? S.items : S.users;
+    id = id || (col[0]+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6));
+    const i = arr.findIndex(x=>x.id===id); const row = {...data, id};
+    if (i>=0) arr[i]=row; else arr.push(row);
+    saveLocal(); refresh(); return id;
+  },
+  async del(col, id){
+    if (cap.db){ await cap.db.collection(col).doc(id).delete(); return; }
+    const arr = col==="ativos" ? S.items : S.users;
+    const i = arr.findIndex(x=>x.id===id); if (i>=0) arr.splice(i,1);
+    saveLocal(); refresh();
+  }
+};
+function writeErr(e){
+  if (e && e.code==="invalid_argument"){ S.canWrite=false; toast("Você tem acesso somente leitura a este sistema."); }
+  else if (e && e.code==="quota_exceeded") toast("Limite de armazenamento atingido. Exclua registros antigos.");
+  else toast("Não foi possível salvar. Tente novamente.");
+  console.error(e);
+}
+
+async function initCaps(){
+  const use = window.claude && window.claude.use;
+  if (!use){ goLocal(); return; }
+  try{
+    const [db, assets, downloads] = await Promise.all([window.claude.use("db"), window.claude.use("assets"), window.claude.use("downloads")]);
+    cap.db=db; cap.assets=assets; cap.downloads=downloads;
+  }catch(e){}
+  if (!cap.db){ goLocal(); return; }
+  S.mode="db";
+  setSync("ok","Dados sincronizados para toda a equipe");
+  let got=0;
+  const done=()=>{ if(++got>=2 && !S.ready){ S.ready=true; render(); openFromHash(); } };
+  cap.db.doc("inventario/atual").onSnapshot(snap=>{ INV = snap.exists ? {...snap.data()} : null; if(S.ready && S.view==="inventario") updateInv(); }, e=>console.error(e));
+  cap.db.collection("ativos").onSnapshot(snap=>{
+    S.items = snap.docs.map(d=>({...d.data(), id:d.id})); done(); if(S.ready) refresh();
+  }, e=>{ console.error(e); setSync("","Conexão com o banco interrompida. Recarregue a página."); });
+  cap.db.collection("usuarios").onSnapshot(snap=>{
+    S.users = snap.docs.map(d=>({...d.data(), id:d.id})); done(); if(S.ready) refresh();
+  }, e=>console.error(e));
+}
+function goLocal(){
+  S.mode="local"; loadLocal(); S.ready=true;
+  try{ INV = JSON.parse(localStorage.getItem(IKEY)||"null"); }catch(e){}
+  setTimeout(openFromHash,0);
+  setSync("local","Modo local: os dados ficam só neste navegador.");
+  render();
+}
+function setSync(cls, txt){ document.getElementById("syncdot").className="dot "+cls; document.getElementById("synctxt").textContent=txt; }
+
+// ---------- utilidades ----------
+function toast(t){ const el=document.getElementById("toast"); el.textContent=t; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,3200); }
+const pill = s => s ? `<span class="pill ${STCLS[s]||"st-desc"}">${esc(s)}</span>` : `<span class="muted">—</span>`;
+const photoUrl = f => !f ? "" : (f.startsWith("data:") ? f : "/_blob/"+f);
+const byType = t => S.items.filter(x=>x.tipo===t);
+const setores = () => [...new Set([...SETORES_BASE, ...S.items.map(x=>x.setor), ...S.users.map(u=>u.setor)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+const sortDev = (a,b) => String(b.dispositivo||"").localeCompare(String(a.dispositivo||""),"pt-BR",{numeric:true});
+function nextName(t){
+  const p=TYPES[t].prefix; let max=0;
+  byType(t).forEach(x=>{ const m=String(x.dispositivo||"").toUpperCase().match(new RegExp("^"+p+"(\\d+)$")); if(m) max=Math.max(max,+m[1]); });
+  return p+String(max+1).padStart(3,"0");
+}
+
+// ---------- navegação ----------
+function renderMenu(){
+  const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
+  const tools = [["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
+  const btn = ([k,l,ic,n]) => `<button class="nav ${S.view===k?"on":""}" data-act="go" data-v="${k}">${ICON(ic)}<span>${l}</span>${n!=null&&S.ready?`<span class="n">${n}</span>`:""}</button>`;
+  document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
+}
+function go(v){ S.view=v; S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
+
+function render(){
+  renderMenu();
+  const m=document.getElementById("main");
+  if (!S.ready){ m.innerHTML=`<div class="head"><div><h1>Carregando…</h1><div class="sub">Buscando os ativos cadastrados.</div></div></div>`; return; }
+  if (S.view==="dashboard") m.innerHTML = dashboardHTML();
+  else if (S.view==="usuarios"){ m.innerHTML = usersShell(); updateUsers(); }
+  else if (S.view==="etiquetas"){ m.innerHTML = etqShell(); updateEtq(); }
+  else if (S.view==="inventario"){ m.innerHTML = invShell(); updateInv(); }
+  else { m.innerHTML = listShell(S.view); updateTable(); }
+}
+function refresh(){
+  renderMenu();
+  if (!S.ready) return;
+  if (S.view==="dashboard") document.getElementById("main").innerHTML = dashboardHTML();
+  else if (S.view==="usuarios") updateUsers();
+  else if (S.view==="etiquetas") updateEtq();
+  else if (S.view==="inventario") updateInv();
+  else updateTable();
+}
+
+// ---------- dashboard ----------
+function stackHTML(list){
+  const tot=list.length||1;
+  return `<div class="stack">${STATUS.map(s=>{const n=list.filter(x=>x.status===s).length; return n?`<i style="width:${n/tot*100}%;background:${STCOLOR[s]}" title="${s}: ${n}"></i>`:"";}).join("")}</div>`;
+}
+function dashboardHTML(){
+  const all=S.items;
+  const tiles=Object.entries(TYPES).map(([k,t])=>{
+    const l=byType(k), u=l.filter(x=>x.status==="Em uso").length, d=l.filter(x=>x.status==="Disponível").length;
+    return `<button class="card tile" data-act="go" data-v="${k}"><span class="ti"><span>${ICON(t.icon)}</span>${t.label}</span><span class="big">${l.length}</span><span class="mini">${u} em uso · ${d} disponíveis</span></button>`;
+  }).join("");
+  const legend=STATUS.map(s=>`<span><em style="background:${STCOLOR[s]}"></em>${s} <b>${all.filter(x=>x.status===s).length}</b></span>`).join("");
+  const cats=Object.entries(TYPES).map(([k,t])=>{const l=byType(k); return `<div class="catrow"><span>${t.label}</span>${stackHTML(l)}<b>${l.length}</b></div>`;}).join("");
+  const sc={}; all.forEach(x=>{ if(x.setor) sc[x.setor]=(sc[x.setor]||0)+1; });
+  const se=Object.entries(sc).sort((a,b)=>b[1]-a[1]); const mx=se[0]?se[0][1]:1;
+  const bars=se.length? se.map(([s,n])=>`<div class="bar"><span>${esc(s)}</span><div class="track"><div class="fill" style="width:${n/mx*100}%"></div></div><b>${n}</b></div>`).join("") : `<p class="muted">Nenhum ativo com setor informado.</p>`;
+  const disp=all.filter(x=>x.status==="Disponível").sort(sortDev);
+  const dl=disp.length? disp.slice(0,12).map(x=>`<div class="li" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc(TYPES[x.tipo]?.one||"")} · ${esc([x.fabricante,x.modelo].filter(Boolean).join(" "))}</span>${ICON("eye")}</div>`).join("") : `<p class="muted">Nenhum equipamento disponível no momento.</p>`;
+  const man=all.filter(x=>x.status==="Manutenção").sort(sortDev);
+  const ml=man.length? man.map(x=>`<div class="li" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc(TYPES[x.tipo]?.one||"")} · ${esc(x.obs||x.modelo||"")}</span>${ICON("eye")}</div>`).join("") : `<p class="muted">Nenhum equipamento em manutenção.</p>`;
+  return `<div class="head"><div><h1>Dashboard</h1><div class="sub">${all.length} ativos cadastrados · ${S.users.length} usuários</div></div></div>
+  <div class="tiles">${tiles}</div>
+  <div class="grid2">
+    <section class="card panel"><h2>Status dos ativos</h2>${stackHTML(all)}<div class="legend">${legend}</div><div style="margin-top:18px">${cats}</div></section>
+    <section class="card panel"><h2>Ativos por setor</h2><div class="bars">${bars}</div></section>
+    <section class="card panel"><h2>Disponíveis para alocação (${disp.length})</h2><div class="list">${dl}</div></section>
+    <section class="card panel"><h2>Em manutenção (${man.length})</h2><div class="list">${ml}</div></section>
+  </div>`;
+}
+
+// ---------- listas ----------
+function listShell(t){
+  const T=TYPES[t];
+  return `<div class="head"><div><h1>${T.label}</h1><div class="sub" id="count"></div></div>
+    <div class="actions">
+      <button class="btn" data-act="import">${ICON("up")}Importar Excel</button>
+      <button class="btn" data-act="export">${ICON("down")}Exportar Excel</button>
+      <button class="btn primary" data-act="new">${ICON("plus")}Novo ${T.one}</button>
+    </div></div>
+  <div class="card filters">
+    <label class="search">${ICON("search")}<input id="q" type="search" placeholder="Pesquisar por dispositivo, usuário ou fabricante..." value="${esc(S.q)}" aria-label="Pesquisar"></label>
+    <label class="sel">${ICON("filter")}<select id="fStatus" aria-label="Status"><option value="">Todos os Status</option>${STATUS.map(s=>`<option ${S.fStatus===s?"selected":""}>${s}</option>`).join("")}</select></label>
+    <label class="sel">${ICON("filter")}<select id="fSetor" aria-label="Setor"></select></label>
+  </div>
+  <div class="card tablewrap"><table><thead><tr><th>Imagem</th><th>Dispositivo</th><th>Status</th><th>Usuário</th><th>Setor</th><th>Fabricante</th><th>Modelo</th><th class="th-r">Ações</th></tr></thead><tbody id="tb"></tbody></table></div>`;
+}
+function filtered(t){
+  const q=norm(S.q);
+  return byType(t).filter(x=>(!S.fStatus||x.status===S.fStatus)&&(!S.fSetor||x.setor===S.fSetor)&&
+    (!q||[x.dispositivo,x.usuario,x.fabricante,x.modelo,x.serie].some(v=>norm(v).includes(q)))).sort(sortDev);
+}
+function updateTable(){
+  const t=S.view, T=TYPES[t]; const tb=document.getElementById("tb"); if(!tb) return;
+  const fs=document.getElementById("fSetor");
+  fs.innerHTML=`<option value="">Todos os Setores</option>`+setores().map(s=>`<option ${S.fSetor===s?"selected":""}>${esc(s)}</option>`).join("");
+  const rows=filtered(t), total=byType(t).length;
+  document.getElementById("count").textContent = rows.length===total ? `${total} ${T.label.toLowerCase()} encontrados` : `${rows.length} de ${total} ${T.label.toLowerCase()} encontrados`;
+  if(!rows.length){
+    tb.innerHTML=`<tr><td colspan="8"><div class="empty">${total?`<b>Nenhum resultado</b>Ajuste a pesquisa ou os filtros.`:`<b>Nenhum ${T.one.toLowerCase()} cadastrado</b>Use “Novo ${T.one}” ou importe uma planilha Excel.`}</div></td></tr>`;
+    return;
+  }
+  tb.innerHTML=rows.map(x=>`<tr>
+    <td>${x.foto?`<img class="thumb" src="${esc(photoUrl(x.foto))}" alt="" loading="lazy">`:`<div class="thumb ph">${ICON(T.icon)}</div>`}</td>
+    <td class="dev">${esc(x.dispositivo)}</td><td>${pill(x.status)}</td>
+    <td>${x.usuario?esc(x.usuario):"-"}</td><td class="set">${esc(x.setor||"-")}</td>
+    <td>${esc(x.fabricante||"-")}</td><td>${esc(x.modelo||"-")}</td>
+    <td><div class="rowacts">
+      <button class="ib" data-act="view" data-id="${x.id}" title="Ver detalhes" aria-label="Ver ${esc(x.dispositivo)}">${ICON("eye")}</button>
+      <button class="ib" data-act="edit" data-id="${x.id}" title="Editar" aria-label="Editar ${esc(x.dispositivo)}">${ICON("edit")}</button>
+      <button class="ib del" data-act="del" data-id="${x.id}" title="Excluir" aria-label="Excluir ${esc(x.dispositivo)}">${ICON("trash")}</button>
+    </div></td></tr>`).join("");
+}
+
+// ---------- modais ----------
+function openModal(html, size=""){
+  const r=document.getElementById("modalRoot");
+  r.innerHTML=`<div class="overlay" data-act="bg"><div class="modal ${size}" role="dialog" aria-modal="true"><button class="close" data-act="close" aria-label="Fechar">${ICON("x")}</button>${html}</div></div>`;
+  const f=r.querySelector("input:not([type=hidden]),select,textarea,button.btn"); if(f) setTimeout(()=>f.focus(),30);
+}
+function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; }
+
+function viewItem(id){
+  const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
+  const val=v=>`<p>${esc(v||"—")}</p>`;
+  const main=[...COMMON.filter(f=>f.k!=="dispositivo"&&f.k!=="status"), ...T.extra.filter(f=>!f.trio)];
+  const trio=T.extra.filter(f=>f.trio);
+  openModal(`<h2>Detalhes do ${T.one}: ${esc(x.dispositivo)}</h2>
+  <div class="detail">
+    <div class="photo">${x.foto?`<img src="${esc(photoUrl(x.foto))}" alt="Foto de ${esc(x.dispositivo)}">`:`<div class="ph">${ICON("image")}Sem foto cadastrada</div>`}</div>
+    <div style="display:flex;flex-direction:column;gap:26px;min-width:0">
+      <div class="kv">
+        <div><label>Status</label>${pill(x.status)}</div><div><label>Nome do Dispositivo</label>${val(x.dispositivo)}</div>
+        ${main.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}
+      </div>
+      ${trio.length?`<div class="kv three">${trio.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}</div>`:""}
+      <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
+      <div class="foot"><button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
+    </div>
+  </div>`);
+}
+
+function fieldHTML(f, v){
+  const id="f_"+f.k; const lab=`<span>${f.l}${f.req?" <i>*</i>":""}</span>`;
+  if (f.opts) return `<label class="fld">${lab}<select id="${id}" name="${f.k}"><option value="">—</option>${f.opts.map(o=>`<option ${v===o?"selected":""}>${o}</option>`).join("")}${v&&!f.opts.includes(v)?`<option selected>${esc(v)}</option>`:""}</select></label>`;
+  return `<label class="fld">${lab}<input id="${id}" name="${f.k}" value="${esc(v)}" ${f.req?"required":""} ${f.list?`list="dl-${f.list}"`:""} autocomplete="off"></label>`;
+}
+function editItem(id, tipo){
+  const x = id ? S.items.find(i=>i.id===id) : null;
+  const t = x ? x.tipo : tipo; const T=TYPES[t];
+  const d = x || {status:"Disponível", dispositivo:nextName(t), setor:"TI"};
+  if (t==="notebook" && !x){ d.tipoSistema="64 bits"; d.teclado="Não"; d.mouse="Não"; d.monitor="Não"; }
+  pendingPhoto=null;
+  openModal(`<h2>${x?`Editar ${T.one}: ${esc(x.dispositivo)}`:`Novo ${T.one}`}</h2>
+  <form class="f" id="itemForm" data-id="${x?x.id:""}" data-tipo="${t}">
+    <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
+    <datalist id="dl-setores">${setores().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <fieldset><legend class="l">Identificação</legend>${COMMON.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
+    <fieldset><legend class="l">Especificações</legend>${T.extra.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
+    <fieldset><legend class="l">Foto e observações</legend>
+      <div class="upl"><div class="prev" id="prev">${d.foto?`<img src="${esc(photoUrl(d.foto))}" alt="">`:ICON("image")}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn" data-act="pickphoto">${ICON("up")}${d.foto?"Trocar foto":"Enviar foto"}</button>
+        ${d.foto?`<button type="button" class="btn ghost" data-act="rmphoto">Remover foto</button>`:""}</div>
+        <input type="hidden" name="foto" id="f_foto" value="${esc(d.foto||"")}">
+      </div>
+      <label class="fld wide"><span>Observações</span><textarea id="f_obs" name="obs">${esc(d.obs||"")}</textarea></label>
+    </fieldset>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="saveBtn">${x?"Salvar alterações":"Cadastrar "+T.one}</button></div>
+  </form>`, "md");
+}
+async function submitItem(form){
+  const btn=document.getElementById("saveBtn"); btn.disabled=true;
+  const fd=new FormData(form); const t=form.dataset.tipo; const id=form.dataset.id||null;
+  const data={tipo:t}; fieldsOf(t).forEach(f=>data[f.k]=String(fd.get(f.k)||"").trim());
+  data.dispositivo=data.dispositivo.toUpperCase();
+  data.foto=String(fd.get("foto")||"");
+  const dup=S.items.find(i=>i.tipo===t && i.id!==id && norm(i.dispositivo)===norm(data.dispositivo));
+  if (dup){ toast(`Já existe um ${TYPES[t].one.toLowerCase()} chamado ${data.dispositivo}.`); btn.disabled=false; return; }
+  const prev = id ? S.items.find(i=>i.id===id) : null;
+  try{
+    if (pendingPhoto){
+      if (cap.assets){ const r=await cap.assets.upload(pendingPhoto.blob,{type:"image/jpeg"}); data.foto=r.id; }
+      else data.foto=pendingPhoto.small;
+    }
+    data.atualizadoEm=new Date().toISOString(); if(!prev) data.criadoEm=data.atualizadoEm; else data.criadoEm=prev.criadoEm||"";
+    await store.put("ativos", id, data);
+    if (prev && prev.foto && prev.foto!==data.foto) dropAsset(prev.foto);
+    closeModal(); toast(prev?"Alterações salvas.":`${data.dispositivo} cadastrado.`);
+  }catch(e){ btn.disabled=false; if(e&&e.code&&e.code!=="invalid_argument"&&cap.assets&&pendingPhoto) toast("Não foi possível enviar a foto. Tente uma imagem menor."); else writeErr(e); }
+}
+function dropAsset(f){ if(f && !f.startsWith("data:") && cap.assets) cap.assets.delete(f).catch(()=>{}); }
+
+function confirmDel(id){
+  const x=S.items.find(i=>i.id===id); if(!x) return;
+  openModal(`<h2>Excluir ${esc(x.dispositivo)}?</h2><div class="msg"><p>O ${esc((TYPES[x.tipo]?.one||"ativo").toLowerCase())} <b>${esc(x.dispositivo)}</b>${x.usuario?` (${esc(x.usuario)})`:""} será removido do cadastro, junto com a foto. Essa ação não pode ser desfeita.</p></div>
+  <div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn danger" data-act="dodel" data-id="${x.id}">${ICON("trash")}Excluir</button></div>`,"sm");
+}
+async function doDel(id){
+  const x=S.items.find(i=>i.id===id);
+  try{ await store.del("ativos",id); if(x) dropAsset(x.foto); closeModal(); toast(`${x?x.dispositivo:"Ativo"} excluído.`); }catch(e){ writeErr(e); }
+}
+
+// ---------- foto ----------
+function resize(file, max, q){
+  return new Promise((res,rej)=>{
+    const img=new Image(); const url=URL.createObjectURL(file);
+    img.onload=()=>{ const s=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement("canvas");
+      c.width=Math.round(img.width*s); c.height=Math.round(img.height*s); c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url); c.toBlob(b=>res({blob:b,dataUrl:c.toDataURL("image/jpeg",q)}),"image/jpeg",q); };
+    img.onerror=()=>{URL.revokeObjectURL(url);rej();}; img.src=url;
+  });
+}
+document.getElementById("photoFile").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  try{
+    const big=await resize(f,1200,.85), small=await resize(f,520,.72);
+    pendingPhoto={blob:big.blob, small:small.dataUrl};
+    const p=document.getElementById("prev"); if(p) p.innerHTML=`<img src="${small.dataUrl}" alt="">`;
+  }catch(err){ toast("Não foi possível ler essa imagem. Use JPG ou PNG."); }
+});
+
+// ---------- Excel ----------
+function exportExcel(){
+  const t=S.view, T=TYPES[t]; const rows=filtered(t);
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const fs=fieldsOf(t);
+  const data=rows.map(x=>Object.fromEntries(fs.map(f=>[f.l, x[f.k]||""])));
+  const ws=XLSX.utils.json_to_sheet(data,{header:fs.map(f=>f.l)});
+  ws["!cols"]=fs.map(f=>({wch:Math.max(12,f.l.length+2)}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,T.label);
+  const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  const name=`${T.label.toLowerCase()}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  if(!cap.downloads){
+    if(S.mode==="local"){ try{ XLSX.writeFile(wb,name); toast(`${rows.length} registros exportados.`); }catch(e){ toast("Não foi possível exportar o arquivo."); } }
+    else toast("Exportação indisponível nesta visualização.");
+    return;
+  }
+  cap.downloads.save({filename:name,data:new Blob([buf])}).then(()=>toast(`${rows.length} registros exportados.`)).catch(e=>{
+    if(e&&e.code==="declined") return; if(e&&e.code==="rate_limited") toast("Aguarde um instante e tente de novo."); else toast("Não foi possível exportar o arquivo.");
+  });
+}
+document.getElementById("importFile").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  try{
+    const wb=XLSX.read(await f.arrayBuffer());
+    const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:"",raw:false});
+    const t=S.view; const fs=fieldsOf(t); const map={};
+    fs.forEach(fl=>{ map[norm(fl.l)]=fl.k; map[norm(fl.k)]=fl.k; });
+    Object.assign(map,{dispositivo:"dispositivo",nome:"dispositivo",hostname:"dispositivo",marca:"fabricante",memoria:"ram",memoriaram:"ram",so:"so",observacao:"obs",obs:"obs",numerodeserie:"serie",serial:"serie",sistema:"so",bateria:"bateria"});
+    const headers=raw.length?Object.keys(raw[0]):[];
+    const recognized=headers.filter(h=>map[norm(h)]);
+    const rows=raw.map(r=>{ const o={tipo:t}; headers.forEach(h=>{ const k=map[norm(h)]; if(k) o[k]=String(r[h]??"").trim(); });
+      if(o.dispositivo) o.dispositivo=o.dispositivo.toUpperCase();
+      if(o.status){ const s=STATUS.find(s=>norm(s)===norm(o.status)); if(s) o.status=s; }
+      return o; }).filter(o=>o.dispositivo);
+    const upd=rows.filter(r=>byType(t).some(i=>norm(i.dispositivo)===norm(r.dispositivo))).length;
+    importRows=rows;
+    const T=TYPES[t];
+    openModal(`<h2>Importar ${T.label.toLowerCase()}</h2><div class="msg">
+      ${rows.length?`<p>A planilha <b>${esc(f.name)}</b> tem <b>${rows.length}</b> linhas válidas: <b>${rows.length-upd}</b> novos ${T.label.toLowerCase()} e <b>${upd}</b> atualizações de dispositivos que já existem.</p>
+      <p class="note">Colunas reconhecidas: <span class="hdrs">${recognized.map(esc).join(", ")}</span>${headers.length>recognized.length?`<br>Ignoradas: <span class="hdrs">${headers.filter(h=>!map[norm(h)]).map(esc).join(", ")}</span>`:""}</p>`
+      :`<p>Nenhuma linha com a coluna <b>Dispositivo</b> (ou <b>Nome do Dispositivo</b>) foi encontrada em <b>${esc(f.name)}</b>.</p><p class="note">Dica: exporte a lista atual para obter uma planilha modelo com os cabeçalhos certos.</p>`}
+    </div><div class="foot"><button class="btn ghost" data-act="close">Cancelar</button>${rows.length?`<button class="btn primary" data-act="doimport" id="impBtn">${ICON("up")}Importar ${rows.length} registros</button>`:""}</div>`,"sm");
+  }catch(err){ console.error(err); toast("Não foi possível ler a planilha. Use .xlsx, .xls ou .csv."); }
+});
+async function doImport(){
+  const rows=importRows; if(!rows) return; const btn=document.getElementById("impBtn"); btn.disabled=true;
+  let ok=0; const now=new Date().toISOString();
+  try{
+    for(const r of rows){
+      const ex=S.items.find(i=>i.tipo===r.tipo && norm(i.dispositivo)===norm(r.dispositivo));
+      const data=ex?{...ex,...r,atualizadoEm:now}:{status:"Disponível",...r,criadoEm:now,atualizadoEm:now};
+      delete data.id;
+      await store.put("ativos", ex?ex.id:null, data); ok++;
+      btn.textContent=`Importando ${ok}/${rows.length}…`;
+    }
+    closeModal(); toast(`${ok} registros importados.`);
+  }catch(e){ writeErr(e); closeModal(); if(ok) toast(`${ok} de ${rows.length} registros importados antes do erro.`); }
+}
+
+// ---------- usuários ----------
+function usersShell(){
+  return `<div class="head"><div><h1>Usuários</h1><div class="sub" id="ucount"></div></div>
+    <div class="actions"><button class="btn primary" data-act="newuser">${ICON("plus")}Novo Usuário</button></div></div>
+  <div class="card filters"><label class="search">${ICON("search")}<input id="uq" type="search" placeholder="Pesquisar por login, nome ou setor..." value="${esc(S.uq)}" aria-label="Pesquisar usuários"></label></div>
+  <div class="card tablewrap"><table><thead><tr><th>Login</th><th>Nome</th><th>Setor</th><th>E-mail</th><th>Equipamentos</th><th class="th-r">Ações</th></tr></thead><tbody id="utb"></tbody></table></div>`;
+}
+function updateUsers(){
+  const tb=document.getElementById("utb"); if(!tb) return; const q=norm(S.uq);
+  // inclui logins que aparecem nos ativos mas ainda não têm cadastro
+  const known=new Set(S.users.map(u=>norm(u.login)));
+  const orphan=[...new Set(S.items.map(i=>i.usuario).filter(u=>u&&!known.has(norm(u))))].map(l=>({id:"",login:l,setor:(S.items.find(i=>i.usuario===l)||{}).setor||"",orphan:true}));
+  const all=[...S.users,...orphan].sort((a,b)=>String(a.login).localeCompare(String(b.login),"pt-BR"));
+  const rows=all.filter(u=>!q||[u.login,u.nome,u.setor,u.email].some(v=>norm(v).includes(q)));
+  document.getElementById("ucount").textContent=`${S.users.length} usuários cadastrados${orphan.length?` · ${orphan.length} com equipamento sem cadastro`:""}`;
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty">${all.length?"<b>Nenhum resultado</b>Ajuste a pesquisa.":"<b>Nenhum usuário cadastrado</b>Use “Novo Usuário” para começar."}</div></td></tr>`; return; }
+  tb.innerHTML=rows.map(u=>{
+    const eq=S.items.filter(i=>norm(i.usuario)===norm(u.login)).sort(sortDev);
+    return `<tr><td class="dev">${esc(u.login)}</td><td>${u.orphan?`<span class="muted">Sem cadastro</span>`:esc(u.nome||"—")}</td><td class="set">${esc(u.setor||"-")}</td><td>${esc(u.email||"—")}</td>
+    <td><div class="chips">${eq.length?eq.map(i=>`<button class="chip" style="border:0;cursor:pointer" data-act="view" data-id="${i.id}">${esc(i.dispositivo)}</button>`).join(""):`<span class="muted">Nenhum</span>`}</div></td>
+    <td><div class="rowacts">${u.orphan?`<button class="btn" style="padding:7px 12px" data-act="newuser" data-login="${esc(u.login)}" data-setor="${esc(u.setor)}">${ICON("plus")}Cadastrar</button>`:
+      `<button class="ib" data-act="edituser" data-id="${u.id}" aria-label="Editar ${esc(u.login)}">${ICON("edit")}</button><button class="ib del" data-act="deluser" data-id="${u.id}" aria-label="Excluir ${esc(u.login)}">${ICON("trash")}</button>`}</div></td></tr>`;
+  }).join("");
+}
+function editUser(id, preset={}){
+  const u=id?S.users.find(x=>x.id===id):null; const d=u||preset;
+  openModal(`<h2>${u?`Editar usuário: ${esc(u.login)}`:"Novo Usuário"}</h2>
+  <form class="f" id="userForm" data-id="${u?u.id:""}">
+    <datalist id="dl-setores">${setores().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <fieldset>
+      <label class="fld"><span>Login <i>*</i></span><input id="u_login" name="login" required value="${esc(d.login||"")}" placeholder="nome.sobrenome" autocomplete="off"></label>
+      <label class="fld"><span>Nome completo</span><input id="u_nome" name="nome" value="${esc(d.nome||"")}"></label>
+      <label class="fld"><span>Setor</span><input id="u_setor" name="setor" list="dl-setores" value="${esc(d.setor||"")}" autocomplete="off"></label>
+      <label class="fld"><span>E-mail</span><input id="u_email" name="email" type="email" value="${esc(d.email||"")}"></label>
+    </fieldset>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="uSave">${u?"Salvar alterações":"Cadastrar usuário"}</button></div>
+  </form>`,"sm");
+}
+async function submitUser(form){
+  const fd=new FormData(form); const id=form.dataset.id||null;
+  const data={login:String(fd.get("login")).trim().toLowerCase(),nome:String(fd.get("nome")).trim(),setor:String(fd.get("setor")).trim(),email:String(fd.get("email")).trim()};
+  if(S.users.some(u=>u.id!==id&&norm(u.login)===norm(data.login))){ toast(`O login ${data.login} já está cadastrado.`); return; }
+  const prev=id?S.users.find(u=>u.id===id):null;
+  document.getElementById("uSave").disabled=true;
+  try{
+    await store.put("usuarios",id,data);
+    // renomeou o login: atualiza os equipamentos vinculados
+    if(prev&&norm(prev.login)!==norm(data.login)){
+      for(const i of S.items.filter(i=>norm(i.usuario)===norm(prev.login))){ const {id:iid,...rest}=i; await store.put("ativos",iid,{...rest,usuario:data.login}); }
+    }
+    closeModal(); toast(prev?"Usuário atualizado.":`${data.login} cadastrado.`);
+  }catch(e){ document.getElementById("uSave").disabled=false; writeErr(e); }
+}
+function confirmDelUser(id){
+  const u=S.users.find(x=>x.id===id); if(!u) return; const n=S.items.filter(i=>norm(i.usuario)===norm(u.login)).length;
+  openModal(`<h2>Excluir ${esc(u.login)}?</h2><div class="msg"><p>O cadastro do usuário será removido.${n?` Ele ainda tem <b>${n}</b> equipamento(s) vinculado(s); os equipamentos continuam no sistema com o login registrado.`:""}</p></div>
+  <div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn danger" data-act="dodeluser" data-id="${u.id}">${ICON("trash")}Excluir</button></div>`,"sm");
+}
+
+// ---------- link direto (QR Code da etiqueta) ----------
+const APP_URL = "https://claude.ai/artifact/UK7buhkNEcvAzA87bhfv1U";
+function openFromHash(){
+  const h = decodeURIComponent((location.hash||"").slice(1)).trim(); if(!h) return;
+  const x = S.items.find(i=>norm(i.dispositivo)===norm(h));
+  if (x){ if (S.view!==x.tipo){ S.view=x.tipo; render(); } viewItem(x.id); }
+  else if (/^[A-Za-z]{2,5}\d+$/.test(h)) toast(`${h.toUpperCase()} ainda não está cadastrado.`);
+}
+window.addEventListener("hashchange", ()=>{ if(S.ready) openFromHash(); });
+
+// ---------- etiquetas: Code128B + layout vetorial (mm) ----------
+const C128 = ["212222","222122","222221","121223","121322","131222","122213","122312","132212","221213","221312","231212","112232","122132","122231","113222","123122","123221","223211","221132","221231","213212","223112","312131","311222","321122","321221","312212","322112","322211","212123","212321","232121","111323","131123","131321","112313","132113","132311","211313","231113","231311","112133","112331","132131","113123","113321","133121","313121","211331","231131","213113","213311","213131","311123","311321","331121","312113","312311","332111","314111","221411","431111","111224","111422","121124","121421","141122","141221","112214","112412","122114","122411","142112","142211","241211","221114","413111","241112","134111","111242","121142","121241","114212","124112","124211","411212","421112","421211","212141","214121","412121","111143","111341","131141","114113","114311","411113","411311","113141","114131","311141","411131","211412","211214","211232","2331112"];
+function code128(text){
+  const vals=[104]; for(const ch of text){ const c=ch.charCodeAt(0); if(c<32||c>126) throw new Error("Caractere inválido"); vals.push(c-32); }
+  let sum=104; for(let i=1;i<vals.length;i++) sum+=vals[i]*i;
+  vals.push(sum%103); vals.push(106);
+  const bars=[]; let x=0;
+  vals.forEach(v=>{ const p=C128[v]; for(let i=0;i<p.length;i++){ const w=+p[i]; if(i%2===0) bars.push([x,w]); x+=w; } });
+  return {bars, modules:x};
+}
+// p = pincel: rect(x,y,w,h), text(str,x,y,sizePt,bold,align,maxW) — coordenadas em mm
+function drawLabel(p, o){
+  const {W,H,code,qrText,top,bottom} = o;
+  const m = Math.max(1.2, H*0.06), hb = H*0.27, gap = H*0.045;
+  const topH = H - 2*m - hb - gap - (bottom ? H*0.08 : 0);
+  const qr = qrcode(0, "M"); qr.addData(qrText); qr.make();
+  const n = qr.getModuleCount(), qs = topH, ms = qs/n;
+  for(let r=0;r<n;r++){ let c=0; while(c<n){ if(qr.isDark(r,c)){ let e=c; while(e+1<n && qr.isDark(r,e+1)) e++; p.rect(m+c*ms, m+r*ms, (e-c+1)*ms+0.01, ms+0.01); c=e+1; } else c++; } }
+  const tx = m + qs + H*0.07, tw = W - tx - m, pt = mm => mm/0.3528;
+  const hTop = top ? topH*0.22 : 0, sp = top ? topH*0.06 : 0;
+  if (top) p.text(top, tx, m + hTop*0.82, pt(hTop*0.78), true, "left", tw);
+  const codeH = topH - hTop - sp;
+  p.text(code, tx, m + hTop + sp + codeH*0.78, pt(Math.min(codeH*0.95, tw/(code.length*0.62))), true, "left", tw);
+  const {bars, modules} = code128(code);
+  const bw = W - 2*m, xd = bw/(modules+20), by = m + topH + gap;
+  bars.forEach(([x,w]) => p.rect(m + (10+x)*xd, by, w*xd, hb));
+  if (bottom) p.text(bottom, W/2, H - m*0.75, pt(H*0.075), false, "center", W-2*m);
+}
+const _mctx = document.createElement("canvas").getContext("2d");
+function svgPainter(){
+  const out=[];
+  return { out,
+    rect:(x,y,w,h)=>out.push(`<rect x="${x.toFixed(3)}" y="${y.toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}"/>`),
+    text:(s,x,y,size,bold,align,maxW)=>{ let sz=size; const f=z=>{_mctx.font=`${bold?"700":"400"} ${z*0.3528}px Helvetica, Arial, sans-serif`; return _mctx.measureText(s).width;};
+      while(f(sz)>maxW && sz>3) sz-=0.5;
+      out.push(`<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="${(sz*0.3528).toFixed(3)}" font-weight="${bold?700:400}" text-anchor="${align==="center"?"middle":"start"}">${esc(s)}</text>`); } };
+}
+function pdfPainter(d, ox=0, oy=0){
+  return { rect:(x,y,w,h)=>d.rect(ox+x,oy+y,w,h,"F"),
+    text:(s,x,y,size,bold,align,maxW)=>{ d.setFont("helvetica",bold?"bold":"normal"); let sz=size; d.setFontSize(sz); while(d.getTextWidth(s)>maxW && sz>3){ sz-=0.5; d.setFontSize(sz);} d.text(s,ox+x,oy+y,{align}); } };
+}
+
+const SIZES = {"50x25":[50,25],"40x20":[40,20],"60x30":[60,30],"70x35":[70,35]};
+const L = { src:"cadastro", cat:"notebook", q:"", sel:null, prefix:"LAP", from:1, to:100, dig:3, size:"50x25", top:"PATRIMÔNIO · TI", bottom:"Propriedade da empresa · não remover", qr:"link", bleed:false };
+try{ Object.assign(L, JSON.parse(localStorage.getItem("ga-etq")||"{}")); }catch(e){}
+L.sel = null;
+const saveL = () => { try{ const {sel,q,...rest}=L; localStorage.setItem("ga-etq", JSON.stringify(rest)); }catch(e){} };
+
+function etqItems(){
+  const q=norm(L.q);
+  return S.items.filter(x=>(L.cat==="todos"||x.tipo===L.cat) && (!q||[x.dispositivo,x.usuario,x.setor,x.modelo].some(v=>norm(v).includes(q)))).sort((a,b)=>String(a.dispositivo).localeCompare(String(b.dispositivo),"pt-BR",{numeric:true}));
+}
+function etqCodes(){
+  if (L.src==="faixa"){
+    const a=Math.max(0,parseInt(L.from)||0), b=Math.min(a+999, parseInt(L.to)||0), d=Math.max(1,Math.min(6,parseInt(L.dig)||3));
+    const pf=String(L.prefix||"").toUpperCase().replace(/[^A-Z0-9-]/g,"");
+    const out=[]; for(let i=a;i<=b;i++) out.push({code:pf+String(i).padStart(d,"0")}); return out;
+  }
+  if (!L.sel) L.sel = new Set(etqItems().filter(x=>x.status!=="Descartado").map(x=>x.id));
+  return S.items.filter(x=>L.sel.has(x.id)).sort((a,b)=>String(a.dispositivo).localeCompare(String(b.dispositivo),"pt-BR",{numeric:true})).map(x=>({code:String(x.dispositivo).toUpperCase(), item:x}));
+}
+const qrOf = code => L.qr==="link" ? `${APP_URL}#${code}` : code;
+
+function etqShell(){
+  const opt=(v,t,cur)=>`<option value="${v}" ${cur===v?"selected":""}>${t}</option>`;
+  return `<div class="head"><div><h1>Etiquetas</h1><div class="sub">Gere o arquivo para a gráfica com QR Code e código de barras</div></div></div>
+  <div class="etq">
+    <section class="card panel opt">
+      <div class="seg" role="radiogroup" aria-label="Origem dos códigos">
+        <label><input type="radio" name="e_src" id="e_src1" value="cadastro" ${L.src==="cadastro"?"checked":""}>Equipamentos cadastrados</label>
+        <label><input type="radio" name="e_src" id="e_src2" value="faixa" ${L.src==="faixa"?"checked":""}>Faixa de códigos</label>
+      </div>
+      <div id="srcArea"></div>
+      <fieldset><legend class="l">Layout</legend>
+        <label class="fld"><span>Tamanho</span><select id="e_size">${opt("50x25","50 × 25 mm ★",L.size)}${opt("40x20","40 × 20 mm",L.size)}${opt("60x30","60 × 30 mm",L.size)}${opt("70x35","70 × 35 mm",L.size)}</select></label>
+        <label class="fld"><span>QR Code</span><select id="e_qr">${opt("link","Abre a ficha no sistema",L.qr)}${opt("codigo","Contém só o código",L.qr)}</select></label>
+        <label class="fld"><span>Texto superior</span><input id="e_top" value="${esc(L.top)}" maxlength="28"></label>
+        <label class="fld"><span>Texto inferior</span><input id="e_bottom" value="${esc(L.bottom)}" maxlength="48"></label>
+        <label class="check fld wide"><input type="checkbox" id="e_bleed" ${L.bleed?"checked":""}><span style="font-weight:600;color:var(--ink)">Adicionar sangria de 2 mm no PDF da gráfica (só se a gráfica pedir)</span></label>
+      </fieldset>
+    </section>
+    <section class="card panel opt">
+      <div class="stage"><div id="prevSvg" style="width:100%;display:grid;place-items:center"></div><small id="prevCap"></small></div>
+      <div class="pickbar"><div><span class="bigcount" id="eCount">0</span> etiquetas</div></div>
+      <div class="dl">
+        <button class="btn primary" data-act="etqpdf">${ICON("down")}PDF para a gráfica<small style="color:#fff;opacity:.85">1 etiqueta por página</small></button>
+        <button class="btn" data-act="etqa4">${ICON("down")}Folha A4 para teste<small>imprima em 100%</small></button>
+        <button class="btn" data-act="etqcsv">${ICON("down")}Planilha CSV<small>para dados variáveis</small></button>
+      </div>
+      <div class="note req" id="eReq"></div>
+    </section>
+  </div>`;
+}
+function srcHTML(){
+  if (L.src==="faixa"){
+    const pfx=Object.values(TYPES).map(t=>`<option value="${t.prefix}">`).join("");
+    return `<fieldset><legend class="l">Faixa de códigos</legend>
+      <datalist id="dl-pfx">${pfx}</datalist>
+      <label class="fld"><span>Prefixo</span><input id="e_prefix" list="dl-pfx" value="${esc(L.prefix)}" maxlength="6"></label>
+      <label class="fld"><span>Dígitos</span><input id="e_dig" type="number" min="1" max="6" value="${esc(L.dig)}"></label>
+      <label class="fld"><span>De</span><input id="e_from" type="number" min="0" value="${esc(L.from)}"></label>
+      <label class="fld"><span>Até</span><input id="e_to" type="number" min="0" value="${esc(L.to)}"></label>
+      <p class="fld wide muted" style="margin:0;font-size:13.5px">Use para etiquetar equipamentos antes de cadastrá-los. Máximo de 1.000 por arquivo.</p>
+    </fieldset>`;
+  }
+  const cats=`<option value="todos" ${L.cat==="todos"?"selected":""}>Todas as categorias</option>`+Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${L.cat===k?"selected":""}>${t.label}</option>`).join("");
+  return `<fieldset><legend class="l">Equipamentos</legend>
+    <label class="fld"><span>Categoria</span><select id="e_cat">${cats}</select></label>
+    <label class="fld"><span>Filtrar</span><input id="e_q" type="search" value="${esc(L.q)}" placeholder="Código, usuário, setor…"></label>
+    <div class="fld wide"><div class="pickbar"><span id="selInfo"></span><span><button type="button" class="linkbtn" data-act="etqall">Marcar todos</button> · <button type="button" class="linkbtn" data-act="etqnone">Limpar</button></span></div></div>
+    <div class="pick fld wide" id="pickList"></div>
+  </fieldset>`;
+}
+function etqInput(el){
+  const id=el.id;
+  if (id==="e_src1"||id==="e_src2"){ L.src=el.value; saveL(); document.getElementById("srcArea").innerHTML=srcHTML(); return updateEtq(); }
+  if (id==="e_cat"){ L.cat=el.value; L.sel=null; saveL(); return updateEtq(); }
+  if (id==="e_q"){ L.q=el.value; return updateEtq(); }
+  if (id==="e_bleed"){ L.bleed=el.checked; saveL(); return updateEtq(true); }
+  const k=id.slice(2); if (k in L){ L[k]=el.value; saveL(); updateEtq(true); }
+}
+function updateEtq(keepList){
+  const area=document.getElementById("srcArea"); if(!area) return;
+  if (!area.firstChild) area.innerHTML=srcHTML();
+  const codes=etqCodes();
+  if (L.src==="cadastro" && !keepList){
+    const list=etqItems(); const pl=document.getElementById("pickList");
+    pl.innerHTML = list.length ? list.map(x=>`<label><input type="checkbox" class="esel" value="${x.id}" ${L.sel.has(x.id)?"checked":""}><b>${esc(x.dispositivo)}</b><span>${esc([x.usuario||x.status, x.setor].filter(Boolean).join(" · "))}</span></label>`).join("")
+      : `<div class="empty" style="padding:28px">Nenhum equipamento nesta seleção.</div>`;
+  }
+  const si=document.getElementById("selInfo"); if(si) si.textContent=`${codes.length} selecionados`;
+  const [W,H]=SIZES[L.size]||SIZES["50x25"];
+  const first=codes[0]?codes[0].code:(TYPES[L.cat]?.prefix||"LAP")+"001";
+  const pp=svgPainter(); let ok=true;
+  try{ drawLabel(pp,{W,H,code:first,qrText:qrOf(first),top:L.top.trim(),bottom:L.bottom.trim()}); }catch(e){ ok=false; }
+  document.getElementById("prevSvg").innerHTML = ok ? `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Prévia da etiqueta ${esc(first)}"><rect width="${W}" height="${H}" style="fill:var(--paper)"/><g style="fill:var(--paper-ink)" font-family="Helvetica, Arial, sans-serif">${pp.out.join("")}</g></svg>` : `<div class="muted">O código ${esc(first)} tem caracteres inválidos.</div>`;
+  document.getElementById("prevCap").textContent = `Prévia em tamanho ampliado · ${W} × ${H} mm${codes.length?"":" · exemplo"}`;
+  document.getElementById("eCount").textContent = codes.length;
+  document.getElementById("eReq").innerHTML = `<b style="color:var(--heading)">O que pedir à gráfica</b><ul>
+    <li><b>${codes.length}</b> etiquetas de <b>${W} × ${H} mm</b>, com numeração variável (uma arte por página do PDF)</li>
+    <li>Material: <b>poliéster ou vinil branco</b>, adesivo permanente. Opcional: <b>antiviolação (VOID)</b></li>
+    <li>Impressão em <b>1 cor (preto)</b>, sem ampliar nem reduzir, para manter o QR Code e o código de barras legíveis</li>
+    <li>Acabamento: meio-corte, em rolo ou cartela</li></ul>
+    <div><button class="linkbtn" data-act="etqcopy">${"Copiar mensagem para a gráfica"}</button></div>`;
+}
+async function saveFile(name, blob, fallback){
+  if (cap.downloads){
+    try{ await cap.downloads.save({filename:name, data:blob}); return true; }
+    catch(e){ if(e&&e.code==="declined") return false; toast(e&&e.code==="rate_limited"?"Aguarde um instante e tente de novo.":"Não foi possível gerar o arquivo."); return false; }
+  }
+  if (S.mode==="local" && fallback){ fallback(); return true; }
+  toast("Download indisponível nesta visualização."); return false;
+}
+function etqPDF(kind){
+  const codes=etqCodes(); if(!codes.length){ toast("Selecione ao menos um equipamento."); return; }
+  if(!window.jspdf || !window.qrcode){ toast("As bibliotecas de PDF não carregaram. Recarregue a página."); return; }
+  const {jsPDF}=window.jspdf; const [W,H]=SIZES[L.size]; const o={W,H,top:L.top.trim(),bottom:L.bottom.trim()};
+  let d;
+  try{
+    if (kind==="grafica"){
+      const b=L.bleed?2:0, PW=W+2*b, PH=H+2*b;
+      d=new jsPDF({unit:"mm",format:[PW,PH],orientation:PW>=PH?"landscape":"portrait",compress:true});
+      codes.forEach((c,i)=>{ if(i) d.addPage([PW,PH],PW>=PH?"landscape":"portrait"); drawLabel(pdfPainter(d,b,b),{...o,code:c.code,qrText:qrOf(c.code)}); });
+    } else {
+      d=new jsPDF({unit:"mm",format:"a4",compress:true});
+      const mg=10, g=4, cols=Math.max(1,Math.floor((210-2*mg+g)/(W+g))), rows=Math.max(1,Math.floor((297-2*mg-6+g)/(H+g))), per=cols*rows, pages=Math.ceil(codes.length/per);
+      codes.forEach((c,i)=>{
+        const pi=Math.floor(i/per), k=i%per;
+        if(k===0){ if(pi) d.addPage("a4","portrait"); d.setFont("helvetica","normal"); d.setFontSize(7); d.setTextColor(120); d.text(`Gestão de Ativos · etiquetas ${W}×${H} mm · imprimir em tamanho real (100%) · página ${pi+1}/${pages}`, mg, mg-3); d.setTextColor(0); }
+        const x=mg+(k%cols)*(W+g), y=mg+2+Math.floor(k/cols)*(H+g);
+        d.setDrawColor(190); d.setLineWidth(0.1); d.rect(x,y,W,H,"S");
+        drawLabel(pdfPainter(d,x,y),{...o,code:c.code,qrText:qrOf(c.code)});
+      });
+    }
+  }catch(e){ console.error(e); toast("Algum código tem caracteres inválidos (use letras sem acento e números)."); return; }
+  const day=new Date().toISOString().slice(0,10);
+  const name = kind==="grafica" ? `etiquetas_${W}x${H}mm_${codes.length}un_${day}.pdf` : `etiquetas_teste_A4_${W}x${H}mm_${day}.pdf`;
+  saveFile(name, new Blob([d.output("arraybuffer")]), ()=>d.save(name)).then(ok=>{ if(ok) toast(`PDF com ${codes.length} etiquetas gerado.`); });
+}
+function etqCSV(){
+  const codes=etqCodes(); if(!codes.length){ toast("Selecione ao menos um equipamento."); return; }
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const lines=[["codigo","qrcode","tipo","usuario","setor","modelo"].join(";")].concat(codes.map(c=>[c.code,qrOf(c.code),c.item?TYPES[c.item.tipo]?.one:"",c.item?.usuario,c.item?.setor,c.item?.modelo].map(q).join(";")));
+  const text="﻿"+lines.join("\r\n"); const name=`etiquetas_dados_${new Date().toISOString().slice(0,10)}.csv`;
+  saveFile(name, new Blob([text],{type:"text/csv"}), ()=>{ const w=XLSX.utils.aoa_to_sheet(lines.map(l=>l.split(";").map(s=>s.replace(/^"|"$/g,"")))); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,w,"etiquetas"); XLSX.writeFile(wb,name,{bookType:"csv"}); });
+}
+function etqCopy(){
+  const codes=etqCodes(); const [W,H]=SIZES[L.size];
+  const txt=`Olá! Gostaria de um orçamento de etiquetas patrimoniais personalizadas:
+- Quantidade: ${codes.length} etiquetas, cada uma com numeração diferente (envio PDF com uma arte por página)
+- Tamanho: ${W} x ${H} mm
+- Material: poliéster ou vinil branco, adesivo permanente (se tiver, cotar também a versão antiviolação/VOID)
+- Impressão: 1 cor (preto), sem ampliar nem reduzir a arte, pois tem QR Code e código de barras
+- Acabamento: meio-corte, em rolo ou cartela
+Podem me passar prazo e valor? Obrigado!`;
+  const fallback=()=>openModal(`<h2>Mensagem para a gráfica</h2><div class="msg"><p>Selecione o texto e copie:</p><label class="fld"><textarea id="copyTxt" style="min-height:220px">${esc(txt)}</textarea></label></div>`,"sm");
+  try{ navigator.clipboard.writeText(txt).then(()=>toast("Mensagem copiada."), fallback); }catch(e){ fallback(); }
+}
+
+// ---------- inventário (conferência com coletor) ----------
+const IKEY="gestao-ativos-inv"; let INV=null; let INVCAT="todos"; let invLast=null; let invQ=Promise.resolve();
+const invBase = () => S.items.filter(x=>x.status!=="Descartado");
+function invSave(next){
+  INV=next;
+  if (cap.db){ invQ = invQ.then(()=>cap.db.doc("inventario/atual").set(next)).catch(writeErr); }
+  else { try{ localStorage.setItem(IKEY, JSON.stringify(next)); }catch(e){} }
+}
+function invShell(){
+  return `<div class="head"><div><h1>Inventário</h1><div class="sub" id="invSub"></div></div>
+    <div class="actions"><button class="btn" data-act="invexp">${ICON("down")}Exportar resultado</button><button class="btn primary" data-act="invnew">${ICON("plus")}Novo inventário</button></div></div>
+  <div class="card scan" style="margin-bottom:20px">
+    <label class="scanbox">${ICON("scan")}<input id="scanIn" placeholder="Bipe ou digite o código" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Código do equipamento"></label>
+    <div class="fb" id="fb">Aponte o coletor para a etiqueta. O código entra aqui e é conferido na hora.</div>
+  </div>
+  <div class="grid2">
+    <section class="card panel"><h2>Progresso</h2><div id="invProg"></div></section>
+    <section class="card panel"><div class="panelhead"><h2 id="pendH">Pendentes</h2><select id="invCat" aria-label="Categoria"><option value="todos">Todas</option>${Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${INVCAT===k?"selected":""}>${t.label}</option>`).join("")}</select></div><div class="list scroll" id="invPend"></div></section>
+    <section class="card panel"><h2 id="doneH">Conferidos</h2><div class="list scroll" id="invDone"></div></section>
+    <section class="card panel"><h2 id="extH">Códigos lidos sem cadastro</h2><div id="invExt"></div></section>
+  </div>`;
+}
+const fmtDT = iso => { try{ return new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } };
+function updateInv(){
+  const pend=document.getElementById("invPend"); if(!pend) return;
+  const base=invBase(), enc=(INV&&INV.encontrados)||{};
+  const done=base.filter(x=>enc[x.id]), pct=base.length?Math.round(done.length/base.length*100):0;
+  document.getElementById("invSub").textContent = INV ? `Iniciado em ${fmtDT(INV.inicio)} · ${done.length} de ${base.length} equipamentos conferidos` : "Nenhum inventário em andamento. Bipe o primeiro código para começar.";
+  document.getElementById("invProg").innerHTML = `<div class="prog"><span class="pct">${pct}%</span><div class="track2"><i style="width:${pct}%"></i></div></div>
+    ${Object.entries(TYPES).map(([k,t])=>{ const b=base.filter(x=>x.tipo===k); if(!b.length) return ""; const d=b.filter(x=>enc[x.id]).length;
+      return `<div class="bar"><span>${t.label}</span><div class="track"><div class="fill" style="width:${d/b.length*100}%"></div></div><b>${d}/${b.length}</b></div>`; }).join("")}
+    <p class="muted" style="margin:14px 0 0;font-size:13.5px">Equipamentos com status Descartado não entram na conferência.</p>`;
+  const pl=base.filter(x=>!enc[x.id] && (INVCAT==="todos"||x.tipo===INVCAT)).sort(sortDev).reverse();
+  document.getElementById("pendH").textContent=`Pendentes (${pl.length})`;
+  pend.innerHTML = pl.length ? pl.map(x=>`<div class="li" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc([x.usuario||x.status,x.setor].filter(Boolean).join(" · "))}</span>${ICON("eye")}</div>`).join("") : `<p class="muted">Tudo conferido nesta categoria.</p>`;
+  const dl=done.sort((a,b)=>String(enc[b.id]).localeCompare(String(enc[a.id])));
+  document.getElementById("doneH").textContent=`Conferidos (${dl.length})`;
+  document.getElementById("invDone").innerHTML = dl.length ? dl.map(x=>`<div class="li done" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc([x.usuario||x.status,x.setor].filter(Boolean).join(" · "))}</span><small class="muted">${fmtDT(enc[x.id])}</small></div>`).join("") : `<p class="muted">Nenhum equipamento conferido ainda.</p>`;
+  const ext=(INV&&INV.extras)||[];
+  document.getElementById("extH").textContent=`Códigos lidos sem cadastro (${ext.length})`;
+  document.getElementById("invExt").innerHTML = ext.length ? `<div class="chips">${ext.map(e=>`<span class="chip">${esc(e.code)}</span>`).join("")}</div><p class="muted" style="font-size:13.5px;margin:12px 0 0">Cadastre esses equipamentos na categoria correspondente.</p>` : `<p class="muted">Nenhum código desconhecido.</p>`;
+}
+function invScan(raw){
+  let c=String(raw||"").trim(); if(!c) return; if(c.includes("#")) c=c.split("#").pop(); c=c.toUpperCase();
+  const fb=document.getElementById("fb");
+  const now=new Date().toISOString(); const cur=INV?{...INV,encontrados:{...(INV.encontrados||{})},extras:[...(INV.extras||[])]}:{inicio:now,encontrados:{},extras:[]};
+  const x=S.items.find(i=>norm(i.dispositivo)===norm(c));
+  if (!x){ if(!cur.extras.some(e=>e.code===c)) cur.extras.push({code:c,em:now}); fb.className="fb bad"; fb.textContent=`${c} não está cadastrado. Anotado na lista de códigos sem cadastro.`; }
+  else if (x.status==="Descartado"){ fb.className="fb bad"; fb.textContent=`${c} está marcado como Descartado. Verifique o status.`; }
+  else if (cur.encontrados[x.id]){ fb.className="fb dup"; fb.textContent=`${c} já foi conferido às ${fmtDT(cur.encontrados[x.id])}.`; updateInv(); return; }
+  else { cur.encontrados[x.id]=now; fb.className="fb ok"; fb.textContent=`✓ ${c} conferido · ${[x.usuario,x.setor].filter(Boolean).join(" · ")||x.status}`; }
+  invSave(cur); updateInv();
+}
+function confirmInvNew(){
+  openModal(`<h2>Começar um novo inventário?</h2><div class="msg"><p>A conferência atual${INV?` (iniciada em ${fmtDT(INV.inicio)})`:""} será zerada. Exporte o resultado antes se quiser guardar.</p></div>
+  <div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" data-act="doinvnew">Começar do zero</button></div>`,"sm");
+}
+function invNew(){ invSave({inicio:new Date().toISOString(),encontrados:{},extras:[]}); closeModal(); updateInv(); toast("Novo inventário iniciado."); setTimeout(()=>document.getElementById("scanIn")?.focus(),50); }
+function invExport(){
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const enc=(INV&&INV.encontrados)||{};
+  const rows=invBase().sort(sortDev).reverse().map(x=>({"Dispositivo":x.dispositivo,"Categoria":TYPES[x.tipo]?.one||"","Status":x.status,"Usuário":x.usuario||"","Setor":x.setor||"","Conferido":enc[x.id]?"Sim":"Não","Data/hora":enc[x.id]?fmtDT(enc[x.id]):""}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Conferência");
+  const ext=((INV&&INV.extras)||[]).map(e=>({"Código lido":e.code,"Data/hora":fmtDT(e.em)}));
+  if(ext.length) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ext),"Sem cadastro");
+  const name=`inventario_TI_${new Date().toISOString().slice(0,10)}.xlsx`;
+  saveFile(name,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})]),()=>XLSX.writeFile(wb,name)).then(ok=>{ if(ok) toast("Resultado exportado."); });
+}
+document.addEventListener("keydown", e=>{ if(e.target.id==="scanIn" && e.key==="Enter"){ e.preventDefault(); invScan(e.target.value); e.target.value=""; } });
+
+// ---------- eventos ----------
+document.addEventListener("click", e=>{
+  const el=e.target.closest("[data-act]"); if(!el) return;
+  const a=el.dataset.act, id=el.dataset.id;
+  if(a==="bg"){ if(e.target===el) closeModal(); return; }
+  if(a==="go") return go(el.dataset.v);
+  if(a==="close") return closeModal();
+  if(a==="view") return viewItem(id);
+  if(a==="edit") return editItem(id);
+  if(a==="new") return editItem(null,S.view);
+  if(a==="del") return confirmDel(id);
+  if(a==="dodel") return doDel(id);
+  if(a==="pickphoto") return document.getElementById("photoFile").click();
+  if(a==="rmphoto"){ pendingPhoto=null; document.getElementById("f_foto").value=""; document.getElementById("prev").innerHTML=ICON("image"); el.remove(); return; }
+  if(a==="export") return exportExcel();
+  if(a==="import") return document.getElementById("importFile").click();
+  if(a==="doimport") return doImport();
+  if(a==="newuser") return editUser(null,{login:el.dataset.login||"",setor:el.dataset.setor||""});
+  if(a==="edituser") return editUser(id);
+  if(a==="deluser") return confirmDelUser(id);
+  if(a==="etqall"){ etqItems().forEach(x=>L.sel.add(x.id)); return updateEtq(); }
+  if(a==="etqnone"){ L.sel.clear(); return updateEtq(); }
+  if(a==="etqpdf") return etqPDF("grafica");
+  if(a==="etqa4") return etqPDF("a4");
+  if(a==="etqcsv") return etqCSV();
+  if(a==="etqcopy") return etqCopy();
+  if(a==="invnew") return confirmInvNew();
+  if(a==="doinvnew") return invNew();
+  if(a==="invexp") return invExport();
+  if(a==="dodeluser") return store.del("usuarios",id).then(()=>{closeModal();toast("Usuário excluído.");}).catch(writeErr);
+});
+document.addEventListener("submit", e=>{
+  e.preventDefault();
+  if(e.target.id==="itemForm") submitItem(e.target);
+  if(e.target.id==="userForm") submitUser(e.target);
+});
+document.addEventListener("input", e=>{
+  if(e.target.id==="q"){ S.q=e.target.value; updateTable(); }
+  if(e.target.id==="uq"){ S.uq=e.target.value; updateUsers(); }
+  if(e.target.id && e.target.id.startsWith("e_") && e.target.type!=="checkbox" && e.target.tagName!=="SELECT") etqInput(e.target);
+});
+document.addEventListener("change", e=>{
+  if(e.target.id==="fStatus"){ S.fStatus=e.target.value; updateTable(); }
+  if(e.target.id==="fSetor"){ S.fSetor=e.target.value; updateTable(); }
+  if(e.target.id && e.target.id.startsWith("e_")) etqInput(e.target);
+  if(e.target.classList && e.target.classList.contains("esel")){ const id=e.target.value; e.target.checked?L.sel.add(id):L.sel.delete(id); updateEtq(true); }
+  if(e.target.id==="invCat"){ INVCAT=e.target.value; updateInv(); }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
+
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+if (!S.view || S.view==="") S.view="dashboard";
+render();
+initCaps();
+})();
+</script>

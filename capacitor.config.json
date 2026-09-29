@@ -1,0 +1,11 @@
+{
+  "appId": "br.com.grupozerbini.ativosti",
+  "appName": "Ativos TI",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 800, "backgroundColor": "#f1f8fc" }
+  }
+}
