@@ -305,7 +305,7 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
 <div class="app">
   <aside class="side">
     <div class="brand">
-      <div class="logo"><img src="img/logo-128.png" alt="Logo da empresa" width="36" height="36"></div>
+      <div class="logo"><img src="img/logo-128.png?v=2" alt="Logo da empresa" width="36" height="36"></div>
       <div><b>Gestão de Ativos</b><small>Sistema de TI</small></div>
       <button class="ib out" data-act="logout" id="logoutBtn" title="Sair" aria-label="Sair" hidden><svg class="i"><use href="#i-logout"/></svg></button>
     </div>
@@ -508,7 +508,7 @@ const redirectUrl = () => CFG.appUrl || (location.origin + location.pathname);
 function gate(mode, msg){
   let g=document.getElementById("gate");
   if(!g){ g=document.createElement("div"); g.id="gate"; g.className="gate"; document.body.appendChild(g); }
-  const head=`<div class="brand"><div class="logo"><img src="img/logo-128.png" alt="Logo da empresa" width="36" height="36"></div><div><b>Gestão de Ativos</b><small>Sistema de TI</small></div></div>`;
+  const head=`<div class="brand"><div class="logo"><img src="img/logo-128.png?v=2" alt="Logo da empresa" width="36" height="36"></div><div><b>Gestão de Ativos</b><small>Sistema de TI</small></div></div>`;
   const note = msg ? `<div class="${msg.ok?"ok":"err"}">${esc(msg.t)}</div>` : "";
   let body="";
   if (mode==="entrar") body=`<h2>Entrar</h2><p>Use o e-mail liberado pela TI.</p>
