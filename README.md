@@ -4,7 +4,7 @@ Inventário dos equipamentos de TI: notebooks, celulares, tablets, impressoras, 
 
 | Onde usar | Como |
 |---|---|
-| **Navegador (PC)** | https://danielfernandeszerloti-ui.github.io/Gestao-de-ativos-TI/ |
+| **Navegador (PC)** | https://ativos.grupozerbini.com.br |
 | **iPhone** | Abra o endereço acima no Safari → Compartilhar → **Adicionar à Tela de Início** |
 | **Android e coletores** | Baixe o `AtivosTI.apk` em [Releases → apk-latest](../../releases/tag/apk-latest) e instale |
 
@@ -99,8 +99,12 @@ npm run android:apk      # APK em android/app/build/outputs/apk/debug/
    - `ANDROID_KEY_ALIAS`: `ativosti`
 
    Sem esses secrets, o workflow gera um APK de teste. Nesse caso, cada nova versão exige desinstalar a anterior.
-3. **Supabase → Authentication → URL Configuration:**
-   - Em **Site URL**, coloque o endereço do GitHub Pages.
+3. **Domínio próprio (`ativos.grupozerbini.com.br`):**
+   - No Registro.br (DNS do domínio), crie um registro **CNAME**: nome `ativos`, valor `danielfernandeszerloti-ui.github.io`.
+   - Em *Settings → Pages → Custom domain*, informe `ativos.grupozerbini.com.br` e, depois da verificação, marque **Enforce HTTPS**.
+   - O endereço antigo do GitHub Pages redireciona automaticamente para o novo.
+4. **Supabase → Authentication → URL Configuration:**
+   - Em **Site URL**, coloque `https://ativos.grupozerbini.com.br`.
    - Adicione o mesmo endereço em **Redirect URLs**.
 
    Assim, os links de confirmação e de troca de senha voltam para o app.
