@@ -57,14 +57,17 @@
 html,body{height:100%}
 body{background:var(--bg);background-image:radial-gradient(1200px 500px at 85% -10%,var(--glow),transparent 70%);background-attachment:fixed;color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
 button,input,select,textarea{font:inherit;color:inherit}
+select{background-color:var(--surface);color:var(--ink)}
+select option,select optgroup{background-color:var(--surface);color:var(--ink)}
+select option:checked{background-color:var(--accent-soft);color:var(--heading)}
 svg.i{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
 
 .app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100%}
 .side{border-right:1px solid var(--border);background:color-mix(in srgb,var(--surface) 70%,transparent);display:flex;flex-direction:column;position:sticky;top:env(safe-area-inset-top,0px);height:100vh}
 .brand{display:flex;gap:12px;align-items:center;padding:22px 18px;border-bottom:1px solid var(--border)}
-.logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#1aa9e0,#3b6cf0 60%,#b34fd8);box-shadow:0 6px 16px rgba(37,99,235,.25)}
-.logo svg.i{width:22px;height:22px}
+.logo{width:44px;height:44px;flex:none;border-radius:12px;display:grid;place-items:center;background:#ffffff;border:1px solid var(--border);box-shadow:0 4px 12px rgba(28,47,107,.10)}
+.logo img{width:36px;height:36px;display:block}
 .brand b{display:block;color:var(--heading);font-size:19px;font-weight:800;line-height:1.1}
 .brand small{color:var(--accent-2);font-size:12.5px}
 .navlabel{padding:22px 20px 8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
@@ -302,7 +305,7 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
 <div class="app">
   <aside class="side">
     <div class="brand">
-      <div class="logo"><svg class="i"><use href="#i-laptop"/></svg></div>
+      <div class="logo"><img src="img/logo-128.png" alt="Logo da empresa" width="36" height="36"></div>
       <div><b>Gestão de Ativos</b><small>Sistema de TI</small></div>
       <button class="ib out" data-act="logout" id="logoutBtn" title="Sair" aria-label="Sair" hidden><svg class="i"><use href="#i-logout"/></svg></button>
     </div>
@@ -505,7 +508,7 @@ const redirectUrl = () => CFG.appUrl || (location.origin + location.pathname);
 function gate(mode, msg){
   let g=document.getElementById("gate");
   if(!g){ g=document.createElement("div"); g.id="gate"; g.className="gate"; document.body.appendChild(g); }
-  const head=`<div class="brand"><div class="logo"><svg class="i"><use href="#i-laptop"/></svg></div><div><b>Gestão de Ativos</b><small>Sistema de TI</small></div></div>`;
+  const head=`<div class="brand"><div class="logo"><img src="img/logo-128.png" alt="Logo da empresa" width="36" height="36"></div><div><b>Gestão de Ativos</b><small>Sistema de TI</small></div></div>`;
   const note = msg ? `<div class="${msg.ok?"ok":"err"}">${esc(msg.t)}</div>` : "";
   let body="";
   if (mode==="entrar") body=`<h2>Entrar</h2><p>Use o e-mail liberado pela TI.</p>

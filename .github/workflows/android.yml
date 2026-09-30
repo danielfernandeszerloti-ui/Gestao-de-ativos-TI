@@ -50,8 +50,8 @@ jobs:
           npm run vendor
           npx cap add android
           npx capacitor-assets generate --android \
-            --iconBackgroundColor '#1aa9e0' --iconBackgroundColorDark '#1aa9e0' \
-            --splashBackgroundColor '#f1f8fc' --splashBackgroundColorDark '#0a1320' || echo "Ícones padrão mantidos"
+            --iconBackgroundColor '#ffffff' --iconBackgroundColorDark '#ffffff' \
+            --splashBackgroundColor '#ffffff' --splashBackgroundColorDark '#0a1320' || echo "Ícones padrão mantidos"
           npx cap sync android
           sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"2.0.${{ github.run_number }}\"/" android/app/build.gradle
           grep -E "versionCode|versionName" android/app/build.gradle
