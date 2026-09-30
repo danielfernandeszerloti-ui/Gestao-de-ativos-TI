@@ -112,7 +112,7 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `ativos`, `usuarios`, `inventario` | qualquer membro | `admin` e `editor` |
 | `ativos_historico` | qualquer membro | só o trigger |
 | `membros` | qualquer membro | só `admin` |
-| `termos` | qualquer membro (anônimo: só via token) | `admin` e `editor` geram, cancelam e registram devolução. A assinatura só pelo link |
+| `termos` | qualquer membro (anônimo: só via token) | `admin` e `editor` geram, cancelam e registram devolução. Só `admin` exclui (fica no histórico). A assinatura só pelo link |
 | Storage `fotos` | público (link da imagem) | `admin` e `editor` |
 
 As funções `papel_atual()`, `pode_ler()` e `pode_editar()` leem o e-mail do token de login (`auth.jwt()`).

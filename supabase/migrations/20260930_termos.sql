@@ -133,3 +133,19 @@ revoke execute on function public.termo_publico(text) from public;
 revoke execute on function public.assinar_termo(text,text,text,text,text,text,text) from public;
 grant execute on function public.termo_publico(text) to anon, authenticated;
 grant execute on function public.assinar_termo(text,text,text,text,text,text,text) to anon, authenticated;
+
+-- Exclusão (somente administradores), registrada no histórico do equipamento
+create policy termos_del on public.termos for delete to authenticated using (public.papel_atual() = 'admin');
+create or replace function public.termos_excluido() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if old.ativo_id is not null then
+    insert into ativos_historico(ativo_id,dispositivo,campo,de,para,por)
+      values (old.ativo_id, old.dispositivo, 'termo', old.status,
+              'excluído (' || coalesce(nullif(old.colaborador_nome,''), old.usuario_login) || ')',
+              coalesce(auth.jwt()->>'email',''));
+  end if;
+  return old;
+end $$;
+revoke execute on function public.termos_excluido() from public, anon, authenticated;
+create trigger termos_excluido after delete on public.termos for each row execute function public.termos_excluido();

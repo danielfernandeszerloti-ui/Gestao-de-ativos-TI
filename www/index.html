@@ -1064,11 +1064,11 @@ function termosChegaram(novos){
 }
 function tActions(t){
   const st=tStatus(t), b=(act,ic,lab)=>`<button class="ib" data-act="${act}" data-id="${t.id}" title="${lab}" aria-label="${lab}">${ICON(ic)}</button>`;
-  const w=S.canWrite;
-  if(st==="pendente"||st==="expirado") return b("tlink","link","Link de assinatura")+(w?b("tcancel","x","Cancelar termo"):"");
-  if(st==="assinado") return b("tpdf","down","Exportar PDF")+(w?b("tdev","undo","Registrar devolução"):"");
-  if(st==="devolvido") return b("tpdf","down","Exportar PDF");
-  return "";
+  const w=S.canWrite, del=SB_ROLE==="admin"?`<button class="ib del" data-act="tdel" data-id="${t.id}" title="Excluir termo" aria-label="Excluir termo">${ICON("trash")}</button>`:"";
+  if(st==="pendente"||st==="expirado") return b("tlink","link","Link de assinatura")+(w?b("tcancel","x","Cancelar termo"):"")+del;
+  if(st==="assinado") return b("tpdf","down","Exportar PDF")+(w?b("tdev","undo","Registrar devolução"):"")+del;
+  if(st==="devolvido") return b("tpdf","down","Exportar PDF")+del;
+  return del;
 }
 function tQuando(t){
   const st=tStatus(t);
@@ -1201,6 +1201,26 @@ function cancelarModal(id){
   const t=S.termos.find(t=>t.id===id); if(!t) return;
   openModal(`<h2>Cancelar termo?</h2><div class="msg"><p>O link enviado para <b>${esc(t.colaborador_nome||t.usuario_login)}</b> (${esc(t.dispositivo)}) deixa de funcionar. O registro continua na lista como cancelado.</p></div>
   <div class="foot"><button class="btn ghost" data-act="close">Voltar</button><button class="btn danger" data-act="dotcancel" data-id="${t.id}">Cancelar termo</button></div>`,"sm");
+}
+function excluirModal(id){
+  const t=S.termos.find(t=>t.id===id); if(!t) return;
+  const assinado=["assinado","devolvido"].includes(t.status);
+  openModal(`<h2>Excluir termo?</h2><form class="f" id="tdelForm" data-id="${t.id}">
+    <p style="margin:0">O termo de <b>${esc(t.colaborador_nome||t.usuario_login)}</b> para o <b>${esc(t.dispositivo)}</b> (${esc(tQuando(t))}) será apagado de vez, junto com ${assinado?"a assinatura e as evidências":"o link de assinatura"}. A exclusão fica registrada no histórico do equipamento.</p>
+    ${assinado?`<div class="warnnote">Este termo já foi <b>assinado</b> e é um documento com valor jurídico. Se ainda não tiver o PDF, exporte antes de excluir.</div>
+    <label class="fld"><span>Para confirmar, digite o patrimônio <b>${esc(t.dispositivo)}</b></span><input id="tdel_conf" autocomplete="off" autocapitalize="characters"></label>`:""}
+    <div class="foot">${assinado?`<button type="button" class="btn ghost" data-act="tpdf" data-id="${t.id}">${ICON("down")}Exportar PDF</button>`:""}<button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="tdelBtn">${ICON("trash")}Excluir termo</button></div>
+  </form>`,"sm");
+}
+async function doExcluirTermo(form){
+  const t=S.termos.find(t=>t.id===form.dataset.id); if(!t) return;
+  const c=document.getElementById("tdel_conf");
+  if(c && norm(c.value)!==norm(t.dispositivo)){ toast(`Digite ${t.dispositivo} para confirmar.`); c.focus(); return; }
+  const btn=document.getElementById("tdelBtn"); btn.disabled=true;
+  const {data,error}=await sb.from("termos").delete().eq("id",t.id).select("id");
+  if(error){ btn.disabled=false; writeErr(error); return; }
+  if(!data||!data.length){ btn.disabled=false; toast("Só administradores podem excluir termos."); return; }
+  await sbLoad("termos"); closeModal(); toast("Termo excluído.");
 }
 async function tUpdate(id, patch, msg){
   const {error}=await sb.from("termos").update(patch).eq("id",id);
@@ -1572,6 +1592,7 @@ document.addEventListener("click", e=>{
   if(a==="tpdf") return termoPDF(id);
   if(a==="tdev") return devolucaoModal(id);
   if(a==="tcancel") return cancelarModal(id);
+  if(a==="tdel") return excluirModal(id);
   if(a==="dotcancel") return tUpdate(id,{status:"cancelado"},"Termo cancelado.").then(ok=>{ if(ok) closeModal(); });
   if(a==="trenew") return tUpdate(id,{expira_em:new Date(Date.now()+30*864e5).toISOString()},"Link renovado por 30 dias.").then(ok=>{ if(ok) linkModal(id); });
   if(a==="texport") return exportTermos();
@@ -1604,6 +1625,7 @@ document.addEventListener("submit", e=>{
   if(e.target.id==="gForm") gateSubmit(e.target);
   if(e.target.id==="termoForm") submitTermo(e.target);
   if(e.target.id==="devForm") doDevolucao(e.target);
+  if(e.target.id==="tdelForm") doExcluirTermo(e.target);
   if(e.target.id==="accForm"){ const em=document.getElementById("acc_email").value.trim().toLowerCase(), pp=document.getElementById("acc_papel").value;
     sb.from("membros").upsert({email:em,papel:pp}).then(({error})=>{ if(error) writeErr(error); else { toast(`${em} liberado.`); updateAcessos(); } }); }
 });
