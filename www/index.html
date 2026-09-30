@@ -316,6 +316,7 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
   <main id="main"></main>
 </div>
 <input type="file" id="importFile" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="importUsers" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" hidden></div>
@@ -711,7 +712,7 @@ function openModal(html, size=""){
   const f=r.querySelector(".mbody input:not([type=hidden]),.mbody select,.mbody textarea")||r.querySelector(".close");
   if(f) setTimeout(()=>f.focus({preventScroll:true}),30);
 }
-function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; }
+function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; }
 
 function viewItem(id){
   const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
@@ -868,10 +869,83 @@ async function doImport(){
   }catch(e){ writeErr(e); closeModal(); if(ok) toast(`${ok} de ${rows.length} registros importados antes do erro.`); }
 }
 
+
+// ---------- usuários: Excel ----------
+const UCOLS=[["login","Login"],["nome","Nome"],["setor","Setor"],["email","E-mail"]];
+let importUserRows=null;
+function usersFiltered(){
+  const q=norm(S.uq);
+  return S.users.filter(u=>!q||[u.login,u.nome,u.setor,u.email].some(v=>norm(v).includes(q))).sort((a,b)=>String(a.login).localeCompare(String(b.login),"pt-BR"));
+}
+function exportUsers(){
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const rows=usersFiltered().map(u=>{
+    const eq=S.items.filter(i=>norm(i.usuario)===norm(u.login)).sort(sortDev).map(i=>i.dispositivo);
+    return {"Login":u.login||"","Nome":u.nome||"","Setor":u.setor||"","E-mail":u.email||"","Equipamentos":eq.join(", "),"Qtd. equipamentos":eq.length};
+  });
+  const ws=XLSX.utils.json_to_sheet(rows,{header:["Login","Nome","Setor","E-mail","Equipamentos","Qtd. equipamentos"]});
+  ws["!cols"]=[{wch:22},{wch:30},{wch:16},{wch:32},{wch:36},{wch:16}];
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Usuários");
+  const name=`usuarios_${new Date().toISOString().slice(0,10)}.xlsx`;
+  saveFile(name,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"})).then(ok=>{ if(ok) toast(`${rows.length} usuários exportados.`); });
+}
+document.getElementById("importUsers").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  try{
+    const wb=XLSX.read(await f.arrayBuffer());
+    const raw=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:"",raw:false});
+    const map={login:"login",usuario:"login",user:"login",username:"login",nomedeusuario:"login",
+      nome:"nome",nomecompleto:"nome",colaborador:"nome",funcionario:"nome",
+      setor:"setor",departamento:"setor",area:"setor",
+      email:"email",emailcorporativo:"email"};
+    const headers=raw.length?Object.keys(raw[0]):[];
+    const recognized=headers.filter(h=>map[norm(h)]);
+    const seen=new Map();
+    raw.forEach(r=>{
+      const o={}; headers.forEach(h=>{ const k=map[norm(h)]; if(k && !o[k]) o[k]=String(r[h]??"").trim(); });
+      if(!o.login && o.email && o.email.includes("@")) o.login=o.email.split("@")[0];
+      if(!o.login) return;
+      o.login=o.login.toLowerCase().replace(/\s+/g,"");
+      if(o.email) o.email=o.email.toLowerCase();
+      seen.set(norm(o.login), {...(seen.get(norm(o.login))||{}), ...Object.fromEntries(Object.entries(o).filter(([,v])=>v))});
+    });
+    const rows=[...seen.values()];
+    const upd=rows.filter(r=>S.users.some(u=>norm(u.login)===norm(r.login))).length;
+    importUserRows=rows;
+    openModal(`<h2>Importar usuários</h2><div class="msg">
+      ${rows.length?`<p>A planilha <b>${esc(f.name)}</b> tem <b>${rows.length}</b> usuários: <b>${rows.length-upd}</b> novos e <b>${upd}</b> já cadastrados, que serão atualizados. Células vazias não apagam o que já existe.</p>
+      <p class="note">Colunas reconhecidas: <span class="hdrs">${recognized.map(esc).join(", ")}</span>${headers.length>recognized.length?`<br>Ignoradas: <span class="hdrs">${headers.filter(h=>!map[norm(h)]).map(esc).join(", ")}</span>`:""}</p>`
+      :`<p>Nenhuma linha com <b>Login</b> (ou <b>E-mail</b>) foi encontrada em <b>${esc(f.name)}</b>.</p><p class="note">Colunas aceitas: Login, Nome, Setor e E-mail. Dica: exporte a lista atual para obter uma planilha modelo.</p>`}
+    </div><div class="foot"><button class="btn ghost" data-act="close">Cancelar</button>${rows.length?`<button class="btn primary" data-act="douimport" id="uimpBtn">${ICON("up")}Importar ${rows.length} usuários</button>`:""}</div>`,"sm");
+  }catch(err){ console.error(err); toast("Não foi possível ler a planilha. Use .xlsx, .xls ou .csv."); }
+});
+async function doImportUsers(){
+  const rows=importUserRows; if(!rows) return; const btn=document.getElementById("uimpBtn"); btn.disabled=true; btn.textContent="Importando…";
+  const merged=rows.map(r=>{ const ex=S.users.find(u=>norm(u.login)===norm(r.login));
+    return {id:ex?ex.id:null, login:r.login, nome:r.nome||ex?.nome||"", setor:r.setor||ex?.setor||"", email:r.email||ex?.email||""}; });
+  try{
+    if (sb){
+      for(let i=0;i<merged.length;i+=500){
+        const chunk=merged.slice(i,i+500).map(r=>({...r,id:r.id||newId()}));
+        const {error}=await sb.from("usuarios").upsert(chunk); if(error) throw error;
+      }
+      await sbLoad("usuarios");
+    } else {
+      let n=0; for(const r of merged){ const {id,...d}=r; await store.put("usuarios",id,d); btn.textContent=`Importando ${++n}/${merged.length}…`; }
+    }
+    closeModal(); toast(`${merged.length} usuários importados.`);
+  }catch(e){ writeErr(e); closeModal(); }
+}
+
 // ---------- usuários ----------
 function usersShell(){
   return `<div class="head"><div><h1>Usuários</h1><div class="sub" id="ucount"></div></div>
-    <div class="actions"><button class="btn primary" data-act="newuser">${ICON("plus")}Novo Usuário</button></div></div>
+    <div class="actions">
+      <button class="btn" data-act="uimport">${ICON("up")}Importar Excel</button>
+      <button class="btn" data-act="uexport">${ICON("down")}Exportar Excel</button>
+      <button class="btn primary" data-act="newuser">${ICON("plus")}Novo Usuário</button>
+    </div></div>
   <div class="card filters"><label class="search">${ICON("search")}<input id="uq" type="search" placeholder="Pesquisar por login, nome ou setor..." value="${esc(S.uq)}" aria-label="Pesquisar usuários"></label></div>
   <div class="card tablewrap"><table><thead><tr><th>Login</th><th>Nome</th><th>Setor</th><th>E-mail</th><th>Equipamentos</th><th class="th-r">Ações</th></tr></thead><tbody id="utb"></tbody></table></div>
   <section class="card acc" id="acessos" hidden></section>`;
@@ -1238,6 +1312,9 @@ document.addEventListener("click", e=>{
   if(a==="export") return exportExcel();
   if(a==="import") return document.getElementById("importFile").click();
   if(a==="doimport") return doImport();
+  if(a==="uexport") return exportUsers();
+  if(a==="uimport") return document.getElementById("importUsers").click();
+  if(a==="douimport") return doImportUsers();
   if(a==="newuser") return editUser(null,{login:el.dataset.login||"",setor:el.dataset.setor||""});
   if(a==="edituser") return editUser(id);
   if(a==="deluser") return confirmDelUser(id);

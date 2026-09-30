@@ -17,7 +17,7 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Dashboard | Total por categoria, status geral, ativos por setor, equipamentos disponíveis e em manutenção |
 | Notebooks / Celulares / Impressoras / Coletores / Monitores | Lista com foto, busca e filtros, ficha com **histórico de movimentação**, cadastro, edição e exclusão |
 | Importar / Exportar Excel | Importa `.xlsx`, `.xls` ou `.csv`, atualizando pelo código do dispositivo. Exporta a lista filtrada |
-| Usuários | Colaboradores, equipamentos vinculados e, para administradores, **quem acessa o sistema** |
+| Usuários | Colaboradores e equipamentos vinculados, com importação e exportação de Excel. Para administradores, também **quem acessa o sistema** |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
 | Inventário | Conferência bipando as etiquetas com o coletor; pendentes, conferidos e códigos sem cadastro |
 
