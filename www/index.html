@@ -534,7 +534,7 @@ async function startSession(session){
   }
   closeGate(); S.ready=true; render(); openFromHash();
 }
-const redirectUrl = () => CFG.appUrl || (location.origin + location.pathname);
+const redirectUrl = () => APP_URL;
 function gate(mode, msg){
   let g=document.getElementById("gate");
   if(!g){ g=document.createElement("div"); g.id="gate"; g.className="gate"; document.body.appendChild(g); }
@@ -1248,7 +1248,15 @@ function exportTermos(){
 }
 
 // ---------- link direto (QR Code da etiqueta) ----------
-const APP_URL = (window.GA_CONFIG && window.GA_CONFIG.appUrl) || "https://claude.ai/artifact/UK7buhkNEcvAzA87bhfv1U";
+// Endereço público do app (links de assinatura, QR Code das etiquetas, e-mails de login).
+// No navegador usa o próprio endereço aberto (funciona antes e depois do domínio próprio);
+// no app Android usa o endereço configurado em config.js.
+const APP_URL = (() => {
+  const cfg = (window.GA_CONFIG && window.GA_CONFIG.appUrl) || "";
+  const nativo = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (!nativo && location.protocol === "https:" && !/^(localhost|127\.)/.test(location.hostname)) return location.origin + location.pathname.replace(/[^/]*$/, "");
+  return cfg || (location.origin + location.pathname.replace(/[^/]*$/, ""));
+})();
 function openFromHash(){
   const h = decodeURIComponent((location.hash||"").slice(1)).trim(); if(!h) return;
   const x = S.items.find(i=>norm(i.dispositivo)===norm(h));
