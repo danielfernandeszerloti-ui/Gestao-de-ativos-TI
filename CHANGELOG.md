@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.1.0] — 2026-09-30
+### Adicionado
+- Categoria **Tablets** (prefixo `TAB`), com campos próprios, etiquetas e inventário.
+- Importar e exportar Excel na tela de **Usuários**.
+- Logo da empresa no menu, na tela de login e nos ícones do app.
+
+### Corrigido
+- Janelas de detalhes e cadastro não passam mais da altura da tela.
+- Listas suspensas legíveis no tema escuro.
+- Histórico registrava "Cadastrado" a cada salvamento.
+
 ## [2.0.0] — 2026-09-29
 ### Adicionado
 - Banco próprio no **Supabase** (Postgres + RLS), com os dados migrados do artifact.

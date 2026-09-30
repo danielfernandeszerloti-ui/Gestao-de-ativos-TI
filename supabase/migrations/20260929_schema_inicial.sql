@@ -16,7 +16,7 @@ create or replace function public.pode_editar() returns boolean language sql sta
 
 create table public.ativos (
   id text primary key default gen_random_uuid()::text,
-  tipo text not null check (tipo in ('notebook','celular','impressora','coletor','monitor')),
+  tipo text not null check (tipo in ('notebook','celular','tablet','impressora','coletor','monitor')),
   dispositivo text not null,
   status text not null default 'Disponível',
   usuario text default '', setor text default '', fabricante text default '', modelo text default '',

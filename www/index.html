@@ -324,6 +324,7 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></symbol>
   <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="2"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-tablet" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/></symbol>
   <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
   <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><rect x="7" y="14" width="10" height="7"/></symbol>
   <symbol id="i-scan" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/><rect x="9" y="9" width="6" height="6"/></symbol>
@@ -374,6 +375,11 @@ const TYPES = {
   celular:{label:"Celulares", one:"Celular", prefix:"CEL", icon:"phone", extra:[
     {k:"linha",l:"Número / Linha"},{k:"operadora",l:"Operadora"},{k:"imei",l:"IMEI"},{k:"armazenamento",l:"Armazenamento"},
     {k:"so",l:"Sistema Operacional"},{k:"capa",l:"Capa / Película",opts:SIMNAO}]},
+  tablet:{label:"Tablets", one:"Tablet", prefix:"TAB", icon:"tablet", extra:[
+    {k:"tela",l:"Tamanho da tela (pol.)"},{k:"armazenamento",l:"Armazenamento"},{k:"ram",l:"RAM"},
+    {k:"so",l:"Sistema Operacional"},{k:"conectividade",l:"Conectividade",opts:["Wi-Fi","Wi-Fi + 4G/5G"]},
+    {k:"linha",l:"Número / Linha (chip)"},{k:"imei",l:"IMEI"},
+    {k:"capa",l:"Capa / Película",opts:SIMNAO},{k:"carregador",l:"Carregador",opts:SIMNAO}]},
   impressora:{label:"Impressoras", one:"Impressora", prefix:"IMP", icon:"printer", extra:[
     {k:"tipoImp",l:"Tipo",opts:["Laser","Jato de tinta","Térmica (etiquetas)","Multifuncional"]},{k:"ip",l:"Endereço IP"},
     {k:"conexao",l:"Conexão",opts:["Rede","USB","Wi-Fi"]},{k:"suprimento",l:"Toner / Ribbon"}]},

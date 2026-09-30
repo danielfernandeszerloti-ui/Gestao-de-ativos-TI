@@ -1,6 +1,6 @@
 # Gestão de Ativos — Sistema de TI
 
-Inventário dos equipamentos de TI: notebooks, celulares, impressoras, coletores e monitores. Registra quem está com cada equipamento, gera etiquetas patrimoniais e faz a conferência de inventário com o coletor.
+Inventário dos equipamentos de TI: notebooks, celulares, tablets, impressoras, coletores e monitores. Registra quem está com cada equipamento, gera etiquetas patrimoniais e faz a conferência de inventário com o coletor.
 
 | Onde usar | Como |
 |---|---|
@@ -15,7 +15,7 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Módulo | O que faz |
 |---|---|
 | Dashboard | Total por categoria, status geral, ativos por setor, equipamentos disponíveis e em manutenção |
-| Notebooks / Celulares / Impressoras / Coletores / Monitores | Lista com foto, busca e filtros, ficha com **histórico de movimentação**, cadastro, edição e exclusão |
+| Notebooks / Celulares / Tablets / Impressoras / Coletores / Monitores | Lista com foto, busca e filtros, ficha com **histórico de movimentação**, cadastro, edição e exclusão |
 | Importar / Exportar Excel | Importa `.xlsx`, `.xls` ou `.csv`, atualizando pelo código do dispositivo. Exporta a lista filtrada |
 | Usuários | Colaboradores e equipamentos vinculados, com importação e exportação de Excel. Para administradores, também **quem acessa o sistema** |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
@@ -32,6 +32,7 @@ Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Se
 |---|---|---|
 | Notebook | `LAP` | Processador, Geração, RAM, Tipo de Sistema, Sistema Operacional, Duração da Bateria, Teclado, Mouse, Monitor |
 | Celular | `CEL` | Número/Linha, Operadora, IMEI, Armazenamento, Sistema Operacional, Capa/Película |
+| Tablet | `TAB` | Tamanho da tela, Armazenamento, RAM, Sistema Operacional, Conectividade, Número/Linha, IMEI, Capa/Película, Carregador |
 | Impressora | `IMP` | Tipo, Endereço IP, Conexão, Toner/Ribbon |
 | Coletor | `COL` | Sistema Operacional, Endereço MAC, Endereço IP, Bateria, Base carregadora |
 | Monitor | `MON` | Tamanho (pol.), Resolução, Entradas |

@@ -33,7 +33,7 @@ A chave pública não dá acesso a nada sozinha. Todas as tabelas têm **RLS (Ro
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `id` | text (PK) | UUID. Os notebooks migrados usam `nb-lap066` |
-| `tipo` | text | `notebook` · `celular` · `impressora` · `coletor` · `monitor` |
+| `tipo` | text | `notebook` · `celular` · `tablet` · `impressora` · `coletor` · `monitor` |
 | `dispositivo` | text | Código (`LAP066`). Único por tipo, sem diferenciar maiúsculas |
 | `status` | text | `Em uso` · `Disponível` · `Manutenção` · `Descartado` |
 | `usuario` | text | Login do colaborador (liga com `usuarios.login`) |
