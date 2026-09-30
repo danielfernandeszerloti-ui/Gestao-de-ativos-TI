@@ -1,7 +1,7 @@
 // Service worker: abre o app mesmo com internet instável.
 // Páginas: rede primeiro (pega atualizações), cache se estiver offline.
 // Bibliotecas e ícones: cache primeiro. Chamadas ao Supabase nunca passam pelo cache.
-const VERSAO = "ga-v2.0.0";
+const VERSAO = "ga-v2.0.1";
 const BASE = ["./", "index.html", "config.js", "manifest.webmanifest",
   "vendor/supabase.js", "vendor/xlsx.full.min.js", "vendor/jspdf.umd.min.js", "vendor/qrcode.js",
   "icons/icon-192.png", "icons/icon-512.png"];
