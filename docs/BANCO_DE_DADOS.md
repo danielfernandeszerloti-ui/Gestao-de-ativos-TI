@@ -78,6 +78,33 @@ Uma linha (`id = 'atual'`) guarda a conferência em andamento.
 
 O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 
+### `termos`: termos de responsabilidade
+
+| Coluna | Observação |
+|---|---|
+| `token` | 64 caracteres aleatórios. Identifica o link de assinatura |
+| `ativo_id`, `tipo`, `dispositivo`, `marca`, `modelo`, `serie` | Cópia dos dados do equipamento no momento da entrega |
+| `condicao` | `novo` · `usado_bom` · `usado_ressalvas` |
+| `usuario_login`, `colaborador_nome`, `colaborador_email`, `cargo`, `telefone` | Colaborador (confirmados por ele na assinatura) |
+| `entregue_por_nome`, `entregue_por_email` | Usuário da TI que gerou o termo. O e-mail vem do login e não pode ser forjado |
+| `status` | `pendente` · `assinado` · `devolvido` · `cancelado` |
+| `expira_em` | Validade do link (30 dias, renovável) |
+| `assinado_em`, `assinatura` (PNG), `ip`, `user_agent`, `hash` | Evidências da assinatura |
+| `devolvido_em`, `devolvido_por`, `devolucao_obs` | Devolução |
+
+**Proteções (trigger `termos_proteger`)**
+- Todo termo nasce `pendente`.
+- A equipe não consegue marcar um termo como assinado. Só a função `assinar_termo` faz isso.
+- Depois de assinado, o conteúdo fica congelado: a única mudança possível é registrar a devolução.
+
+**Funções públicas** (executáveis sem login, mas só com o token):
+- `termo_publico(token)`: devolve os dados do termo.
+- `assinar_termo(...)`: grava a assinatura, o IP (cabeçalho `x-forwarded-for`) e o hash.
+
+**Código de verificação**
+- É o SHA-256 dos campos do termo, dos dados informados, do instante da assinatura e do SHA-256 da imagem.
+- O app recalcula esse código ao exportar o PDF e indica se ele confere.
+
 ## Regras de acesso (RLS)
 
 | Tabela | Ler | Gravar |
@@ -85,6 +112,7 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `ativos`, `usuarios`, `inventario` | qualquer membro | `admin` e `editor` |
 | `ativos_historico` | qualquer membro | só o trigger |
 | `membros` | qualquer membro | só `admin` |
+| `termos` | qualquer membro (anônimo: só via token) | `admin` e `editor` geram, cancelam e registram devolução. A assinatura só pelo link |
 | Storage `fotos` | público (link da imagem) | `admin` e `editor` |
 
 As funções `papel_atual()`, `pode_ler()` e `pode_editar()` leem o e-mail do token de login (`auth.jwt()`).

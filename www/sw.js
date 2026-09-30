@@ -1,9 +1,9 @@
 // Service worker: abre o app mesmo com internet instável.
 // Páginas: rede primeiro (pega atualizações), cache se estiver offline.
 // Bibliotecas e ícones: cache primeiro. Chamadas ao Supabase nunca passam pelo cache.
-const VERSAO = "ga-v2.0.5";
+const VERSAO = "ga-v2.2.0";
 const BASE = ["./", "index.html", "config.js", "manifest.webmanifest",
-  "vendor/supabase.js", "vendor/xlsx.full.min.js", "vendor/jspdf.umd.min.js", "vendor/qrcode.js",
+  "vendor/supabase.js", "vendor/xlsx.full.min.js", "vendor/jspdf.umd.min.js", "vendor/qrcode.js", "termo-pdf.js",
   "icons/icon-192.png", "icons/icon-512.png", "img/logo-128.png"];
 
 self.addEventListener("install", e => {

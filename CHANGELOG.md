@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.2.0] — 2026-09-30
+### Adicionado
+- **Termo de responsabilidade digital**:
+  - geração na ficha do equipamento;
+  - assinatura pelo colaborador via link ou QR Code, sem login;
+  - PDF no layout do termo da empresa, com página de evidências (data e hora, IP, aparelho e código SHA-256);
+  - registro de devolução.
+- Tela **Termos**, com filtros e exportação para Excel. Coluna de termos na tela de Usuários.
+- Endereço do app em `ativos.grupozerbini.com.br`.
+
 ## [2.1.0] — 2026-09-30
 ### Adicionado
 - Categoria **Tablets** (prefixo `TAB`), com campos próprios, etiquetas e inventário.

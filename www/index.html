@@ -20,6 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
+<script src="termo-pdf.js"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -281,6 +282,23 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
 .acc form input,.acc form select,.acc td select{border:1px solid var(--border);border-radius:9px;padding:9px 12px;background:var(--surface)}
 .acc form input{flex:1 1 240px;min-width:0}
 .acc table{min-width:520px}
+/* termos */
+.tlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.tlist li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px;padding:6px 0;border-bottom:1px solid var(--row)}
+.tlist li:last-child{border-bottom:0}
+.tlist li>.who{flex:1;min-width:0}
+.tlist .ib{width:34px;height:34px}
+.linkbox{display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;align-items:start;margin:14px 0}
+.linkbox .qr{background:#ffffff;border-radius:10px;padding:8px;border:1px solid var(--border)}
+.linkbox .qr svg{width:100%;height:auto;display:block}
+.linkbox .acts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 8px}
+.linkbox .acts .btn{text-decoration:none}
+.seg{flex-wrap:wrap}
+fieldset .seg,fieldset .check{grid-column:1/-1}
+.tpills{display:flex;flex-wrap:wrap;gap:6px}
+.tpills button{border:0;cursor:pointer;font:inherit}
+.warnnote{background:var(--maint-bg);color:var(--maint-fg);border:1px solid var(--maint-bd);border-radius:10px;padding:10px 12px;font-size:14px}
+@media (max-width:600px){.linkbox{grid-template-columns:1fr}.linkbox .qr{max-width:210px}}
 @media (max-width:1000px){.grid2{grid-template-columns:1fr}.detail{grid-template-columns:1fr}.photo{max-width:380px;position:static}}
 @media (max-width:860px){
   .app{grid-template-columns:1fr}
@@ -343,6 +361,9 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
   <symbol id="i-check" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 2h6v4H9zM9 14l2 2 4-4"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-sign" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 17c1.5-2 2.5-2 3 0s1.5 2 3 0 2-1 3 0"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
 </svg>
 
@@ -393,7 +414,7 @@ const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -476,6 +497,7 @@ async function sbLoad(which){
   const jobs=[];
   if(!which||which==="ativos") jobs.push(sb.from("ativos").select("*").then(({data,error})=>{ if(!error) S.items=(data||[]).map(rowToItem); }));
   if(!which||which==="usuarios") jobs.push(sb.from("usuarios").select("*").then(({data,error})=>{ if(!error) S.users=data||[]; }));
+  if(!which||which==="termos") jobs.push(sb.from("termos").select(TCOLS).order("criado_em",{ascending:false}).then(({data,error})=>{ if(!error) termosChegaram(data||[]); }));
   if(!which||which==="inventario") jobs.push(sb.from("inventario").select("*").eq("id","atual").maybeSingle().then(({data,error})=>{ if(!error) INV=data?{inicio:data.inicio,encontrados:data.encontrados||{},extras:data.extras||[]}:null; }));
   await Promise.all(jobs);
   if (S.ready) refresh();
@@ -507,6 +529,7 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"ativos"},()=>sbDeb("ativos"))
       .on("postgres_changes",{event:"*",schema:"public",table:"usuarios"},()=>sbDeb("usuarios"))
       .on("postgres_changes",{event:"*",schema:"public",table:"inventario"},()=>sbDeb("inventario"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"termos"},()=>sbDeb("termos"))
       .subscribe();
   }
   closeGate(); S.ready=true; render(); openFromHash();
@@ -570,7 +593,7 @@ async function loadHist(id){
   const el=document.getElementById("hist"); if(!el||!sb) return;
   const {data,error}=await sb.from("ativos_historico").select("campo,de,para,por,em").eq("ativo_id",id).order("em",{ascending:false}).limit(40);
   if(error||!data||!data.length){ el.hidden=true; return; }
-  const nome={cadastro:"Cadastrado",usuario:"Usuário",status:"Status",setor:"Setor"};
+  const nome={cadastro:"Cadastrado",usuario:"Usuário",status:"Status",setor:"Setor",termo:"Termo"};
   el.innerHTML=`<label>Histórico</label><ul>${data.map(h=>`<li><time>${fmtDT(h.em)}</time><span>${h.campo==="cadastro"?`<b>Cadastrado</b> como ${esc(h.para||"")}`:`<b>${nome[h.campo]||esc(h.campo)}</b>: ${esc(h.de||"—")} → ${esc(h.para||"—")}`}</span>${h.por?`<em>por ${esc(h.por)}</em>`:""}</li>`).join("")}</ul>`;
 }
 async function updateAcessos(){
@@ -611,7 +634,8 @@ function nextName(t){
 // ---------- navegação ----------
 function renderMenu(){
   const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
-  const tools = [["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
+  const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
+  const tools = [["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
   const btn = ([k,l,ic,n]) => `<button class="nav ${S.view===k?"on":""}" data-act="go" data-v="${k}">${ICON(ic)}<span>${l}</span>${n!=null&&S.ready?`<span class="n">${n}</span>`:""}</button>`;
   document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
@@ -625,6 +649,7 @@ function render(){
   else if (S.view==="usuarios"){ m.innerHTML = usersShell(); updateUsers(); updateAcessos(); }
   else if (S.view==="etiquetas"){ m.innerHTML = etqShell(); updateEtq(); }
   else if (S.view==="inventario"){ m.innerHTML = invShell(); updateInv(); }
+  else if (S.view==="termos"){ m.innerHTML = termosShell(); updateTermos(); }
   else { m.innerHTML = listShell(S.view); updateTable(); }
 }
 function refresh(){
@@ -634,7 +659,9 @@ function refresh(){
   else if (S.view==="usuarios") updateUsers();
   else if (S.view==="etiquetas") updateEtq();
   else if (S.view==="inventario") updateInv();
+  else if (S.view==="termos") updateTermos();
   else updateTable();
+  const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
 }
 
 // ---------- dashboard ----------
@@ -735,8 +762,9 @@ function viewItem(id){
       </div>
       ${trio.length?`<div class="kv three">${trio.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}</div>`:""}
       <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
+      ${sb?`<div class="hist" id="termoBox" data-ativo="${x.id}">${termoBoxHTML(x.id)}</div>`:""}
       ${sb?`<div class="hist" id="hist"><label>Histórico</label><p class="muted" style="margin:0">Carregando…</p></div>`:""}
-      <div class="foot"><button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
+      <div class="foot">${sb&&S.canWrite?`<button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
     </div>
   </div>`);
   if (sb) loadHist(x.id);
@@ -953,7 +981,7 @@ function usersShell(){
       <button class="btn primary" data-act="newuser">${ICON("plus")}Novo Usuário</button>
     </div></div>
   <div class="card filters"><label class="search">${ICON("search")}<input id="uq" type="search" placeholder="Pesquisar por login, nome ou setor..." value="${esc(S.uq)}" aria-label="Pesquisar usuários"></label></div>
-  <div class="card tablewrap"><table><thead><tr><th>Login</th><th>Nome</th><th>Setor</th><th>E-mail</th><th>Equipamentos</th><th class="th-r">Ações</th></tr></thead><tbody id="utb"></tbody></table></div>
+  <div class="card tablewrap"><table><thead><tr><th>Login</th><th>Nome</th><th>Setor</th><th>E-mail</th><th>Equipamentos</th><th>Termos</th><th class="th-r">Ações</th></tr></thead><tbody id="utb"></tbody></table></div>
   <section class="card acc" id="acessos" hidden></section>`;
 }
 function updateUsers(){
@@ -964,11 +992,12 @@ function updateUsers(){
   const all=[...S.users,...orphan].sort((a,b)=>String(a.login).localeCompare(String(b.login),"pt-BR"));
   const rows=all.filter(u=>!q||[u.login,u.nome,u.setor,u.email].some(v=>norm(v).includes(q)));
   document.getElementById("ucount").textContent=`${S.users.length} usuários cadastrados${orphan.length?` · ${orphan.length} com equipamento sem cadastro`:""}`;
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty">${all.length?"<b>Nenhum resultado</b>Ajuste a pesquisa.":"<b>Nenhum usuário cadastrado</b>Use “Novo Usuário” para começar."}</div></td></tr>`; return; }
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty">${all.length?"<b>Nenhum resultado</b>Ajuste a pesquisa.":"<b>Nenhum usuário cadastrado</b>Use “Novo Usuário” para começar."}</div></td></tr>`; return; }
   tb.innerHTML=rows.map(u=>{
     const eq=S.items.filter(i=>norm(i.usuario)===norm(u.login)).sort(sortDev);
     return `<tr><td class="dev">${esc(u.login)}</td><td>${u.orphan?`<span class="muted">Sem cadastro</span>`:esc(u.nome||"—")}</td><td class="set">${esc(u.setor||"-")}</td><td>${esc(u.email||"—")}</td>
     <td><div class="chips">${eq.length?eq.map(i=>`<button class="chip" style="border:0;cursor:pointer" data-act="view" data-id="${i.id}">${esc(i.dispositivo)}</button>`).join(""):`<span class="muted">Nenhum</span>`}</div></td>
+    <td>${termosUsuarioHTML(u.login)}</td>
     <td><div class="rowacts">${u.orphan?`<button class="btn" style="padding:7px 12px" data-act="newuser" data-login="${esc(u.login)}" data-setor="${esc(u.setor)}">${ICON("plus")}Cadastrar</button>`:
       `<button class="ib" data-act="edituser" data-id="${u.id}" aria-label="Editar ${esc(u.login)}">${ICON("edit")}</button><button class="ib del" data-act="deluser" data-id="${u.id}" aria-label="Excluir ${esc(u.login)}">${ICON("trash")}</button>`}</div></td></tr>`;
   }).join("");
@@ -1006,6 +1035,216 @@ function confirmDelUser(id){
   const u=S.users.find(x=>x.id===id); if(!u) return; const n=S.items.filter(i=>norm(i.usuario)===norm(u.login)).length;
   openModal(`<h2>Excluir ${esc(u.login)}?</h2><div class="msg"><p>O cadastro do usuário será removido.${n?` Ele ainda tem <b>${n}</b> equipamento(s) vinculado(s); os equipamentos continuam no sistema com o login registrado.`:""}</p></div>
   <div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn danger" data-act="dodeluser" data-id="${u.id}">${ICON("trash")}Excluir</button></div>`,"sm");
+}
+
+
+// ---------- termos de responsabilidade ----------
+const TCOLS="id,token,ativo_id,tipo,dispositivo,marca,modelo,serie,condicao,obs,usuario_login,colaborador_nome,colaborador_email,cargo,telefone,entregue_por_nome,entregue_por_email,status,criado_em,expira_em,assinado_em,ip,hash,devolvido_em,devolvido_por,devolucao_obs,cancelado_em";
+const TSTAT={pendente:["Pendente","st-man"],expirado:["Link expirado","st-desc"],assinado:["Assinado","st-disp"],devolvido:["Devolvido","st-uso"],cancelado:["Cancelado","st-desc"]};
+const TF={q:"",st:""};
+const tStatus=t=> t.status==="pendente" && new Date(t.expira_em)<new Date() ? "expirado" : t.status;
+const tPill=t=>{ const [l,c]=TSTAT[tStatus(t)]||[t.status,"st-desc"]; return `<span class="pill ${c}">${l}</span>`; };
+const tUrl=t=>`${APP_URL}assinar.html#${t.token}`;
+const fData=iso=>iso?new Date(iso).toLocaleDateString("pt-BR"):"";
+const fDH=iso=>iso?new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+const slug=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w.-]+/g,"_").replace(/^_+|_+$/g,"");
+function meuNome(){
+  const em=String(SB_USER&&SB_USER.email||"").toLowerCase();
+  const u=S.users.find(u=>String(u.email||"").toLowerCase()===em); if(u&&u.nome) return u.nome;
+  return (em.split("@")[0]||"").split(/[._-]/).filter(Boolean).map(p=>p[0].toUpperCase()+p.slice(1)).join(" ");
+}
+function termosChegaram(novos){
+  const antes=new Map(S.termos.map(t=>[t.id,t.status]));
+  S.termos=novos;
+  if(!S.ready || !antes.size) return;
+  novos.filter(t=>t.status==="assinado" && antes.get(t.id)==="pendente").forEach(t=>{
+    toast(`${t.colaborador_nome||t.usuario_login} assinou o termo do ${t.dispositivo}.`);
+    const lm=document.getElementById("linkModal"); if(lm && lm.dataset.id===t.id) closeModal();
+  });
+}
+function tActions(t){
+  const st=tStatus(t), b=(act,ic,lab)=>`<button class="ib" data-act="${act}" data-id="${t.id}" title="${lab}" aria-label="${lab}">${ICON(ic)}</button>`;
+  const w=S.canWrite;
+  if(st==="pendente"||st==="expirado") return b("tlink","link","Link de assinatura")+(w?b("tcancel","x","Cancelar termo"):"");
+  if(st==="assinado") return b("tpdf","down","Exportar PDF")+(w?b("tdev","undo","Registrar devolução"):"");
+  if(st==="devolvido") return b("tpdf","down","Exportar PDF");
+  return "";
+}
+function tQuando(t){
+  const st=tStatus(t);
+  if(st==="assinado") return `assinado em ${fData(t.assinado_em)}`;
+  if(st==="devolvido") return `devolvido em ${fData(t.devolvido_em)}`;
+  if(st==="cancelado") return `cancelado em ${fData(t.cancelado_em)}`;
+  if(st==="expirado") return `link expirou em ${fData(t.expira_em)}`;
+  return `gerado em ${fData(t.criado_em)}`;
+}
+function termoBoxHTML(ativoId){
+  const ts=S.termos.filter(t=>t.ativo_id===ativoId);
+  return `<label>Termo de responsabilidade</label>${ts.length?`<ul class="tlist">${ts.map(t=>`<li>${tPill(t)}<span class="who"><b>${esc(t.colaborador_nome||t.usuario_login)}</b> · <span class="muted">${esc(tQuando(t))}</span></span><span class="rowacts">${tActions(t)}</span></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhum termo gerado para este equipamento${S.canWrite?". Use “Gerar termo” abaixo.":"."}</p>`}`;
+}
+function termosUsuarioHTML(login){
+  if(!sb) return `<span class="muted">—</span>`;
+  const ts=S.termos.filter(t=>norm(t.usuario_login)===norm(login) && t.status!=="cancelado");
+  if(!ts.length) return `<span class="muted">—</span>`;
+  const p=ts.filter(t=>["pendente","expirado"].includes(tStatus(t))).length, a=ts.filter(t=>t.status==="assinado").length, d=ts.filter(t=>t.status==="devolvido").length;
+  const pill=(n,l,c)=>n?`<button class="pill ${c}" data-act="tuser" data-login="${esc(login)}">${n} ${l}</button>`:"";
+  return `<div class="tpills">${pill(p,p>1?"pendentes":"pendente","st-man")}${pill(a,a>1?"assinados":"assinado","st-disp")}${pill(d,d>1?"devolvidos":"devolvido","st-uso")}</div>`;
+}
+function gerarTermo(id){
+  const x=S.items.find(i=>i.id===id); if(!x) return;
+  const u=S.users.find(u=>norm(u.login)===norm(x.usuario))||{};
+  const aberto=S.termos.filter(t=>t.ativo_id===x.id && t.status==="assinado");
+  const pend=S.termos.filter(t=>t.ativo_id===x.id && t.status==="pendente");
+  openModal(`<h2>Gerar termo: ${esc(x.dispositivo)}</h2>
+  <form class="f" id="termoForm" data-id="${x.id}">
+    <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
+    <p class="note" style="margin:0">${esc(TYPES[x.tipo]?.one||"")} · ${esc([x.fabricante,x.modelo].filter(Boolean).join(" ")||"sem modelo")}${x.serie?` · S/N ${esc(x.serie)}`:""}</p>
+    ${aberto.length?`<div class="warnnote">Este equipamento tem termo assinado por <b>${esc(aberto.map(t=>t.colaborador_nome||t.usuario_login).join(", "))}</b> sem devolução registrada.<label class="check" style="margin-top:8px"><input type="checkbox" id="t_devant" checked><span>Registrar a devolução do termo anterior ao gerar este</span></label></div>`:""}
+    ${pend.length?`<p class="muted" style="margin:0">O link pendente anterior deste equipamento será cancelado.</p>`:""}
+    <fieldset><legend class="l">Colaborador que vai receber</legend>
+      <label class="fld"><span>Login <i>*</i></span><input id="t_login" list="dl-usuarios" required value="${esc(x.usuario||"")}" autocomplete="off"></label>
+      <label class="fld"><span>Nome completo</span><input id="t_nome" value="${esc(u.nome||"")}" placeholder="O colaborador confirma ao assinar"></label>
+      <label class="fld wide"><span>E-mail corporativo</span><input id="t_email" type="email" value="${esc(u.email||"")}"></label>
+    </fieldset>
+    <fieldset><legend class="l">Estado do equipamento na entrega</legend>
+      <div class="seg" role="radiogroup" aria-label="Estado do equipamento">${TERMO.CONDICOES.map(([k,l])=>`<label><input type="radio" name="t_cond" id="t_cond_${k}" value="${k}" ${k==="usado_bom"?"checked":""}>${l}</label>`).join("")}</div>
+      <label class="fld wide"><span>Observações</span><textarea id="t_obs" placeholder="Ex.: acompanha carregador e mouse; pequeno risco na tampa"></textarea></label>
+      <label class="check"><input type="checkbox" id="t_upd" checked><span>Atualizar o equipamento para status <b>Em uso</b> com este colaborador</span></label>
+    </fieldset>
+    <p class="muted" style="margin:0">Entregue por: <b>${esc(meuNome())}</b> (${esc(SB_USER.email)}) · o link vale por 30 dias.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="tBtn">${ICON("link")}Gerar link de assinatura</button></div>
+  </form>`,"md");
+}
+async function submitTermo(form){
+  const x=S.items.find(i=>i.id===form.dataset.id); if(!x) return;
+  const btn=document.getElementById("tBtn"), v=id=>(document.getElementById(id)?.value||"").trim();
+  const login=v("t_login").toLowerCase(); if(!login){ toast("Informe o login do colaborador."); return; }
+  const row={ativo_id:x.id,tipo:x.tipo,dispositivo:x.dispositivo,marca:x.fabricante||"",modelo:x.modelo||"",serie:x.serie||"",
+    condicao:(form.querySelector("input[name=t_cond]:checked")||{}).value||"usado_bom",obs:v("t_obs"),usuario_login:login,
+    colaborador_nome:v("t_nome"),colaborador_email:v("t_email").toLowerCase(),entregue_por_nome:meuNome(),entregue_por_email:SB_USER.email};
+  btn.disabled=true;
+  try{
+    for(const t of S.termos.filter(t=>t.ativo_id===x.id && t.status==="pendente")){ const {error}=await sb.from("termos").update({status:"cancelado"}).eq("id",t.id); if(error) throw error; }
+    if(document.getElementById("t_devant")?.checked){
+      for(const t of S.termos.filter(t=>t.ativo_id===x.id && t.status==="assinado")){ const {error}=await sb.from("termos").update({status:"devolvido",devolucao_obs:`Devolução registrada ao gerar novo termo para ${login}`}).eq("id",t.id); if(error) throw error; }
+    }
+    const {data,error}=await sb.from("termos").insert(row).select(TCOLS).single(); if(error) throw error;
+    if(document.getElementById("t_upd")?.checked && (norm(x.usuario)!==norm(login)||x.status!=="Em uso")){
+      const {id,...rest}=x; await store.put("ativos",x.id,{...rest,usuario:login,status:"Em uso"});
+    }
+    await sbLoad("termos"); linkModal(data.id);
+  }catch(e){ btn.disabled=false; writeErr(e); }
+}
+function linkModal(id){
+  const t=S.termos.find(t=>t.id===id); if(!t) return;
+  const url=tUrl(t), exp=tStatus(t)==="expirado";
+  const qr=qrcode(0,"M"); qr.addData(url); qr.make();
+  const nome=t.colaborador_nome||t.usuario_login;
+  const msg=`Olá, ${nome.split(" ")[0]}! Segue o termo de responsabilidade do equipamento ${t.dispositivo} para você ler e assinar pelo celular: ${url}`;
+  openModal(`<h2>Link de assinatura: ${esc(t.dispositivo)}</h2><div class="msg" id="linkModal" data-id="${t.id}">
+    <p>Envie para <b>${esc(nome)}</b> ou abra neste aparelho para a assinatura na hora da entrega.</p>
+    <div class="linkbox"><div class="qr">${qr.createSvgTag({cellSize:4,margin:2,scalable:true})}</div><div style="min-width:0">
+      <label class="fld"><span>Link</span><input id="tUrl" readonly value="${esc(url)}"></label>
+      <div class="acts"><button class="btn primary" data-act="tcopy">${ICON("copy")}Copiar link</button>
+        <a class="btn" href="https://wa.me/?text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Abrir para assinar</a></div>
+      <p class="muted" style="margin:0">${exp?`Este link expirou em ${fDH(t.expira_em)}.`:`Válido até ${fDH(t.expira_em)}. A tela atualiza sozinha quando o colaborador assinar.`}</p>
+      ${exp&&S.canWrite?`<p style="margin:10px 0 0"><button class="btn" data-act="trenew" data-id="${t.id}">Renovar por mais 30 dias</button></p>`:""}
+    </div></div>
+    <p class="note">O link é pessoal: quem tiver o link consegue assinar. Envie só para o colaborador.</p>
+  </div><div class="foot"><button class="btn ghost" data-act="tpdf" data-id="${t.id}">${ICON("down")}Baixar para imprimir</button><button class="btn" data-act="close">Concluir</button></div>`,"md");
+}
+function copiarLink(){
+  const i=document.getElementById("tUrl"); if(!i) return;
+  const falha=()=>{ i.focus(); i.select(); toast("Selecione e copie o link (Ctrl+C)."); };
+  try{ navigator.clipboard.writeText(i.value).then(()=>toast("Link copiado."),falha); }catch(e){ falha(); }
+}
+let _logo=null;
+async function logoData(){
+  if(_logo) return _logo;
+  try{ const b=await (await fetch("img/logo.png")).blob(); _logo=await new Promise(r=>{ const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(b); }); }catch(e){ _logo=null; }
+  return _logo;
+}
+async function termoPDF(id){
+  if(!window.jspdf||!window.TERMO){ toast("A biblioteca de PDF não carregou. Recarregue a página."); return; }
+  toast("Gerando PDF…");
+  const {data:t,error}=await sb.from("termos").select("*").eq("id",id).single();
+  if(error){ writeErr(error); return; }
+  const ok=await TERMO.verificar(t);
+  const d=TERMO.pdf(t, await logoData(), {integridade:ok===true});
+  const name=`termo_${slug(t.dispositivo)}_${slug(t.colaborador_nome||t.usuario_login)}_${String(t.assinado_em||t.criado_em).slice(0,10)}.pdf`;
+  const salvo=await saveFile(name,new Blob([d.output("arraybuffer")],{type:"application/pdf"}));
+  if(ok===false) toast("Atenção: o código de verificação não confere com os dados do termo.");
+  else if(salvo) toast("Termo exportado.");
+}
+function devolucaoModal(id){
+  const t=S.termos.find(t=>t.id===id); if(!t) return;
+  const x=S.items.find(i=>i.id===t.ativo_id);
+  openModal(`<h2>Registrar devolução: ${esc(t.dispositivo)}</h2><form class="f" id="devForm" data-id="${t.id}">
+    <p style="margin:0">${esc(t.colaborador_nome||t.usuario_login)} está devolvendo o equipamento. O termo assinado continua guardado e passa a constar como devolvido.</p>
+    <label class="fld"><span>Observações da devolução</span><textarea id="d_obs" placeholder="Ex.: devolvido completo, sem avarias"></textarea></label>
+    ${x?`<label class="check"><input type="checkbox" id="d_upd" checked><span>Marcar o equipamento como <b>Disponível</b> e remover o usuário</span></label>`:""}
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="dBtn">${ICON("undo")}Registrar devolução</button></div>
+  </form>`,"sm");
+}
+async function doDevolucao(form){
+  const t=S.termos.find(t=>t.id===form.dataset.id); if(!t) return;
+  const btn=document.getElementById("dBtn"); btn.disabled=true;
+  try{
+    const {error}=await sb.from("termos").update({status:"devolvido",devolucao_obs:(document.getElementById("d_obs").value||"").trim()}).eq("id",t.id); if(error) throw error;
+    const x=S.items.find(i=>i.id===t.ativo_id);
+    if(x && document.getElementById("d_upd")?.checked){ const {id,...rest}=x; await store.put("ativos",x.id,{...rest,usuario:"",status:"Disponível"}); }
+    await sbLoad("termos"); closeModal(); toast("Devolução registrada.");
+  }catch(e){ btn.disabled=false; writeErr(e); }
+}
+function cancelarModal(id){
+  const t=S.termos.find(t=>t.id===id); if(!t) return;
+  openModal(`<h2>Cancelar termo?</h2><div class="msg"><p>O link enviado para <b>${esc(t.colaborador_nome||t.usuario_login)}</b> (${esc(t.dispositivo)}) deixa de funcionar. O registro continua na lista como cancelado.</p></div>
+  <div class="foot"><button class="btn ghost" data-act="close">Voltar</button><button class="btn danger" data-act="dotcancel" data-id="${t.id}">Cancelar termo</button></div>`,"sm");
+}
+async function tUpdate(id, patch, msg){
+  const {error}=await sb.from("termos").update(patch).eq("id",id);
+  if(error){ writeErr(error); return false; }
+  await sbLoad("termos"); if(msg) toast(msg); return true;
+}
+function termosFiltrados(){
+  const q=norm(TF.q);
+  return S.termos.filter(t=>(!TF.st||tStatus(t)===TF.st) && (!q||[t.dispositivo,t.colaborador_nome,t.usuario_login,t.colaborador_email,t.entregue_por_nome].some(v=>norm(v).includes(q))));
+}
+function termosShell(){
+  return `<div class="head"><div><h1>Termos</h1><div class="sub" id="tcount"></div></div>
+    <div class="actions"><button class="btn" data-act="texport">${ICON("down")}Exportar Excel</button></div></div>
+  <div class="card filters">
+    <label class="search">${ICON("search")}<input id="tq" type="search" placeholder="Pesquisar por patrimônio, colaborador ou login..." value="${esc(TF.q)}" aria-label="Pesquisar termos"></label>
+    <label class="sel">${ICON("filter")}<select id="tst" aria-label="Status"><option value="">Todos os status</option>${Object.entries(TSTAT).map(([k,[l]])=>`<option value="${k}" ${TF.st===k?"selected":""}>${l}</option>`).join("")}</select></label>
+  </div>
+  <div class="card tablewrap"><table><thead><tr><th>Gerado em</th><th>Patrimônio</th><th>Colaborador</th><th>Entregue por</th><th>Status</th><th>Assinado em</th><th class="th-r">Ações</th></tr></thead><tbody id="ttb"></tbody></table></div>
+  <p class="muted" style="font-size:13.5px">Para gerar um termo, abra a ficha do equipamento e use “Gerar termo”.</p>`;
+}
+function updateTermos(){
+  const tb=document.getElementById("ttb"); if(!tb) return;
+  if(!sb){ tb.innerHTML=`<tr><td colspan="7"><div class="empty"><b>Disponível na versão com login</b>Os termos digitais usam o banco de dados do sistema.</div></td></tr>`; return; }
+  const rows=termosFiltrados(), p=S.termos.filter(t=>tStatus(t)==="pendente").length;
+  document.getElementById("tcount").textContent=`${S.termos.length} termos · ${p} aguardando assinatura`;
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty">${S.termos.length?"<b>Nenhum resultado</b>Ajuste a pesquisa ou o filtro.":"<b>Nenhum termo gerado ainda</b>Abra a ficha de um equipamento e use “Gerar termo”."}</div></td></tr>`; return; }
+  tb.innerHTML=rows.map(t=>{ const x=S.items.find(i=>i.id===t.ativo_id);
+    return `<tr><td>${esc(fData(t.criado_em))}</td>
+    <td class="dev">${x?`<button class="linkbtn" data-act="view" data-id="${x.id}">${esc(t.dispositivo)}</button>`:esc(t.dispositivo)}</td>
+    <td><b>${esc(t.colaborador_nome||"—")}</b><br><span class="muted">${esc(t.usuario_login)}</span></td>
+    <td>${esc(t.entregue_por_nome||t.entregue_por_email)}</td><td>${tPill(t)}</td>
+    <td>${esc(fDH(t.assinado_em))||`<span class="muted">—</span>`}</td>
+    <td><div class="rowacts">${tActions(t)}</div></td></tr>`; }).join("");
+}
+function exportTermos(){
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const cond=k=>(TERMO.CONDICOES.find(c=>c[0]===k)||["",""])[1];
+  const rows=termosFiltrados().map(t=>({"Gerado em":fDH(t.criado_em),"Patrimônio":t.dispositivo,"Tipo":TYPES[t.tipo]?.one||t.tipo,"Marca":t.marca,"Modelo":t.modelo,"Nº de série":t.serie,
+    "Estado na entrega":cond(t.condicao),"Observações":t.obs,"Colaborador":t.colaborador_nome,"Login":t.usuario_login,"E-mail":t.colaborador_email,"Cargo":t.cargo,"Telefone":t.telefone,
+    "Entregue por":t.entregue_por_nome,"Status":(TSTAT[tStatus(t)]||[t.status])[0],"Assinado em":fDH(t.assinado_em),"IP":t.ip||"","Código de verificação":t.hash||"",
+    "Devolvido em":fDH(t.devolvido_em),"Recebido por":t.devolvido_por||"","Obs. devolução":t.devolucao_obs||""}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Termos");
+  const name=`termos_${new Date().toISOString().slice(0,10)}.xlsx`;
+  saveFile(name,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])).then(ok=>{ if(ok) toast(`${rows.length} termos exportados.`); });
 }
 
 // ---------- link direto (QR Code da etiqueta) ----------
@@ -1319,6 +1558,16 @@ document.addEventListener("click", e=>{
   if(a==="import") return document.getElementById("importFile").click();
   if(a==="doimport") return doImport();
   if(a==="uexport") return exportUsers();
+  if(a==="tgerar") return gerarTermo(id);
+  if(a==="tlink") return linkModal(id);
+  if(a==="tcopy") return copiarLink();
+  if(a==="tpdf") return termoPDF(id);
+  if(a==="tdev") return devolucaoModal(id);
+  if(a==="tcancel") return cancelarModal(id);
+  if(a==="dotcancel") return tUpdate(id,{status:"cancelado"},"Termo cancelado.").then(ok=>{ if(ok) closeModal(); });
+  if(a==="trenew") return tUpdate(id,{expira_em:new Date(Date.now()+30*864e5).toISOString()},"Link renovado por 30 dias.").then(ok=>{ if(ok) linkModal(id); });
+  if(a==="texport") return exportTermos();
+  if(a==="tuser"){ const l=el.dataset.login; go("termos"); TF.q=l; TF.st=""; render(); return; }
   if(a==="uimport") return document.getElementById("importUsers").click();
   if(a==="douimport") return doImportUsers();
   if(a==="newuser") return editUser(null,{login:el.dataset.login||"",setor:el.dataset.setor||""});
@@ -1345,12 +1594,16 @@ document.addEventListener("submit", e=>{
   if(e.target.id==="itemForm") submitItem(e.target);
   if(e.target.id==="userForm") submitUser(e.target);
   if(e.target.id==="gForm") gateSubmit(e.target);
+  if(e.target.id==="termoForm") submitTermo(e.target);
+  if(e.target.id==="devForm") doDevolucao(e.target);
   if(e.target.id==="accForm"){ const em=document.getElementById("acc_email").value.trim().toLowerCase(), pp=document.getElementById("acc_papel").value;
     sb.from("membros").upsert({email:em,papel:pp}).then(({error})=>{ if(error) writeErr(error); else { toast(`${em} liberado.`); updateAcessos(); } }); }
 });
 document.addEventListener("input", e=>{
   if(e.target.id==="q"){ S.q=e.target.value; updateTable(); }
   if(e.target.id==="uq"){ S.uq=e.target.value; updateUsers(); }
+  if(e.target.id==="tq"){ TF.q=e.target.value; updateTermos(); }
+  if(e.target.id==="t_login"){ const u=S.users.find(u=>norm(u.login)===norm(e.target.value)); if(u){ const n=document.getElementById("t_nome"), m=document.getElementById("t_email"); if(n&&u.nome) n.value=u.nome; if(m&&u.email) m.value=u.email; } }
   if(e.target.id && e.target.id.startsWith("e_") && e.target.type!=="checkbox" && e.target.tagName!=="SELECT") etqInput(e.target);
 });
 document.addEventListener("change", e=>{
@@ -1359,11 +1612,12 @@ document.addEventListener("change", e=>{
   if(e.target.id && e.target.id.startsWith("e_")) etqInput(e.target);
   if(e.target.classList && e.target.classList.contains("esel")){ const id=e.target.value; e.target.checked?L.sel.add(id):L.sel.delete(id); updateEtq(true); }
   if(e.target.id==="invCat"){ INVCAT=e.target.value; updateInv(); }
+  if(e.target.id==="tst"){ TF.st=e.target.value; updateTermos(); }
   if(e.target.classList && e.target.classList.contains("accp")){ const em=e.target.dataset.email; sb.from("membros").update({papel:e.target.value}).eq("email",em).then(({error})=>{ if(error) writeErr(error); else toast(`Permissão de ${em} atualizada.`); }); }
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
 
-try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
 if (!S.view || S.view==="") S.view="dashboard";
 render();
 initCaps();
