@@ -297,6 +297,15 @@ legend.l{grid-column:1/-1;font-weight:800;color:var(--heading);font-size:15px;pa
 fieldset .seg,fieldset .check{grid-column:1/-1}
 .tpills{display:flex;flex-wrap:wrap;gap:6px}
 .tpills button{border:0;cursor:pointer;font:inherit}
+.origem{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:0 6px;margin-left:6px;vertical-align:middle}
+.imptab{min-width:820px}
+.imptab td{padding:6px 8px;vertical-align:middle}
+.imptab input[type=text],.imptab input[type=date]{border:1px solid var(--border);border-radius:8px;padding:7px 9px;background:var(--surface);width:100%;min-width:0}
+.imptab input.bad{border-color:var(--maint-bd);background:var(--maint-bg)}
+.imptab .fn{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.imptab .st{font-size:13px;min-width:120px}
+.imptab .st.ok{color:var(--avail-fg);font-weight:700}
+.imptab .st.err{color:var(--danger);font-weight:700}
 .warnnote{background:var(--maint-bg);color:var(--maint-fg);border:1px solid var(--maint-bd);border-radius:10px;padding:10px 12px;font-size:14px}
 @media (max-width:600px){.linkbox{grid-template-columns:1fr}.linkbox .qr{max-width:210px}}
 @media (max-width:1000px){.grid2{grid-template-columns:1fr}.detail{grid-template-columns:1fr}.photo{max-width:380px;position:static}}
@@ -335,6 +344,7 @@ fieldset .seg,fieldset .check{grid-column:1/-1}
 </div>
 <input type="file" id="importFile" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="importUsers" accept=".xlsx,.xls,.csv" hidden>
+<input type="file" id="importTermos" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" hidden></div>
@@ -745,7 +755,7 @@ function openModal(html, size=""){
   const f=r.querySelector(".mbody input:not([type=hidden]),.mbody select,.mbody textarea")||r.querySelector(".close");
   if(f) setTimeout(()=>f.focus({preventScroll:true}),30);
 }
-function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; }
+function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; IMPT=[]; IMPT_ATIVO=null; }
 
 function viewItem(id){
   const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
@@ -764,7 +774,7 @@ function viewItem(id){
       <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
       ${sb?`<div class="hist" id="termoBox" data-ativo="${x.id}">${termoBoxHTML(x.id)}</div>`:""}
       ${sb?`<div class="hist" id="hist"><label>Histórico</label><p class="muted" style="margin:0">Carregando…</p></div>`:""}
-      <div class="foot">${sb&&S.canWrite?`<button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
+      <div class="foot">${sb&&S.canWrite?`<button class="btn" data-act="tanexar" data-id="${x.id}">${ICON("up")}Anexar termo digitalizado</button><button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
     </div>
   </div>`);
   if (sb) loadHist(x.id);
@@ -1039,9 +1049,9 @@ function confirmDelUser(id){
 
 
 // ---------- termos de responsabilidade ----------
-const TCOLS="id,token,ativo_id,tipo,dispositivo,marca,modelo,serie,condicao,obs,usuario_login,colaborador_nome,colaborador_email,cargo,telefone,entregue_por_nome,entregue_por_email,status,criado_em,expira_em,assinado_em,ip,hash,devolvido_em,devolvido_por,devolucao_obs,cancelado_em";
+const TCOLS="id,token,ativo_id,tipo,dispositivo,marca,modelo,serie,condicao,obs,usuario_login,colaborador_nome,colaborador_email,cargo,telefone,entregue_por_nome,entregue_por_email,status,criado_em,expira_em,assinado_em,ip,hash,devolvido_em,devolvido_por,devolucao_obs,cancelado_em,origem,arquivo,arquivo_nome";
 const TSTAT={pendente:["Pendente","st-man"],expirado:["Link expirado","st-desc"],assinado:["Assinado","st-disp"],devolvido:["Devolvido","st-uso"],cancelado:["Cancelado","st-desc"]};
-const TF={q:"",st:""};
+const TF={q:"",st:"",or:""};
 const tStatus=t=> t.status==="pendente" && new Date(t.expira_em)<new Date() ? "expirado" : t.status;
 const tPill=t=>{ const [l,c]=TSTAT[tStatus(t)]||[t.status,"st-desc"]; return `<span class="pill ${c}">${l}</span>`; };
 const tUrl=t=>`${APP_URL}assinar.html#${t.token}`;
@@ -1065,6 +1075,7 @@ function termosChegaram(novos){
 function tActions(t){
   const st=tStatus(t), b=(act,ic,lab)=>`<button class="ib" data-act="${act}" data-id="${t.id}" title="${lab}" aria-label="${lab}">${ICON(ic)}</button>`;
   const w=S.canWrite, del=SB_ROLE==="admin"?`<button class="ib del" data-act="tdel" data-id="${t.id}" title="Excluir termo" aria-label="Excluir termo">${ICON("trash")}</button>`:"";
+  if(t.origem==="papel"){ const f=b("tfile","down","Baixar termo digitalizado"); return st==="assinado"?f+(w?b("tdev","undo","Registrar devolução"):"")+del:f+del; }
   if(st==="pendente"||st==="expirado") return b("tlink","link","Link de assinatura")+(w?b("tcancel","x","Cancelar termo"):"")+del;
   if(st==="assinado") return b("tpdf","down","Exportar PDF")+(w?b("tdev","undo","Registrar devolução"):"")+del;
   if(st==="devolvido") return b("tpdf","down","Exportar PDF")+del;
@@ -1072,7 +1083,7 @@ function tActions(t){
 }
 function tQuando(t){
   const st=tStatus(t);
-  if(st==="assinado") return `assinado em ${fData(t.assinado_em)}`;
+  if(st==="assinado") return `${t.origem==="papel"?"papel assinado":"assinado"} em ${fData(t.assinado_em)}`;
   if(st==="devolvido") return `devolvido em ${fData(t.devolvido_em)}`;
   if(st==="cancelado") return `cancelado em ${fData(t.cancelado_em)}`;
   if(st==="expirado") return `link expirou em ${fData(t.expira_em)}`;
@@ -1080,7 +1091,7 @@ function tQuando(t){
 }
 function termoBoxHTML(ativoId){
   const ts=S.termos.filter(t=>t.ativo_id===ativoId);
-  return `<label>Termo de responsabilidade</label>${ts.length?`<ul class="tlist">${ts.map(t=>`<li>${tPill(t)}<span class="who"><b>${esc(t.colaborador_nome||t.usuario_login)}</b> · <span class="muted">${esc(tQuando(t))}</span></span><span class="rowacts">${tActions(t)}</span></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhum termo gerado para este equipamento${S.canWrite?". Use “Gerar termo” abaixo.":"."}</p>`}`;
+  return `<label>Termo de responsabilidade</label>${ts.length?`<ul class="tlist">${ts.map(t=>`<li>${tPill(t)}${t.origem==="papel"?`<span class="origem" style="margin-left:0">papel</span>`:""}<span class="who"><b>${esc(t.colaborador_nome||t.usuario_login)}</b> · <span class="muted">${esc(tQuando(t))}</span></span><span class="rowacts">${tActions(t)}</span></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhum termo gerado para este equipamento${S.canWrite?". Use “Gerar termo” abaixo.":"."}</p>`}`;
 }
 function termosUsuarioHTML(login){
   if(!sb) return `<span class="muted">—</span>`;
@@ -1206,10 +1217,10 @@ function excluirModal(id){
   const t=S.termos.find(t=>t.id===id); if(!t) return;
   const assinado=["assinado","devolvido"].includes(t.status);
   openModal(`<h2>Excluir termo?</h2><form class="f" id="tdelForm" data-id="${t.id}">
-    <p style="margin:0">O termo de <b>${esc(t.colaborador_nome||t.usuario_login)}</b> para o <b>${esc(t.dispositivo)}</b> (${esc(tQuando(t))}) será apagado de vez, junto com ${assinado?"a assinatura e as evidências":"o link de assinatura"}. A exclusão fica registrada no histórico do equipamento.</p>
+    <p style="margin:0">O termo de <b>${esc(t.colaborador_nome||t.usuario_login)}</b> para o <b>${esc(t.dispositivo)}</b> (${esc(tQuando(t))}) será apagado de vez, junto com ${t.origem==="papel"?"o arquivo digitalizado":assinado?"a assinatura e as evidências":"o link de assinatura"}. A exclusão fica registrada no histórico do equipamento.</p>
     ${assinado?`<div class="warnnote">Este termo já foi <b>assinado</b> e é um documento com valor jurídico. Se ainda não tiver o PDF, exporte antes de excluir.</div>
     <label class="fld"><span>Para confirmar, digite o patrimônio <b>${esc(t.dispositivo)}</b></span><input id="tdel_conf" autocomplete="off" autocapitalize="characters"></label>`:""}
-    <div class="foot">${assinado?`<button type="button" class="btn ghost" data-act="tpdf" data-id="${t.id}">${ICON("down")}Exportar PDF</button>`:""}<button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="tdelBtn">${ICON("trash")}Excluir termo</button></div>
+    <div class="foot">${assinado?`<button type="button" class="btn ghost" data-act="${t.origem==="papel"?"tfile":"tpdf"}" data-id="${t.id}">${ICON("down")}${t.origem==="papel"?"Baixar arquivo":"Exportar PDF"}</button>`:""}<button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="tdelBtn">${ICON("trash")}Excluir termo</button></div>
   </form>`,"sm");
 }
 async function doExcluirTermo(form){
@@ -1220,6 +1231,7 @@ async function doExcluirTermo(form){
   const {data,error}=await sb.from("termos").delete().eq("id",t.id).select("id");
   if(error){ btn.disabled=false; writeErr(error); return; }
   if(!data||!data.length){ btn.disabled=false; toast("Só administradores podem excluir termos."); return; }
+  if(t.arquivo) sb.storage.from("termos").remove([t.arquivo]).catch(()=>{});
   await sbLoad("termos"); closeModal(); toast("Termo excluído.");
 }
 async function tUpdate(id, patch, msg){
@@ -1229,17 +1241,18 @@ async function tUpdate(id, patch, msg){
 }
 function termosFiltrados(){
   const q=norm(TF.q);
-  return S.termos.filter(t=>(!TF.st||tStatus(t)===TF.st) && (!q||[t.dispositivo,t.colaborador_nome,t.usuario_login,t.colaborador_email,t.entregue_por_nome].some(v=>norm(v).includes(q))));
+  return S.termos.filter(t=>(!TF.st||tStatus(t)===TF.st) && (!TF.or||(t.origem||"digital")===TF.or) && (!q||[t.dispositivo,t.colaborador_nome,t.usuario_login,t.colaborador_email,t.entregue_por_nome,t.arquivo_nome].some(v=>norm(v).includes(q))));
 }
 function termosShell(){
   return `<div class="head"><div><h1>Termos</h1><div class="sub" id="tcount"></div></div>
-    <div class="actions"><button class="btn" data-act="texport">${ICON("down")}Exportar Excel</button></div></div>
+    <div class="actions">${S.canWrite?`<button class="btn" data-act="tlote">${ICON("up")}Importar termos digitalizados</button>`:""}<button class="btn" data-act="texport">${ICON("down")}Exportar Excel</button></div></div>
   <div class="card filters">
     <label class="search">${ICON("search")}<input id="tq" type="search" placeholder="Pesquisar por patrimônio, colaborador ou login..." value="${esc(TF.q)}" aria-label="Pesquisar termos"></label>
+    <label class="sel">${ICON("filter")}<select id="tor" aria-label="Origem"><option value="">Digital e papel</option><option value="digital" ${TF.or==="digital"?"selected":""}>Só digitais</option><option value="papel" ${TF.or==="papel"?"selected":""}>Só em papel</option></select></label>
     <label class="sel">${ICON("filter")}<select id="tst" aria-label="Status"><option value="">Todos os status</option>${Object.entries(TSTAT).map(([k,[l]])=>`<option value="${k}" ${TF.st===k?"selected":""}>${l}</option>`).join("")}</select></label>
   </div>
   <div class="card tablewrap"><table><thead><tr><th>Gerado em</th><th>Patrimônio</th><th>Colaborador</th><th>Entregue por</th><th>Status</th><th>Assinado em</th><th class="th-r">Ações</th></tr></thead><tbody id="ttb"></tbody></table></div>
-  <p class="muted" style="font-size:13.5px">Para gerar um termo, abra a ficha do equipamento e use “Gerar termo”.</p>`;
+  <p class="muted" style="font-size:13.5px">Para gerar um termo digital, abra a ficha do equipamento e use “Gerar termo”. Termos em papel já assinados entram por “Importar termos digitalizados”: o sistema reconhece o patrimônio pelo nome do arquivo (ex.: LAP066.pdf).</p>`;
 }
 function updateTermos(){
   const tb=document.getElementById("ttb"); if(!tb) return;
@@ -1251,8 +1264,8 @@ function updateTermos(){
     return `<tr><td>${esc(fData(t.criado_em))}</td>
     <td class="dev">${x?`<button class="linkbtn" data-act="view" data-id="${x.id}">${esc(t.dispositivo)}</button>`:esc(t.dispositivo)}</td>
     <td><b>${esc(t.colaborador_nome||"—")}</b><br><span class="muted">${esc(t.usuario_login)}</span></td>
-    <td>${esc(t.entregue_por_nome||t.entregue_por_email)}</td><td>${tPill(t)}</td>
-    <td>${esc(fDH(t.assinado_em))||`<span class="muted">—</span>`}</td>
+    <td>${t.origem==="papel"?`<span class="muted">anexado por</span> ${esc(t.entregue_por_email)}`:esc(t.entregue_por_nome||t.entregue_por_email)}</td><td>${tPill(t)}${t.origem==="papel"?`<span class="origem">papel</span>`:""}</td>
+    <td>${esc(t.origem==="papel"?fData(t.assinado_em):fDH(t.assinado_em))||`<span class="muted">—</span>`}</td>
     <td><div class="rowacts">${tActions(t)}</div></td></tr>`; }).join("");
 }
 function exportTermos(){
@@ -1260,11 +1273,124 @@ function exportTermos(){
   const cond=k=>(TERMO.CONDICOES.find(c=>c[0]===k)||["",""])[1];
   const rows=termosFiltrados().map(t=>({"Gerado em":fDH(t.criado_em),"Patrimônio":t.dispositivo,"Tipo":TYPES[t.tipo]?.one||t.tipo,"Marca":t.marca,"Modelo":t.modelo,"Nº de série":t.serie,
     "Estado na entrega":cond(t.condicao),"Observações":t.obs,"Colaborador":t.colaborador_nome,"Login":t.usuario_login,"E-mail":t.colaborador_email,"Cargo":t.cargo,"Telefone":t.telefone,
-    "Entregue por":t.entregue_por_nome,"Status":(TSTAT[tStatus(t)]||[t.status])[0],"Assinado em":fDH(t.assinado_em),"IP":t.ip||"","Código de verificação":t.hash||"",
+    "Entregue por":t.entregue_por_nome,"Origem":t.origem==="papel"?"Papel (digitalizado)":"Digital","Arquivo":t.arquivo_nome||"","Status":(TSTAT[tStatus(t)]||[t.status])[0],"Assinado em":t.origem==="papel"?fData(t.assinado_em):fDH(t.assinado_em),"IP":t.ip||"","Código de verificação":t.hash||"",
     "Devolvido em":fDH(t.devolvido_em),"Recebido por":t.devolvido_por||"","Obs. devolução":t.devolucao_obs||""}));
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Termos");
   const name=`termos_${new Date().toISOString().slice(0,10)}.xlsx`;
   saveFile(name,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])).then(ok=>{ if(ok) toast(`${rows.length} termos exportados.`); });
+}
+
+// ---------- termos em papel (digitalizados) ----------
+let IMPT=[], IMPT_ATIVO=null;
+const MIME={pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png"};
+async function sha256Hex(buf){ try{ return [...new Uint8Array(await crypto.subtle.digest("SHA-256",buf))].map(b=>b.toString(16).padStart(2,"0")).join(""); }catch(e){ return ""; } }
+function ativoPorCodigo(txt){
+  const c=String(txt||"").toUpperCase().replace(/[^A-Z0-9]/g,""); if(!c) return null;
+  const m=c.match(/^([A-Z]+)0*(\d+)$/);
+  return S.items.find(i=>{ const d=String(i.dispositivo||"").toUpperCase().replace(/[^A-Z0-9]/g,""); if(d===c) return true;
+    const mm=d.match(/^([A-Z]+)0*(\d+)$/); return !!(m&&mm&&m[1]===mm[1]&&+m[2]===+mm[2]); })||null;
+}
+function ativoPeloArquivo(nome){
+  const base=nome.replace(/\.[^.]+$/,"").toUpperCase();
+  const prefs=[...new Set([...Object.values(TYPES).map(t=>t.prefix),...S.items.map(i=>(String(i.dispositivo||"").toUpperCase().match(/^[A-Z]+/)||[""])[0]).filter(Boolean)])].join("|");
+  const re=new RegExp(`(${prefs})[\\s_.-]*(\\d{1,6})`,"g"); let m;
+  while((m=re.exec(base))){ const x=ativoPorCodigo(m[1]+m[2]); if(x) return x; }
+  return null;
+}
+function loginPeloArquivo(nome, x){
+  const n=norm(nome);
+  const u=S.users.filter(u=>u.login && norm(u.login).length>=4 && n.includes(norm(u.login))).sort((a,b)=>b.login.length-a.login.length)[0];
+  return u?u.login:((x&&x.usuario)||"");
+}
+function dataPeloArquivo(f){
+  const n=f.name; let m;
+  if((m=n.match(/(20\d{2})[-_.](\d{2})[-_.](\d{2})/))) return `${m[1]}-${m[2]}-${m[3]}`;
+  if((m=n.match(/(\d{2})[-_.](\d{2})[-_.](20\d{2})/))) return `${m[3]}-${m[2]}-${m[1]}`;
+  const d=new Date(f.lastModified||Date.now()); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+}
+function abrirImportTermos(ativoId){ IMPT_ATIVO=ativoId||null; const i=document.getElementById("importTermos"); i.multiple=!ativoId; i.click(); }
+document.getElementById("importTermos").addEventListener("change", e=>{
+  const files=[...e.target.files]; e.target.value=""; if(!files.length) return;
+  const fixo=IMPT_ATIVO?S.items.find(i=>i.id===IMPT_ATIVO):null;
+  IMPT=files.map(f=>{ const ext=(f.name.split(".").pop()||"").toLowerCase(); const x=fixo||ativoPeloArquivo(f.name);
+    const erro=!MIME[ext]?"Formato não aceito (use PDF, JPG ou PNG)":f.size>20*1024*1024?"Arquivo maior que 20 MB":"";
+    return {f,ext,x,cod:x?x.dispositivo:"",login:loginPeloArquivo(f.name,x),data:dataPeloArquivo(f),inc:!erro&&!!x,erro,st:"",ok:false}; });
+  renderImportTermos();
+});
+function impAviso(r){
+  if(r.erro) return r.erro;
+  if(!r.x) return "Informe o patrimônio";
+  if(!r.login) return "Informe o colaborador";
+  const ja=S.termos.find(t=>t.ativo_id===r.x.id && t.status==="assinado" && norm(t.usuario_login)===norm(r.login));
+  return ja?"Já existe termo assinado deste colaborador":"";
+}
+function renderImportTermos(){
+  const ok=IMPT.filter(r=>r.x).length;
+  openModal(`<h2>Importar termos digitalizados</h2><div class="msg">
+    <p>${IMPT.length} ${IMPT.length>1?"arquivos selecionados":"arquivo selecionado"}: ${ok} com patrimônio reconhecido. Confira o patrimônio, o colaborador e a data em que o termo foi assinado.</p>
+    <datalist id="dl-ativos">${S.items.map(i=>`<option value="${esc(i.dispositivo)}">${esc([TYPES[i.tipo]?.one,i.usuario].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
+    <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
+    <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px"><table class="imptab"><thead><tr><th></th><th>Arquivo</th><th>Patrimônio</th><th>Colaborador (login)</th><th>Assinado em</th><th>Situação</th></tr></thead><tbody id="imptb"></tbody></table></div>
+    <p class="note" style="margin-top:12px">Dica: nomeie os arquivos com o patrimônio, como <b>LAP066.pdf</b> ou <b>LAP066 - ketlyn.santos - 2025-03-10.pdf</b>, e o sistema preenche tudo sozinho.</p>
+  </div><div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="impTBtn" data-act="impt">${ICON("up")}Anexar termos</button></div>`);
+  updateImportTermos();
+}
+function updateImportTermos(){
+  const tb=document.getElementById("imptb"); if(!tb) return;
+  tb.innerHTML=IMPT.map((r,i)=>{ const av=r.st||impAviso(r); const cls=r.ok?"ok":(r.st||(!r.x||r.erro||!r.login))?"err":"";
+    return `<tr><td><input type="checkbox" class="impinc" data-i="${i}" ${r.inc?"checked":""} ${r.ok||r.erro?"disabled":""} aria-label="Incluir ${esc(r.f.name)}"></td>
+    <td class="fn" title="${esc(r.f.name)}">${esc(r.f.name)}</td>
+    <td><input type="text" class="impcod ${r.x?"":"bad"}" data-i="${i}" list="dl-ativos" value="${esc(r.cod)}" ${r.ok?"disabled":""} placeholder="Digite o patrimônio"></td>
+    <td><input type="text" class="implog ${r.login?"":"bad"}" data-i="${i}" list="dl-usuarios" value="${esc(r.login)}" ${r.ok?"disabled":""}></td>
+    <td><input type="date" class="impdt" data-i="${i}" value="${esc(r.data)}" max="${new Date().toISOString().slice(0,10)}" ${r.ok?"disabled":""}></td>
+    <td class="st ${cls}">${esc(r.ok?"✓ Anexado":av||"Pronto")}</td></tr>`; }).join("");
+  const n=IMPT.filter(r=>r.inc&&!r.ok).length, b=document.getElementById("impTBtn");
+  if(b){ b.disabled=!n; b.innerHTML=`${ICON("up")}Anexar ${n} ${n===1?"termo":"termos"}`; }
+}
+function impCampo(el){
+  const r=IMPT[+el.dataset.i]; if(!r) return;
+  if(el.classList.contains("impcod")){ r.cod=el.value; r.x=ativoPorCodigo(el.value); if(r.x && !r.login) r.login=r.x.usuario||""; if(r.x&&!r.erro) r.inc=true; el.classList.toggle("bad",!r.x);
+    const lg=el.closest("tr").querySelector(".implog"); if(lg && !lg.value && r.login){ lg.value=r.login; lg.classList.remove("bad"); } }
+  if(el.classList.contains("implog")){ r.login=el.value.trim().toLowerCase(); el.classList.toggle("bad",!r.login); }
+  if(el.classList.contains("impdt")) r.data=el.value;
+  if(el.classList.contains("impinc")) r.inc=el.checked;
+  r.st=""; const st=el.closest("tr").querySelector(".st"); const av=impAviso(r);
+  st.textContent=av||"Pronto"; st.className="st "+((!r.x||r.erro||!r.login)?"err":"");
+  const n=IMPT.filter(r=>r.inc&&!r.ok).length, b=document.getElementById("impTBtn");
+  if(b){ b.disabled=!n; b.innerHTML=`${ICON("up")}Anexar ${n} ${n===1?"termo":"termos"}`; }
+}
+async function doImportTermos(){
+  const b=document.getElementById("impTBtn"); const fila=IMPT.filter(r=>r.inc&&!r.ok);
+  if(fila.some(r=>!r.x||!r.login||!r.data)){ fila.forEach(r=>{ if(!r.x||!r.login||!r.data) r.st=!r.x?"Informe o patrimônio":!r.login?"Informe o colaborador":"Informe a data"; }); updateImportTermos(); toast("Complete as linhas destacadas ou desmarque-as."); return; }
+  b.disabled=true; let n=0, falhas=0;
+  for(const r of fila){
+    b.textContent=`Anexando ${++n}/${fila.length}…`;
+    try{
+      const path=`${r.x.id}/${newId()}.${r.ext}`;
+      const hash=await sha256Hex(await r.f.arrayBuffer());
+      const up=await sb.storage.from("termos").upload(path,r.f,{contentType:MIME[r.ext],upsert:false}); if(up.error) throw up.error;
+      const u=S.users.find(u=>norm(u.login)===norm(r.login))||{};
+      const {error}=await sb.from("termos").insert({origem:"papel",ativo_id:r.x.id,tipo:r.x.tipo,dispositivo:r.x.dispositivo,marca:r.x.fabricante||"",modelo:r.x.modelo||"",serie:r.x.serie||"",
+        usuario_login:r.login,colaborador_nome:u.nome||"",colaborador_email:u.email||"",assinado_em:`${r.data}T12:00:00-03:00`,
+        arquivo:path,arquivo_nome:r.f.name,arquivo_hash:hash,obs:"Termo em papel digitalizado",entregue_por_nome:""});
+      if(error) throw error;
+      r.ok=true; r.inc=false; r.st="";
+    }catch(e){ console.error(e); falhas++; r.st="Erro: "+((e&&e.message)||"não foi possível enviar"); }
+    updateImportTermos();
+  }
+  await sbLoad("termos");
+  const okn=fila.filter(r=>r.ok).length;
+  if(!falhas){ closeModal(); toast(`${okn} ${okn===1?"termo anexado":"termos anexados"}.`); }
+  else { updateImportTermos(); toast(`${okn} anexados, ${falhas} com erro. Veja a coluna Situação.`); }
+}
+async function termoArquivo(id){
+  const t=S.termos.find(t=>t.id===id); if(!t||!t.arquivo) return;
+  toast("Baixando arquivo…");
+  const {data,error}=await sb.storage.from("termos").download(t.arquivo);
+  if(error){ writeErr(error); return; }
+  const ext=(t.arquivo.split(".").pop()||"pdf");
+  const name=`termo_${slug(t.dispositivo)}_${slug(t.colaborador_nome||t.usuario_login)}_${String(t.assinado_em||"").slice(0,10)}.${ext}`;
+  saveFile(name,data).then(ok=>{ if(ok) toast("Arquivo baixado."); });
 }
 
 // ---------- link direto (QR Code da etiqueta) ----------
@@ -1593,6 +1719,10 @@ document.addEventListener("click", e=>{
   if(a==="tdev") return devolucaoModal(id);
   if(a==="tcancel") return cancelarModal(id);
   if(a==="tdel") return excluirModal(id);
+  if(a==="tanexar") return abrirImportTermos(id);
+  if(a==="tlote") return abrirImportTermos(null);
+  if(a==="impt") return doImportTermos();
+  if(a==="tfile") return termoArquivo(id);
   if(a==="dotcancel") return tUpdate(id,{status:"cancelado"},"Termo cancelado.").then(ok=>{ if(ok) closeModal(); });
   if(a==="trenew") return tUpdate(id,{expira_em:new Date(Date.now()+30*864e5).toISOString()},"Link renovado por 30 dias.").then(ok=>{ if(ok) linkModal(id); });
   if(a==="texport") return exportTermos();
@@ -1633,6 +1763,7 @@ document.addEventListener("input", e=>{
   if(e.target.id==="q"){ S.q=e.target.value; updateTable(); }
   if(e.target.id==="uq"){ S.uq=e.target.value; updateUsers(); }
   if(e.target.id==="tq"){ TF.q=e.target.value; updateTermos(); }
+  if(e.target.classList && (e.target.classList.contains("impcod")||e.target.classList.contains("implog"))) impCampo(e.target);
   if(e.target.id==="t_login"){ const u=S.users.find(u=>norm(u.login)===norm(e.target.value)); if(u){ const n=document.getElementById("t_nome"), m=document.getElementById("t_email"); if(n&&u.nome) n.value=u.nome; if(m&&u.email) m.value=u.email; } }
   if(e.target.id && e.target.id.startsWith("e_") && e.target.type!=="checkbox" && e.target.tagName!=="SELECT") etqInput(e.target);
 });
@@ -1643,6 +1774,8 @@ document.addEventListener("change", e=>{
   if(e.target.classList && e.target.classList.contains("esel")){ const id=e.target.value; e.target.checked?L.sel.add(id):L.sel.delete(id); updateEtq(true); }
   if(e.target.id==="invCat"){ INVCAT=e.target.value; updateInv(); }
   if(e.target.id==="tst"){ TF.st=e.target.value; updateTermos(); }
+  if(e.target.id==="tor"){ TF.or=e.target.value; updateTermos(); }
+  if(e.target.classList && (e.target.classList.contains("impdt")||e.target.classList.contains("impinc"))) impCampo(e.target);
   if(e.target.classList && e.target.classList.contains("accp")){ const em=e.target.dataset.email; sb.from("membros").update({papel:e.target.value}).eq("email",em).then(({error})=>{ if(error) writeErr(error); else toast(`Permissão de ${em} atualizada.`); }); }
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });

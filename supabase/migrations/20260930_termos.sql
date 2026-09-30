@@ -149,3 +149,16 @@ begin
 end $$;
 revoke execute on function public.termos_excluido() from public, anon, authenticated;
 create trigger termos_excluido after delete on public.termos for each row execute function public.termos_excluido();
+
+-- Termos em papel digitalizados (aplicada em 2026-09-30): colunas origem/arquivo, bucket privado "termos"
+-- (ver migração "termos_papel" no Supabase: termos_proteger e termos_historico foram atualizadas para origem = 'papel')
+alter table public.termos
+  add column if not exists origem text not null default 'digital' check (origem in ('digital','papel')),
+  add column if not exists arquivo text,
+  add column if not exists arquivo_nome text,
+  add column if not exists arquivo_hash text;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('termos','termos',false, 20971520, array['application/pdf','image/jpeg','image/png']) on conflict (id) do nothing;
+create policy termos_arq_ler on storage.objects for select to authenticated using (bucket_id='termos' and public.pode_ler());
+create policy termos_arq_ins on storage.objects for insert to authenticated with check (bucket_id='termos' and public.pode_editar());
+create policy termos_arq_del on storage.objects for delete to authenticated using (bucket_id='termos' and public.papel_atual()='admin');

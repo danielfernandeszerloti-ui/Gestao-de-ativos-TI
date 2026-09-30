@@ -44,7 +44,11 @@ Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Se
 2. O sistema gera um **link pessoal** (`assinar.html#<token>`) e um QR Code, com validade de 30 dias. Dá para enviar por WhatsApp ou e-mail, ou abrir no tablet na hora da entrega.
 3. O colaborador lê as cláusulas, confere os dados, assina com o dedo ou o mouse e marca "Li e estou de acordo".
 4. O banco registra a data e a hora, o IP, o aparelho e um **código de verificação SHA-256**. A partir daí, o termo não pode mais ser alterado. Ele só pode ser marcado como devolvido.
-5. Em **Termos**, ficha do equipamento ou Usuários, é possível exportar o **PDF** (layout do termo em papel, com a página de evidências), registrar a **devolução** ou cancelar um link pendente. A lista completa sai em Excel.
+5. **Termos em papel já assinados:** em **Termos → Importar termos digitalizados**, selecione vários PDFs, JPGs ou PNGs de uma vez.
+   - O sistema reconhece o patrimônio, o login e a data pelo nome do arquivo, como em `LAP066 - ketlyn.santos - 2025-03-10.pdf`.
+   - Os arquivos ficam em armazenamento privado.
+   - Para um termo só, use **Anexar termo digitalizado** na ficha do equipamento.
+6. Em **Termos**, ficha do equipamento ou Usuários, é possível exportar o **PDF** (layout do termo em papel, com a página de evidências), registrar a **devolução** ou cancelar um link pendente. A lista completa sai em Excel.
 
 ## Acesso e permissões
 

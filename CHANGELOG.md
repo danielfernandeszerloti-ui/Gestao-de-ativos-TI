@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.0] — 2026-09-30
+### Adicionado
+- **Termos em papel digitalizados**:
+  - importação em lote que reconhece o patrimônio, o login e a data pelo nome do arquivo;
+  - anexo individual na ficha do equipamento;
+  - armazenamento privado e download do arquivo original.
+- Exclusão de termos (somente administradores), registrada no histórico.
+
 ## [2.2.0] — 2026-09-30
 ### Adicionado
 - **Termo de responsabilidade digital**:

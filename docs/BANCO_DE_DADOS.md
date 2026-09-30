@@ -91,6 +91,8 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `expira_em` | Validade do link (30 dias, renovável) |
 | `assinado_em`, `assinatura` (PNG), `ip`, `user_agent`, `hash` | Evidências da assinatura |
 | `devolvido_em`, `devolvido_por`, `devolucao_obs` | Devolução |
+| `origem` | `digital` (assinado pelo link) ou `papel` (termo físico digitalizado, já nasce `assinado`) |
+| `arquivo`, `arquivo_nome`, `arquivo_hash` | Termo em papel: caminho no bucket privado `termos`, nome original e SHA-256 do arquivo |
 
 **Proteções (trigger `termos_proteger`)**
 - Todo termo nasce `pendente`.
