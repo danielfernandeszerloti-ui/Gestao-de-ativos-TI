@@ -227,10 +227,14 @@ begin
     perform public.onb_log(new.id, 'status', 'Status: ' || public.onb_status_label(old.status) || ' → ' || public.onb_status_label(new.status)
       || case when new.status = 'cancelado' and coalesce(new.cancelado_motivo,'') <> '' then ' (' || new.cancelado_motivo || ')' else '' end,
       old.status, new.status);
-    if new.status = 'cancelado' and old.status not in ('entregue','concluido') then
+    if new.status = 'cancelado' then
+      -- libera os ativos (reservados e também os já entregues que ainda estão com o colaborador)
       perform set_config('ga.cancelando','1',true);
-      update onboarding_ativos set removido = true where onboarding_id = new.id and not removido;   -- libera os ativos reservados
+      update onboarding_ativos set removido = true where onboarding_id = new.id and not removido;
       perform set_config('ga.cancelando','',true);
+      update termos set status = 'cancelado' where onboarding_id = new.id and status = 'pendente';
+      update termos set status = 'devolvido', devolucao_obs = 'Onboarding #' || new.numero || ' cancelado'
+       where onboarding_id = new.id and status = 'assinado';
     end if;
     perform public.onb_marcar(new.id, 'concluido', new.status = 'concluido');
   end if;
@@ -344,14 +348,28 @@ create trigger onb_ativo_antes before insert or update on public.onboarding_ativ
 
 create or replace function public.onb_ativo_depois() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare o onboardings;
 begin
   if tg_op = 'INSERT' or (old.removido and not new.removido) then
     perform public.onb_log(new.onboarding_id, 'ativo', public.onb_tipo_label(new.tipo) || ' ' || new.dispositivo || ' vinculado'
       || case when coalesce(new.descricao,'') <> '' then ' (' || new.descricao || ')' else '' end, null, new.ativo_id);
     perform public.onb_marcar(new.onboarding_id, 'ativos_vinculados', true);
   elsif new.removido and not old.removido then
-    update ativos set status = 'Disponível' where id = new.ativo_id and status = 'Reservado';
-    perform public.onb_log(new.onboarding_id, 'ativo', public.onb_tipo_label(new.tipo) || ' ' || new.dispositivo || ' desvinculado', new.ativo_id, null);
+    if old.entregue then   -- só acontece no cancelamento (ga.cancelando)
+      select * into o from onboardings where id = new.onboarding_id;
+      update ativos set status = 'Disponível', usuario = ''
+       where id = new.ativo_id and status = 'Em uso' and lower(coalesce(usuario,'')) = lower(coalesce(o.login,''));
+      if found then
+        insert into ativos_historico(ativo_id, dispositivo, campo, de, para, por)
+        values (new.ativo_id, new.dispositivo, 'devolucao', o.login, 'Devolvido: onboarding #' || o.numero || ' cancelado', coalesce(auth.jwt()->>'email',''));
+        perform public.onb_log(new.onboarding_id, 'ativo', public.onb_tipo_label(new.tipo) || ' ' || new.dispositivo || ' devolvido ao estoque (Disponível)', new.ativo_id, null);
+      else
+        perform public.onb_log(new.onboarding_id, 'ativo', public.onb_tipo_label(new.tipo) || ' ' || new.dispositivo || ' mantido: não está mais com o colaborador', new.ativo_id, null);
+      end if;
+    else
+      update ativos set status = 'Disponível' where id = new.ativo_id and status = 'Reservado';
+      perform public.onb_log(new.onboarding_id, 'ativo', public.onb_tipo_label(new.tipo) || ' ' || new.dispositivo || ' desvinculado', new.ativo_id, null);
+    end if;
     if not exists (select 1 from onboarding_ativos where onboarding_id = new.onboarding_id and not removido) then
       perform public.onb_marcar(new.onboarding_id, 'ativos_vinculados', false); end if;
   end if;
@@ -643,3 +661,4 @@ begin
   perform set_config('ga.assinando','',true);
   return json_build_object('assinado_em', v_quando, 'hash', v_hash);
 end $$;
+

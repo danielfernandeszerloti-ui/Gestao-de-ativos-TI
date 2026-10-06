@@ -1738,7 +1738,7 @@ function onbDetalheHTML(){
   if(ti&&o.status==="entregue") acts.push(`<button class="btn primary" data-act="oconcluir" data-id="${o.id}">${ICON("check")}Concluir</button>`);
   const statusSel = ti&&aberto ? `<label class="sel ostsel">${ICON("filter")}<select id="oStatusSel" data-id="${o.id}" aria-label="Alterar status">${OST_ABERTOS.map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${OST[s][0]}</option>`).join("")}</select></label>` : "";
   const menos=[];
-  if((ti&&aberto)||(isRH()&&o.status==="solicitado")) menos.push(`<button class="btn ghost" data-act="ocancelar" data-id="${o.id}">${ICON("x")}Cancelar solicitação</button>`);
+  if((ti&&(aberto||o.status==="entregue"))||(SB_ROLE==="admin"&&o.status==="concluido")||(isRH()&&o.status==="solicitado")) menos.push(`<button class="btn ghost" data-act="ocancelar" data-id="${o.id}">${ICON("x")}Cancelar solicitação</button>`);
   if((SB_ROLE==="admin"&&["entregue","concluido","cancelado"].includes(o.status))||(ti&&o.status==="cancelado")) menos.push(`<button class="btn ghost" data-act="oreabrir" data-id="${o.id}">${ICON("undo")}Reabrir</button>`);
 
   // resumo
@@ -1875,9 +1875,15 @@ async function submitOnb(form){
 
 // ---------- ações da TI ----------
 function onbCancelarModal(id){
-  const o=S.onb.find(x=>x.id===id); if(!o) return; const L=oLinks(id);
+  const o=S.onb.find(x=>x.id===id); if(!o) return; const L=oLinks(id), res=L.filter(l=>!l.entregue), ent=L.filter(l=>l.entregue);
+  const ts=S.termos.filter(t=>t.onboarding_id===id&&["pendente","assinado"].includes(t.status));
   openModal(`<h2>Cancelar solicitação #${o.numero}?</h2><form class="f" id="oCancForm" data-id="${o.id}">
-    <p style="margin:0">A solicitação de <b>${esc(o.nome)}</b> fica registrada como cancelada.${L.length?` Os ${L.length} ativos reservados voltam para <b>Disponível</b>.`:""}</p>
+    <p style="margin:0">A solicitação de <b>${esc(o.nome)}</b> fica registrada como cancelada, com o histórico preservado.</p>
+    ${L.length?`<ul style="margin:0;padding-left:20px">
+      ${res.length?`<li>${res.map(l=>esc(l.dispositivo)).join(", ")}: reservado${res.length>1?"s":""}, volta${res.length>1?"m":""} para <b>Disponível</b>.</li>`:""}
+      ${ent.length?`<li>${ent.map(l=>esc(l.dispositivo)).join(", ")}: já entregue${ent.length>1?"s":""} a ${esc(o.login||"colaborador")}, volta${ent.length>1?"m":""} para <b>Disponível</b> e sem usuário, com a devolução registrada no histórico do ativo. Se algum já estiver com outra pessoa, não é alterado.</li>`:""}
+      ${ts.length?`<li>Termo ${ts.some(t=>t.status==="assinado")?"assinado passa para <b>devolvido</b>":"pendente é <b>cancelado</b>"}.</li>`:""}
+    </ul>`:""}
     <label class="fld"><span>Motivo <i>*</i></span><textarea id="oc_mot" required maxlength="300" placeholder="Ex.: candidato desistiu da vaga"></textarea></label>
     <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="ocBtn">Cancelar solicitação</button></div></form>`,"sm");
 }

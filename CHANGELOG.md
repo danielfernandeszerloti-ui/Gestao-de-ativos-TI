@@ -2,6 +2,7 @@
 
 ## [2.4.1] — 2026-10-06
 ### Corrigido
+- Cancelar um onboarding que já tinha sido entregue deixava os equipamentos como "Em uso". Agora eles voltam para Disponível (se ainda estiverem com o colaborador), a devolução fica no histórico do ativo e os termos ligados são cancelados ou marcados como devolvidos.
 - O PDF de termos com vários equipamentos saía com o layout antigo, só com os patrimônios, quando o navegador guardava a versão anterior do gerador de PDF. Agora o código do app sempre vem da rede, e o cache fica só para as bibliotecas e imagens.
 
 ## [2.4.0] — 2026-10-06
