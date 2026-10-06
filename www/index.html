@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.5.0"></script>
+<script src="termo-pdf.js?v=2.6.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -389,6 +389,9 @@ tr.click{cursor:pointer}
 .cdet{margin:6px 0 0;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
 .cdet.muted{color:var(--faint);font-size:12.5px}
 .cdet.late{color:var(--danger);font-weight:700}
+.cdet.okd{color:var(--ok-fg);font-weight:700}
+.st-bad{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)}
+.apr{margin-bottom:18px}
 .cdet a{display:inline-flex;align-items:center;gap:6px;color:var(--accent-2);font-weight:700;text-decoration:none}
 .cdet a svg.i{width:15px;height:15px}
 .cacts{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;align-items:center}
@@ -614,7 +617,7 @@ const newId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() :
 function rowToItem(r){ const {specs,criado_em,atualizado_em,...rest}=r; return {...(specs||{}), ...rest, criadoEm:criado_em, atualizadoEm:atualizado_em}; }
 function itemToRow(d){ const row={specs:{}}; for(const [k,v] of Object.entries(d)){ if(k==="criadoEm"||k==="atualizadoEm"||v===undefined) continue; if(COLS.includes(k)) row[k]=v??""; else row.specs[k]=v; } return row; }
 async function sbLoad(which){
-  const jobs=[], inv=SB_ROLE!=="rh";   // o RH só enxerga o módulo de onboarding
+  const jobs=[], inv=!SO_ONB();   // RH e aprovador só enxergam o onboarding
   if((!which||which==="onb")) jobs.push(onbLoad());
   if((!which||which==="onbcfg")) jobs.push(onbLoadCfg());
   if(!inv){ await Promise.all(jobs); if(S.ready) refresh(); return; }
@@ -644,9 +647,9 @@ async function startSession(session){
   SB_ROLE = role || null;
   if (!SB_ROLE) return gate("negado");
   S.canWrite = SB_ROLE==="admin" || SB_ROLE==="editor";
-  if (SB_ROLE==="rh" && !["onboarding"].includes(S.view)) S.view="onboarding";
+  if (SO_ONB() && !viewsPermitidas().includes(S.view)) S.view=viewsPermitidas()[0];
   document.getElementById("logoutBtn").hidden=false;
-  setSync("ok", `${SB_USER.email} · ${({admin:"administrador",editor:"TI",rh:"RH",leitor:"somente leitura"})[SB_ROLE]||SB_ROLE}`);
+  setSync("ok", `${SB_USER.email} · ${({admin:"administrador",editor:"TI",rh:"RH",aprovador:"aprovador de compras",leitor:"somente leitura"})[SB_ROLE]||SB_ROLE}`);
   await sbLoad();
   if (!sbChannel){
     sbChannel = sb.channel("ga-dados")
@@ -730,7 +733,7 @@ async function updateAcessos(){
   if(!sb||SB_ROLE!=="admin"){ el.hidden=true; return; }
   const {data,error}=await sb.from("membros").select("*").order("email");
   if(error){ el.hidden=true; return; }
-  const papeis=[["admin","Administrador"],["editor","TI (editor)"],["rh","RH (só onboarding)"],["leitor","Somente leitura"]];
+  const papeis=[["admin","Administrador"],["editor","TI (editor)"],["rh","RH (só onboarding)"],["aprovador","Aprovador de compras"],["leitor","Somente leitura"]];
   el.hidden=false;
   el.innerHTML=`<h2>Acesso ao sistema</h2><p class="muted" style="margin:0;font-size:14px">Libere o e-mail aqui. Depois a pessoa usa “Primeiro acesso” na tela de entrada para criar a senha.</p>
   <form id="accForm"><input id="acc_email" type="email" required placeholder="email@empresa.com.br" aria-label="E-mail"><select id="acc_papel" aria-label="Permissão">${papeis.map(([v,t])=>`<option value="${v}" ${v==="editor"?"selected":""}>${t}</option>`).join("")}</select><button class="btn primary">${ICON("plus")}Liberar</button></form>
@@ -764,18 +767,20 @@ function nextName(t){
 function renderMenu(){
   const btn = ([k,l,ic,n]) => `<button class="nav ${S.view===k||(k==="onboarding"&&S.view==="onbconfig")?"on":""}" data-act="go" data-v="${k}">${ICON(ic)}<span>${l}</span>${n!=null&&S.ready?`<span class="n">${n}</span>`:""}</button>`;
   const nOnb = sb ? (oAlertas().length||S.onb.filter(o=>OST_ABERTOS.includes(o.status)).length||null) : null;
+  const nApr = sb ? (S.onbCompras.filter(c=>["solicitada","enviada"].includes(c.status)).length||null) : null;
   if (SB_ROLE==="rh"){ document.getElementById("menu").innerHTML = btn(["onboarding","Onboarding","onb",nOnb]); return; }
+  if (SB_ROLE==="aprovador"){ document.getElementById("menu").innerHTML = btn(["aprovacoes","Aprovações","cart",nApr]) + btn(["onboarding","Onboarding","onb",null]); return; }
   const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
   const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
-  const tools = [["onboarding","Onboarding","onb",nOnb],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
+  const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Aprovações","cart",nApr],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
   document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
-function go(v){ if(SB_ROLE==="rh") v="onboarding"; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
+function go(v){ if(SO_ONB() && !viewsPermitidas().includes(v)) v=viewsPermitidas()[0]; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
 
 function render(){
   renderMenu();
   const m=document.getElementById("main");
-  if (SB_ROLE==="rh" && S.view!=="onboarding") S.view="onboarding";
+  if (SO_ONB() && !viewsPermitidas().includes(S.view)) S.view=viewsPermitidas()[0];
   if (!S.ready){ m.innerHTML=`<div class="head"><div><h1>Carregando…</h1><div class="sub">Buscando os ativos cadastrados.</div></div></div>`; return; }
   if (S.view==="dashboard") m.innerHTML = dashboardHTML();
   else if (S.view==="usuarios"){ m.innerHTML = usersShell(); updateUsers(); updateAcessos(); }
@@ -784,6 +789,7 @@ function render(){
   else if (S.view==="termos"){ m.innerHTML = termosShell(); updateTermos(); }
   else if (S.view==="onboarding"){ if(OB.sel) m.innerHTML = onbDetalheHTML(); else { m.innerHTML = onbListShell(); updateOnbList(); } }
   else if (S.view==="onbconfig") m.innerHTML = onbCfgHTML();
+  else if (S.view==="aprovacoes") m.innerHTML = aprovHTML();
   else if (TYPES[S.view]){ m.innerHTML = listShell(S.view); updateTable(); }
   else { S.view="dashboard"; m.innerHTML = dashboardHTML(); }
 }
@@ -797,6 +803,7 @@ function refresh(){
   else if (S.view==="termos") updateTermos();
   else if (S.view==="onboarding"){ if(OB.sel) onbRedetalhe(); else updateOnbList(); }
   else if (S.view==="onbconfig") {}
+  else if (S.view==="aprovacoes") document.getElementById("main").innerHTML = aprovHTML();
   else updateTable();
   const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
 }
@@ -1539,6 +1546,9 @@ let OBP = null;       // seletor de ativo aberto
 let OIMP = null;      // importação do formulário
 const isTI = () => SB_ROLE==="admin" || SB_ROLE==="editor";
 const isRH = () => SB_ROLE==="rh";
+const podeAprovar = () => SB_ROLE==="admin" || SB_ROLE==="aprovador";
+const SO_ONB = () => SB_ROLE==="rh" || SB_ROLE==="aprovador";          // perfis sem acesso ao inventário
+const viewsPermitidas = () => SB_ROLE==="aprovador" ? ["aprovacoes","onboarding"] : SB_ROLE==="rh" ? ["onboarding"] : null;
 const podeSolicitar = () => ["admin","editor","rh"].includes(SB_ROLE);
 const veCPF = () => SB_ROLE==="rh" || SB_ROLE==="admin";
 const oPill = o => { const [l,c]=OST[o.status]||[o.status,"st-desc"]; return `<span class="pill ${c}">${esc(l)}</span>`; };
@@ -2197,6 +2207,9 @@ function onbClick(a, el, id){
     ocpf:()=>{ OB.cpfShow=!OB.cpfShow; onbRedetalhe(); },
     ocompra:()=>{ closeModal(); compraForm(id, null, el.dataset.p||""); }, cedit:()=>compraForm(null, el.dataset.cid), creceber:()=>compraReceber(el.dataset.cid),
     cemail:()=>compraEmail(id, el.dataset.cid), ccopy:()=>compraEnviar("copiar"), cmail:()=>compraEnviar("email"),
+    capr:()=>compraDecidir(el.dataset.cid,"aprovar"), crep:()=>compraDecidir(el.dataset.cid,"reprovar"), caprtodas:()=>compraAprovarTodas(id),
+    ccomprar:()=>compraComprar(el.dataset.cid), creenv:()=>compraStatus(el.dataset.cid,"solicitada","Compra enviada de novo para aprovação."),
+    ccanc:()=>compraCancelarModal(el.dataset.cid), ccancok:()=>compraStatus(el.dataset.cid,"cancelada","Compra cancelada."),
   };
   if(!H[a]) return false; H[a](); return true;
 }
@@ -2209,6 +2222,9 @@ function onbSubmit(f){
   if(f.id==="oComForm"){ onbComentar(f); return true; }
   if(f.id==="oCompraForm"){ submitCompra(f); return true; }
   if(f.id==="oRecForm"){ submitReceber(f); return true; }
+  if(f.id==="cDecForm"){ submitDecisao(f); return true; }
+  if(f.id==="cDecTodas"){ submitAprovarTodas(f); return true; }
+  if(f.id==="cCompForm"){ submitComprar(f); return true; }
   if(f.id==="cfgEmailForm"){ salvarCfg("compras_email", document.getElementById("cfg_email").value.trim()); return true; }
   if(f.classList.contains("ockadd")){ onbCheckAdd(f); return true; }
   if(f.classList.contains("ocfgadd")){ onbCfgAdd(f); return true; }
@@ -2240,8 +2256,9 @@ function onbInput(t){
 
 
 // ---------- compras (quando não há equipamento disponível) ----------
-const CST = { solicitada:["Solicitada","st-sol"], enviada:["Enviada para compra","st-uso"], aprovada:["Aprovada","st-prep"], comprada:["Comprada","st-res"],
-  recebida:["Recebida","st-ok"], reprovada:["Reprovada","st-desc"], cancelada:["Cancelada","st-desc"] };
+const CST = { solicitada:["Aguardando aprovação","st-man"], enviada:["Aguardando aprovação · e-mail enviado","st-man"], aprovada:["Aprovada","st-disp"], comprada:["Comprada","st-res"],
+  recebida:["Recebida","st-ok"], reprovada:["Reprovada","st-bad"], cancelada:["Cancelada","st-desc"] };
+const CPEND = ["solicitada","enviada"];
 const CABERTAS = ["solicitada","enviada","aprovada","comprada"];
 const cPill = c => { const [l,k]=CST[c.status]||[c.status,"st-desc"]; return `<span class="pill ${k}">${esc(l)}</span>`; };
 const oCompras = id => S.onbCompras.filter(c=>c.onboarding_id===id).sort((a,b)=>a.id-b.id);
@@ -2254,8 +2271,9 @@ function compraAlertas(o, out){
     const nome=`${c.quantidade}× ${c.item}`;
     if(c.previsao && diasAte(c.previsao)<0) out.push({o,n:1,c:"late",t:`Compra de ${nome} atrasada (previsão ${fDia(c.previsao)})`});
     else if(c.previsao && o.data_admissao && c.previsao>o.data_admissao) out.push({o,n:2,c:"warn",t:`Compra de ${nome} chega depois da admissão (previsão ${fDia(c.previsao)})`});
-    else if(c.status==="solicitada" && Date.now()-new Date(c.criado_em)>2*864e5) out.push({o,n:3,c:"warn",t:`Compra de ${nome} solicitada há mais de 2 dias e ainda não enviada`});
+    else if(CPEND.includes(c.status) && Date.now()-new Date(c.criado_em)>864e5) out.push({o,n:3,c:"warn",t:`Compra de ${nome} aguardando aprovação há ${Math.floor((Date.now()-new Date(c.criado_em))/864e5)} dia(s)`});
   });
+  oCompras(o.id).filter(c=>c.status==="reprovada").forEach(c=>out.push({o,n:3,c:"warn",t:`Compra de ${c.quantidade}× ${c.item} reprovada${c.decisao_obs?`: ${c.decisao_obs}`:""}`}));
 }
 function compraRow(c, o, ti){
   const aberta=CABERTAS.includes(c.status), url=linkSeguro(c.link), tot=c.valor_unit!=null?c.valor_unit*c.quantidade:null;
@@ -2266,19 +2284,33 @@ function compraRow(c, o, ti){
     ${det.length?`<p class="cdet ${atras?"late":""}">${esc(det.join(" · "))}${atras?" · atrasada":""}</p>`:""}
     ${url?`<p class="cdet"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${ICON("link")}Abrir link da loja</a></p>`:c.link?`<p class="cdet">${esc(c.link)}</p>`:""}
     ${c.obs?`<p class="cdet" style="white-space:pre-wrap">${esc(c.obs)}</p>`:""}
+    ${c.aprovado_por?`<p class="cdet ${c.status==="reprovada"?"late":"okd"}">${c.status==="reprovada"?"Reprovada":"Aprovada"} por ${esc(nomeDe(c.aprovado_por))} em ${esc(fDH(c.aprovado_em))}${c.decisao_obs?` — ${esc(c.decisao_obs)}`:""}</p>`:""}
     <p class="cdet muted">Solicitada por ${esc(nomeDe(c.criado_por))} em ${esc(fDH(c.criado_em))}${c.recebido_em?` · recebida em ${esc(fDH(c.recebido_em))}`:""}${c.status==="recebida"&&c.ativos.length?` · ${c.ativos.length} ${c.ativos.length===1?"ativo cadastrado":"ativos cadastrados"}`:""}</p>
-    ${ti&&aberta?`<div class="cacts"><button class="btn sm" data-act="cemail" data-id="${o.id}" data-cid="${c.id}">${ICON("mail")}E-mail</button><button class="btn sm" data-act="cedit" data-cid="${c.id}">${ICON("edit")}Editar</button><button class="btn sm primary" data-act="creceber" data-cid="${c.id}">${ICON("check")}Receber</button></div>`:""}
+    ${compraBotoes(c,o,ti)}
   </div>`;
+}
+function compraBotoes(c, o, ti){
+  const b=(act,ic,l,cls="")=>`<button class="btn sm ${cls}" data-act="${act}" data-id="${o.id}" data-cid="${c.id}">${ICON(ic)}${l}</button>`, x=[];
+  const pend=CPEND.includes(c.status);
+  if(pend && podeAprovar()) x.push(b("capr","check","Aprovar","primary"), b("crep","x","Reprovar"));
+  if(c.status==="aprovada" && (ti||podeAprovar())) x.push(b("ccomprar","cart","Registrar compra", ti?"":"primary"));
+  if(ti && ["aprovada","comprada"].includes(c.status)) x.push(b("creceber","check","Receber","primary"));
+  if(ti && c.status==="reprovada") x.push(b("creenv","undo","Reenviar para aprovação"));
+  if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("cedit","edit","Editar"));
+  if(ti && pend) x.push(b("cemail","mail","E-mail"));
+  if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("ccanc","x","Cancelar","ghost"));
+  return x.length?`<div class="cacts">${x.join("")}</div>`:"";
 }
 function compraPainel(o){
   const ti=isTI(), aberto=OST_ABERTOS.includes(o.status), cps=oCompras(o.id);
   if(!cps.length && !(ti&&aberto)) return "";
   const ab=cps.filter(c=>CABERTAS.includes(c.status)), tot=ab.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
   return `<section class="card panel"><div class="panelhead"><h2>Compras</h2><div class="rowacts">
-      ${ti&&ab.length?`<button class="btn sm" data-act="cemail" data-id="${o.id}" data-cid="">${ICON("mail")}Enviar pedido por e-mail</button>`:""}
+      ${podeAprovar()&&ab.filter(c=>CPEND.includes(c.status)).length>1?`<button class="btn sm primary" data-act="caprtodas" data-id="${o.id}">${ICON("check")}Aprovar todas</button>`:""}
       ${ti&&aberto?`<button class="btn sm" data-act="ocompra" data-id="${o.id}" data-p="">${ICON("plus")}Nova compra</button>`:""}</div></div>
     ${cps.length?cps.map(c=>compraRow(c,o,ti)).join(""):`<p class="muted" style="margin:0">Nenhuma compra. Quando não houver equipamento disponível no inventário, use “Solicitar compra” no item.</p>`}
     ${tot?`<p class="muted" style="margin:6px 0 0;font-size:14px">Total estimado em aberto: <b>${esc(brl(tot))}</b></p>`:""}
+    ${ti&&ab.some(c=>CPEND.includes(c.status))?`<p class="muted" style="margin:6px 0 0;font-size:13px">As compras aguardando aprovação aparecem para o aprovador em <b>Aprovações</b>. Use “E-mail” só se precisar avisar alguém de fora do sistema.</p>`:""}
   </section>`;
 }
 function compraForm(oid, cid, pedido){
@@ -2298,11 +2330,12 @@ function compraForm(oid, cid, pedido){
       <label class="fld"><span>Valor unitário (R$)</span><input name="valor_unit" inputmode="decimal" maxlength="15" value="${d.valor_unit!=null?String(d.valor_unit).replace(".",","):""}" placeholder="0,00"></label>
       <label class="fld wide"><span>Justificativa / observações</span><textarea name="obs" maxlength="1000" placeholder="Ex.: sem estoque de mouse; precisa chegar antes da admissão">${esc(d.obs||"")}</textarea></label>
     </fieldset>
-    ${c?`<fieldset><legend class="l">Andamento</legend>
-      <label class="fld"><span>Status</span><select name="status">${stOps.map(s=>`<option value="${s}" ${c.status===s?"selected":""}>${CST[s][0]}</option>`).join("")}</select></label>
+    ${c&&c.status==="comprada"?`<fieldset><legend class="l">Compra</legend>
       <label class="fld"><span>Nº do pedido</span><input name="pedido" maxlength="60" value="${esc(c.pedido||"")}"></label>
       <label class="fld"><span>Previsão de entrega</span><input name="previsao" type="date" value="${esc(c.previsao||"")}"></label>
-    </fieldset>`:`<p class="muted" style="margin:0;font-size:13px">Depois de salvar, use “Enviar pedido por e-mail” para mandar o link a quem compra. Quando chegar, use “Receber”: o equipamento entra no inventário já reservado para este colaborador.</p>`}
+    </fieldset>`:""}
+    ${c&&c.status==="aprovada"?`<div class="warnnote">Esta compra já foi aprovada. Mudar item, quantidade, valor, link ou fornecedor faz ela voltar para aprovação.</div>`:""}
+    ${!c?`<p class="muted" style="margin:0;font-size:13px">A compra vai para o aprovador em <b>Aprovações</b>. Depois de aprovada, registre a compra e, quando chegar, use “Receber”: o equipamento entra no inventário já reservado para este colaborador.</p>`:""}
     <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="ccBtn">${c?"Salvar":"Solicitar compra"}</button></div>
   </form>`,"md");
 }
@@ -2312,11 +2345,13 @@ async function submitCompra(f){
   if(vs&&(isNaN(valor)||valor<0)){ toast("Valor inválido."); return; }
   const link=g("link"); if(link&&!linkSeguro(link)){ toast("O link precisa começar com http:// ou https://"); return; }
   const row={item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),tipo_ativo:g("tipo_ativo")||null,subtipo:g("subtipo")||null,link,fornecedor:g("fornecedor"),valor_unit:valor,obs:g("obs")};
-  if(cid){ row.status=g("status"); row.pedido=g("pedido"); row.previsao=g("previsao")||null; }
+  if(cid && f.querySelector("[name=pedido]")){ row.pedido=g("pedido"); row.previsao=g("previsao")||null; }
   const btn=document.getElementById("ccBtn"); btn.disabled=true;
   const q=cid?sb.from("onboarding_compras").update(row).eq("id",+cid):sb.from("onboarding_compras").insert({...row,onboarding_id:f.dataset.id});
   const {error}=await q; if(error){ btn.disabled=false; onbErr(error); return; }
-  closeModal(); await onbReload(); toast(cid?"Compra atualizada.":"Compra solicitada.");
+  closeModal(); await onbReload();
+  const cc=cid?S.onbCompras.find(x=>x.id===+cid):null;
+  toast(!cid?"Compra enviada para aprovação.":cc&&cc.status==="solicitada"?"Compra atualizada e enviada de novo para aprovação.":"Compra atualizada.");
 }
 function compraTexto(o, lista){
   const L=[`Olá,`,``,`Solicito a compra ${lista.length>1?"dos itens abaixo":"do item abaixo"} para o onboarding de ${o.nome}${o.cargo?` (${o.cargo}${o.departamento?`, ${o.departamento}`:""})`:o.departamento?` (${o.departamento})`:""}${o.unidade?`, unidade ${o.unidade}`:""}${o.data_admissao?`, com admissão em ${fDia(o.data_admissao)}`:""}.`,``];
@@ -2325,21 +2360,22 @@ function compraTexto(o, lista){
     L.push(`${i+1}. ${c.quantidade}× ${c.item}${c.fornecedor?` — ${c.fornecedor}`:""}${c.valor_unit!=null?` — ${brl(c.valor_unit)}/un.${c.quantidade>1?` (total ${brl(t)})`:""}`:""}`);
     if(c.link) L.push(`   Link: ${c.link}`); if(c.obs) L.push(`   Obs.: ${c.obs}`); });
   if(tot) L.push(``,`Total estimado: ${brl(tot)}`);
-  L.push(``,`Acompanhamento: onboarding #${o.numero} — ${APP_URL}#onb-${o.numero}`,``,`Obrigado,`,meuNome());
+  L.push(``,`Para aprovar ou reprovar no sistema: ${APP_URL}#aprovacoes`,`Onboarding #${o.numero}: ${APP_URL}#onb-${o.numero}`,``,`Obrigado,`,meuNome());
   return L.join("\n");
 }
 function compraEmail(oid, cid){
   const o=S.onb.find(x=>x.id===oid); if(!o) return;
-  const lista=oCompras(oid).filter(c=>CABERTAS.includes(c.status)); if(!lista.length){ toast("Não há compras em aberto."); return; }
+  const lista=oCompras(oid).filter(c=>CPEND.includes(c.status)); if(!lista.length){ toast("Não há compras aguardando aprovação."); return; }
   let para=S.cfg.compras_email||""; if(!para){ try{ para=localStorage.getItem("ga-compras-para")||""; }catch(e){} }
   CEM={oid, sel:new Set(cid?[+cid]:lista.filter(c=>["solicitada","enviada"].includes(c.status)).map(c=>c.id))};
   if(!CEM.sel.size) lista.forEach(c=>CEM.sel.add(c.id));
-  openModal(`<h2>Enviar pedido de compra</h2><div class="msg">
+  openModal(`<h2>Enviar pedido por e-mail</h2><div class="msg">
+    <p class="note" style="margin:0 0 12px">O aprovador já vê estas compras em <b>Aprovações</b>. Use o e-mail só como exceção, por exemplo para quem ainda não tem acesso ao sistema.</p>
     <div class="ochecks" style="margin-bottom:12px">${lista.map(c=>`<label class="check"><input type="checkbox" class="cesel" value="${c.id}" ${CEM.sel.has(c.id)?"checked":""}><span>${c.quantidade}× ${esc(c.item)} · ${esc(CST[c.status][0])}</span></label>`).join("")}</div>
     <label class="fld"><span>Para</span><input id="ce_para" type="text" value="${esc(para)}" placeholder="compras@grupozerbini.com.br"></label>
     <label class="fld" style="margin-top:10px"><span>Assunto</span><input id="ce_ass" value="${esc(`Solicitação de compra · Onboarding #${o.numero} · ${o.nome}${o.data_admissao?` (admissão ${fDia(o.data_admissao)})`:""}`)}"></label>
     <label class="fld" style="margin-top:10px"><span>Mensagem</span><textarea id="ce_txt" rows="12" style="min-height:220px;font-family:ui-monospace,Consolas,monospace;font-size:13px"></textarea></label>
-    <p class="muted" style="margin:10px 0 0;font-size:13px">“Abrir no e-mail” abre seu programa de e-mail com tudo preenchido. Os itens marcados passam para <b>Enviada para compra</b> e o envio fica no histórico.</p>
+    <p class="muted" style="margin:10px 0 0;font-size:13px">“Abrir no e-mail” abre seu programa de e-mail com tudo preenchido. O envio fica registrado na compra e no histórico.</p>
   </div><div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn" data-act="ccopy">${ICON("copy")}Copiar texto</button><button class="btn primary" data-act="cmail">${ICON("mail")}Abrir no e-mail</button></div>`,"md");
   compraTextoAtualiza();
 }
@@ -2387,6 +2423,85 @@ function compraReceber(cid){
   </form>`,"md");
   compraRecLinhas();
 }
+
+function compraDecidir(cid, tipo){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const o=S.onb.find(x=>x.id===c.onboarding_id);
+  const tot=c.valor_unit!=null?c.valor_unit*c.quantidade:null;
+  openModal(`<h2>${tipo==="aprovar"?"Aprovar":"Reprovar"} compra</h2><form class="f" id="cDecForm" data-cid="${c.id}" data-tipo="${tipo}">
+    <div class="oeq" style="margin:0"><div class="oeqh"><span>${c.quantidade}× ${esc(c.item)}</span>${tot!=null?`<span>${esc(brl(tot))}</span>`:""}</div>
+      <p class="cdet">${esc([c.fornecedor, c.valor_unit!=null?brl(c.valor_unit)+"/un.":""].filter(Boolean).join(" · ")||"Sem fornecedor ou valor informado")}</p>
+      ${linkSeguro(c.link)?`<p class="cdet"><a href="${esc(linkSeguro(c.link))}" target="_blank" rel="noopener noreferrer">${ICON("link")}Abrir link da loja</a></p>`:""}
+      ${c.obs?`<p class="cdet" style="white-space:pre-wrap">${esc(c.obs)}</p>`:""}
+      <p class="cdet muted">Para ${esc(o?o.nome:"")}${o&&o.data_admissao?` · admissão ${esc(fDia(o.data_admissao))}`:""} · pedido por ${esc(nomeDe(c.criado_por))}</p></div>
+    <label class="fld"><span>${tipo==="aprovar"?"Observação (opcional)":"Motivo da reprovação <i>*</i>"}</span><textarea id="cd_obs" maxlength="500" ${tipo==="aprovar"?"":"required"} placeholder="${tipo==="aprovar"?"Ex.: pode comprar no cartão corporativo":"Ex.: usar o equipamento disponível na filial"}"></textarea></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn ${tipo==="aprovar"?"primary":"danger"}" id="cdBtn">${tipo==="aprovar"?ICON("check")+"Aprovar":ICON("x")+"Reprovar"}</button></div>
+  </form>`,"sm");
+}
+async function submitDecisao(f){
+  const tipo=f.dataset.tipo, obs=(document.getElementById("cd_obs").value||"").trim();
+  if(tipo==="reprovar"&&!obs){ toast("Informe o motivo da reprovação."); return; }
+  const btn=document.getElementById("cdBtn"); btn.disabled=true;
+  const {error}=await sb.from("onboarding_compras").update({status:tipo==="aprovar"?"aprovada":"reprovada",decisao_obs:obs}).eq("id",+f.dataset.cid);
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await onbReload(); if(S.view==="aprovacoes") render(); toast(tipo==="aprovar"?"Compra aprovada.":"Compra reprovada.");
+}
+function compraAprovarTodas(oid){
+  const o=S.onb.find(x=>x.id===oid), ps=oCompras(oid).filter(c=>CPEND.includes(c.status)); if(!ps.length) return;
+  const tot=ps.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
+  openModal(`<h2>Aprovar ${ps.length} compras?</h2><form class="f" id="cDecTodas" data-id="${oid}">
+    <ul class="tlist">${ps.map(c=>`<li><b>${c.quantidade}× ${esc(c.item)}</b><span class="who muted">${esc([c.fornecedor,c.valor_unit!=null?brl(c.valor_unit*c.quantidade):""].filter(Boolean).join(" · "))}</span></li>`).join("")}</ul>
+    ${tot?`<p style="margin:0">Total: <b>${esc(brl(tot))}</b> · para ${esc(o.nome)}</p>`:""}
+    <label class="fld"><span>Observação (opcional)</span><textarea id="cd_obs" maxlength="500"></textarea></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn primary" id="cdBtn">${ICON("check")}Aprovar todas</button></div></form>`,"sm");
+}
+async function submitAprovarTodas(f){
+  const ids=oCompras(f.dataset.id).filter(c=>CPEND.includes(c.status)).map(c=>c.id), obs=(document.getElementById("cd_obs").value||"").trim();
+  const btn=document.getElementById("cdBtn"); btn.disabled=true;
+  const {error}=await sb.from("onboarding_compras").update({status:"aprovada",decisao_obs:obs}).in("id",ids);
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await onbReload(); if(S.view==="aprovacoes") render(); toast(`${ids.length} compras aprovadas.`);
+}
+function compraComprar(cid){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return;
+  openModal(`<h2>Registrar compra: ${c.quantidade}× ${esc(c.item)}</h2><form class="f" id="cCompForm" data-cid="${c.id}">
+    <fieldset><label class="fld"><span>Nº do pedido / NF</span><input id="cc_ped" maxlength="60"></label>
+    <label class="fld"><span>Previsão de entrega</span><input id="cc_prev" type="date"></label></fieldset>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn primary" id="ccpBtn">${ICON("cart")}Marcar como comprada</button></div></form>`,"sm");
+}
+async function submitComprar(f){
+  const btn=document.getElementById("ccpBtn"); btn.disabled=true;
+  const {error}=await sb.from("onboarding_compras").update({status:"comprada",pedido:document.getElementById("cc_ped").value.trim(),previsao:document.getElementById("cc_prev").value||null}).eq("id",+f.dataset.cid);
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await onbReload(); if(S.view==="aprovacoes") render(); toast("Compra registrada.");
+}
+async function compraStatus(cid, st, msg){
+  const {error}=await sb.from("onboarding_compras").update({status:st}).eq("id",+cid); if(error){ onbErr(error); return; }
+  closeModal(); await onbReload(); toast(msg);
+}
+function compraCancelarModal(cid){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return;
+  openModal(`<h2>Cancelar compra?</h2><div class="msg"><p>${c.quantidade}× <b>${esc(c.item)}</b> deixa de ser comprado${["aprovada","comprada"].includes(c.status)?". Se o pedido já foi feito na loja, cancele lá também":""}. O registro continua no histórico.</p></div>
+  <div class="foot"><button class="btn ghost" data-act="close">Voltar</button><button class="btn danger" data-act="ccancok" data-cid="${c.id}">Cancelar compra</button></div>`,"sm");
+}
+function aprovHTML(){
+  const pend=S.onbCompras.filter(c=>CPEND.includes(c.status)), grupos=new Map();
+  pend.forEach(c=>{ if(!grupos.has(c.onboarding_id)) grupos.set(c.onboarding_id,[]); grupos.get(c.onboarding_id).push(c); });
+  const lista=[...grupos].map(([oid,cs])=>({o:S.onb.find(o=>o.id===oid),cs})).filter(g=>g.o).sort((a,b)=>String(a.o.data_admissao||"9").localeCompare(String(b.o.data_admissao||"9")));
+  const totGeral=pend.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
+  const dec=S.onbCompras.filter(c=>c.aprovado_por&&!CPEND.includes(c.status)).sort((a,b)=>String(b.aprovado_em).localeCompare(String(a.aprovado_em))).slice(0,15);
+  const card=({o,cs})=>{ const pz=oPrazo(o), tot=cs.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
+    return `<section class="card panel apr"><div class="panelhead"><div><h2 style="margin:0">${esc(o.nome)} <span class="muted" style="font-weight:600">#${o.numero}</span></h2>
+        <div class="muted" style="font-size:14px">${esc([o.cargo,o.departamento,o.unidade].filter(Boolean).join(" · ")||"—")} · admissão ${esc(fDia(o.data_admissao)||"—")} <span class="pz ${pz.c}">(${esc(pz.t)})</span></div></div>
+        <div class="rowacts"><button class="btn sm" data-act="oopen" data-id="${o.id}">${ICON("eye")}Ver onboarding</button>${podeAprovar()&&cs.length>1?`<button class="btn sm primary" data-act="caprtodas" data-id="${o.id}">${ICON("check")}Aprovar todas</button>`:""}</div></div>
+      ${cs.map(c=>compraRow(c,o,false)).join("")}
+      ${tot?`<p style="margin:6px 0 0;font-size:14px">Total: <b>${esc(brl(tot))}</b></p>`:""}</section>`; };
+  return `<div class="head"><div><h1>Aprovações de compra</h1><div class="sub">${pend.length?`${pend.length} ${pend.length===1?"compra aguardando":"compras aguardando"} aprovação${totGeral?` · ${brl(totGeral)}`:""}`:"Nenhuma compra aguardando aprovação"}</div></div></div>
+  ${!podeAprovar()?`<p class="note" style="margin:0 0 18px">Só o aprovador de compras e os administradores podem aprovar. Aqui você acompanha o que está pendente.</p>`:""}
+  ${lista.length?lista.map(card).join(""):`<div class="card empty"><b>Tudo em dia</b>Quando a TI pedir a compra de um equipamento para um novo colaborador, ela aparece aqui para você aprovar.</div>`}
+  ${dec.length?`<section class="card panel" style="margin-top:20px"><h2>Decisões recentes</h2><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Decisão</th><th>Por</th></tr></thead><tbody>
+    ${dec.map(c=>{ const o=S.onb.find(o=>o.id===c.onboarding_id)||{}; return `<tr class="click" data-act="oopen" data-id="${o.id||""}"><td>${esc(fDH(c.aprovado_em))}</td><td class="dev">${esc(o.nome||"—")}</td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}${c.decisao_obs?`<br><span class="muted" style="font-size:13px">${esc(c.decisao_obs)}</span>`:""}</td><td>${esc(nomeDe(c.aprovado_por))}</td></tr>`; }).join("")}
+  </tbody></table></div></section>`:""}`;
+}
 function compraRecLinhas(){
   const f=document.getElementById("oRecForm"); if(!f) return; const c=S.onbCompras.find(x=>x.id===+f.dataset.cid); const t=document.getElementById("cr_tipo").value;
   const nomes=t?nextNames(t,c.quantidade):Array(c.quantidade).fill("");
@@ -2432,7 +2547,8 @@ function openFromHash(){
   const h = decodeURIComponent((location.hash||"").slice(1)).trim(); if(!h) return;
   const mo = h.match(/^onb-(\d+)$/i);
   if (mo){ const o=S.onb.find(o=>String(o.numero)===mo[1]); if(o){ if(OB.sel!==o.id) onbAbrir(o.id); } else toast(`Solicitação #${mo[1]} não encontrada.`); return; }
-  if (SB_ROLE==="rh") return;
+  if (/^aprovac/i.test(h)){ go("aprovacoes"); return; }
+  if (SO_ONB()) return;
   const x = S.items.find(i=>norm(i.dispositivo)===norm(h));
   if (x){ if (S.view!==x.tipo){ S.view=x.tipo; render(); } viewItem(x.id); }
   else if (/^[A-Za-z]{2,5}\d+$/.test(h)) toast(`${h.toUpperCase()} ainda não está cadastrado.`);
@@ -2812,7 +2928,7 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
 
-try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding","aprovacoes"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
 if (!S.view || S.view==="") S.view="dashboard";
 render();
 initCaps();

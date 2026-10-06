@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.0] — 2026-10-06
+### Adicionado
+- **Aprovação de compras pelo sistema**:
+  - novo perfil **Aprovador de compras**, que acessa a tela **Aprovações** e o onboarding, mas não vê o inventário;
+  - aprovar (com observação) e reprovar (com motivo obrigatório), uma compra por vez ou todas da mesma solicitação;
+  - o aprovador também pode registrar a compra, com nº do pedido e previsão.
+### Alterado
+- A TI não aprova as próprias compras.
+- Mudar item, quantidade, valor, link ou fornecedor de uma compra aprovada a devolve para aprovação.
+- "Receber" só é liberado para compras aprovadas.
+- O e-mail passa a ser exceção e traz o link da tela de Aprovações.
+
 ## [2.5.0] — 2026-10-06
 ### Adicionado
 - **Solicitação de compra no onboarding**, para quando não há equipamento disponível:

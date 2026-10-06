@@ -58,7 +58,8 @@ Também há:
 - **Alertas:** admissão hoje, amanhã ou em até 3 dias; atrasados; sem responsável da TI há mais de 1 dia; e entregues aguardando aceite há mais de 2 dias. Os alertas aparecem no Dashboard e no número do menu.
 - **Histórico:** cada mudança de status, item do checklist, vínculo de ativo, termo e comentário é gravada pelo banco, com autor, perfil e data. Ninguém consegue editar nem apagar o histórico pela aplicação.
 - **Compras:** quando não há equipamento disponível, “Solicitar compra” registra item, link, fornecedor e valor. Depois:
-  - **Enviar pedido por e-mail** abre o e-mail pronto para quem compra; o destinatário padrão fica em Configurar;
+  - o **Aprovador de compras** aprova ou reprova (com motivo) na tela **Aprovações**. A TI não aprova as próprias compras, e alterar uma compra aprovada a devolve para aprovação;
+  - o e-mail é exceção: **E-mail** monta a mensagem com o link de Aprovações; o destinatário padrão fica em Configurar;
   - a TI acompanha o andamento até a chegada;
   - **Receber** cadastra os equipamentos no inventário já reservados para o colaborador.
   Pedir uma compra coloca a solicitação em "Aguardando equipamentos". Se o onboarding for cancelado, as compras que ainda não foram aprovadas são canceladas.
@@ -88,6 +89,7 @@ O acesso é por e-mail e senha (Supabase Auth). Só entra quem estiver na tabela
 | Administrador | Tudo, inclusive liberar e remover acessos (em **Usuários → Acesso ao sistema**), configurar o onboarding e reabrir solicitações entregues |
 | TI (editor) | Cadastrar, editar, excluir, importar e fazer inventário. No onboarding: assumir, mudar status, checklist, vincular ativos, termo e entrega |
 | RH | Só o módulo de Onboarding: criar solicitações, editar os dados do colaborador enquanto a solicitação está aberta, consultar status e histórico, comentar. Não vê nem altera o inventário |
+| Aprovador de compras | Tela **Aprovações** e consulta do onboarding: aprova ou reprova compras e registra a compra (pedido e previsão). Não vê o inventário |
 | Somente leitura | Consultar, exportar e gerar etiquetas |
 
 **Para dar acesso a alguém:**

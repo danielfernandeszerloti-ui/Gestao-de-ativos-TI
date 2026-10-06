@@ -26,7 +26,7 @@ A chave pública não dá acesso a nada sozinha. Todas as tabelas têm **RLS (Ro
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `email` | text (PK) | E-mail de login |
-| `papel` | text | `admin` · `editor` (TI) · `rh` · `leitor` |
+| `papel` | text | `admin` · `editor` (TI) · `rh` · `aprovador` · `leitor` |
 
 ### `ativos`
 
@@ -136,7 +136,8 @@ Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_prep
   - cria ou atualiza o usuário;
   - muda o status da solicitação.
 - Ao assinar um termo ligado ao onboarding (`termos.onboarding_id`), o sistema marca o checklist. Se a solicitação estiver `entregue` e sem pendências, ela é concluída.
-- `onboarding_compra_receber(p_id, p_tipo, p_ativos)` cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função.
+- Compras: só `aprovador` e `admin` aprovam ou reprovam; reprovar exige motivo (`decisao_obs`); `comprada` só a partir de `aprovada`; mudar item, quantidade, valor, link ou fornecedor de uma compra aprovada volta para `solicitada`. O aprovador não altera os dados do pedido.
+- `onboarding_compra_receber(p_id, p_tipo, p_ativos)` (exige compra aprovada) cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função.
 - Nada é excluído: não há política de DELETE nas tabelas do módulo.
 
 `termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.
