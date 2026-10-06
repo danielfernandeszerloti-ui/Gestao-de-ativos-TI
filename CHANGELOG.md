@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.4.1] — 2026-10-06
+### Corrigido
+- O PDF de termos com vários equipamentos saía com o layout antigo, só com os patrimônios, quando o navegador guardava a versão anterior do gerador de PDF. Agora o código do app sempre vem da rede, e o cache fica só para as bibliotecas e imagens.
+
 ## [2.4.0] — 2026-10-06
 ### Adicionado
 - **Onboarding de novos colaboradores**, integrado aos ativos existentes:
