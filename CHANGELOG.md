@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.5.0] — 2026-10-06
+### Adicionado
+- **Solicitação de compra no onboarding**, para quando não há equipamento disponível:
+  - item, quantidade, link da loja, fornecedor, valor e justificativa;
+  - envio do pedido por e-mail (texto pronto com todos os itens, links e total) ou cópia do texto;
+  - andamento: solicitada → enviada → aprovada → comprada → recebida, com nº do pedido e previsão de entrega;
+  - **Receber**: cadastra os equipamentos no inventário e já os reserva para o colaborador;
+  - alertas de compra atrasada, compra que chega depois da admissão e compra não enviada;
+  - painel “Compras em andamento” e e-mail de compras padrão em Configurar.
+
 ## [2.4.1] — 2026-10-06
 ### Corrigido
 - Cancelar um onboarding que já tinha sido entregue deixava os equipamentos como "Em uso". Agora eles voltam para Disponível (se ainda estiverem com o colaborador), a devolução fica no histórico do ativo e os termos ligados são cancelados ou marcados como devolvidos.

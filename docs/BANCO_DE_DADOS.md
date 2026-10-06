@@ -117,6 +117,8 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `onboarding_checklist` | Itens do checklist da solicitação, com quem marcou e quando. Itens com `chave` são marcados pelo sistema |
 | `onboarding_ativos` | Ativos vinculados. `removido = true` desfaz o vínculo sem apagar o registro |
 | `onboarding_eventos` | Histórico imutável: só as funções do banco inserem |
+| `onboarding_compras` | Compras de equipamento: item, quantidade, link, fornecedor, valor, `status` (`solicitada` → `enviada` → `aprovada` → `comprada` → `recebida`, ou `reprovada`/`cancelada`), pedido, previsão e os ativos cadastrados no recebimento |
+| `ga_config` | Configurações gerais (`compras_email`). Leitura para membros, gravação só `admin` |
 | `onboarding_opcoes` | Opções do formulário. Para equipamentos, há também a categoria do inventário e o subtipo |
 | `onboarding_checklist_modelo` | Modelo do checklist. `condicao` lista trechos separados por `\|` que precisam aparecer no pedido |
 
@@ -134,6 +136,7 @@ Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_prep
   - cria ou atualiza o usuário;
   - muda o status da solicitação.
 - Ao assinar um termo ligado ao onboarding (`termos.onboarding_id`), o sistema marca o checklist. Se a solicitação estiver `entregue` e sem pendências, ela é concluída.
+- `onboarding_compra_receber(p_id, p_tipo, p_ativos)` cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função.
 - Nada é excluído: não há política de DELETE nas tabelas do módulo.
 
 `termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.

@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.4.1"></script>
+<script src="termo-pdf.js?v=2.5.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -386,6 +386,14 @@ tr.click{cursor:pointer}
 .cfgt input[type=text],.cfgt input[type=number],.cfgt select{border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--surface);width:100%;min-width:0}
 .cfgt input[type=number]{width:72px}
 .cfgt td:has(.auto){display:flex;align-items:center}
+.cdet{margin:6px 0 0;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+.cdet.muted{color:var(--faint);font-size:12.5px}
+.cdet.late{color:var(--danger);font-weight:700}
+.cdet a{display:inline-flex;align-items:center;gap:6px;color:var(--accent-2);font-weight:700;text-decoration:none}
+.cdet a svg.i{width:15px;height:15px}
+.cacts{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;align-items:center}
+.cacts .linkbtn{display:inline-flex;align-items:center;gap:6px;padding:4px 0}
+.cacts .linkbtn svg.i{width:16px;height:16px}
 .resnote{background:var(--res-bg);color:var(--res-fg);border:1px solid var(--res-bd);border-radius:10px;padding:10px 12px;font-size:14px}
 @media (max-width:1100px){.odet{grid-template-columns:1fr}}
 @media (max-width:600px){.linkbox{grid-template-columns:1fr}.linkbox .qr{max-width:210px}}
@@ -467,6 +475,8 @@ tr.click{cursor:pointer}
   <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
   <symbol id="i-onb" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.5L22 8H6"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
 </svg>
 
@@ -524,7 +534,7 @@ const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -647,6 +657,7 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"onboardings"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_ativos"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_checklist"},()=>sbDeb("onb"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_compras"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"onboarding_eventos"},p=>{ if(OB.sel && p.new && p.new.onboarding_id===OB.sel) sbDeb("onbev"); })
       .subscribe();
   }
@@ -873,7 +884,7 @@ function openModal(html, size=""){
   const f=r.querySelector(".mbody input:not([type=hidden]),.mbody select,.mbody textarea")||r.querySelector(".close");
   if(f) setTimeout(()=>f.focus({preventScroll:true}),30);
 }
-function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; IMPT=[]; IMPT_ATIVO=null; OBP=null; OIMP=null; }
+function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; IMPT=[]; IMPT_ATIVO=null; OBP=null; OIMP=null; CEM=null; }
 
 function viewItem(id){
   const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
@@ -1563,6 +1574,7 @@ function casar(o){
     const l=L.find(l=>!usados.has(l.id) && l.tipo===r.op.tipo_ativo && (!r.op.subtipo || norm(l.descricao).startsWith(norm(r.op.subtipo))));
     if(l){ r.links=[l]; usados.add(l.id); } });
   ped.forEach(r=>{ if(r.outro && !r.links.length){ const l=L.find(l=>!usados.has(l.id)); if(l){ r.links=[l]; usados.add(l.id); } } });
+  ped.forEach(r=>{ if(!r.links.length) r.compra=oCompras(o.id).find(c=>CABERTAS.includes(c.status)&&norm(c.item)===norm(r.p)); });
   return {ped, extras:L.filter(l=>!usados.has(l.id))};
 }
 function oPrazo(o){
@@ -1587,6 +1599,7 @@ function oAlertas(){
       if(!o.responsavel_ti && h>24) out.push({o,n:3,c:"warn",t:`Sem responsável da TI há ${Math.floor(h/24)} ${Math.floor(h/24)===1?"dia":"dias"}`});
     } else if(o.status==="entregue" && o.entregue_em && agora-new Date(o.entregue_em)>2*864e5)
       out.push({o,n:4,c:"warn",t:"Entregue há mais de 2 dias, aguardando aceite do termo"});
+    compraAlertas(o, out);
   });
   return out.sort((a,b)=>a.n-b.n || String(a.o.data_admissao||"").localeCompare(String(b.o.data_admissao||"")));
 }
@@ -1603,17 +1616,19 @@ async function pageAll(build){
 }
 async function onbLoad(){
   try{
-    const [o,a,c]=await Promise.all([
+    const [o,a,c,cp]=await Promise.all([
       pageAll(()=>sb.from("onboardings").select("*").order("numero",{ascending:false})),
       pageAll(()=>sb.from("onboarding_ativos").select("*").order("id")),
-      pageAll(()=>sb.from("onboarding_checklist").select("*").order("id"))]);
-    S.onb=o; S.onbAtivos=a; S.onbCheck=c;
+      pageAll(()=>sb.from("onboarding_checklist").select("*").order("id")),
+      pageAll(()=>sb.from("onboarding_compras").select("*").order("id"))]);
+    S.onb=o; S.onbAtivos=a; S.onbCheck=c; S.onbCompras=cp;
   }catch(e){ console.error(e); }
 }
 async function onbLoadCfg(){
   const [p,m]=await Promise.all([sb.from("onboarding_opcoes").select("*").order("grupo").order("ordem").order("id"),
     sb.from("onboarding_checklist_modelo").select("*").order("grupo").order("ordem").order("id")]);
   if(!p.error) S.onbOpc=p.data||[]; if(!m.error) S.onbMod=m.data||[];
+  const g=await sb.from("ga_config").select("*"); if(!g.error) S.cfg=Object.fromEntries((g.data||[]).map(r=>[r.chave,r.valor]));
 }
 async function onbLoadEv(id){
   const {data,error}=await sb.from("onboarding_eventos").select("*").eq("onboarding_id",id).order("em",{ascending:false}).order("id",{ascending:false}).limit(500);
@@ -1647,6 +1662,7 @@ function onbListShell(){
     </div></div>
   <div class="otiles" id="otiles"></div>
   <section class="card panel oalert" id="oalert" hidden></section>
+  <section class="card panel oalert" id="ocompras" hidden></section>
   <div class="card filters">
     <label class="search">${ICON("search")}<input id="oq" type="search" placeholder="Pesquisar por nome, cargo, e-mail ou nº..." value="${esc(OB.q)}" aria-label="Pesquisar"></label>
     <label class="sel">${ICON("filter")}<select id="ost" aria-label="Status"></select></label>
@@ -1677,6 +1693,7 @@ function updateOnbList(){
   document.getElementById("ocount").textContent=`${S.onb.length} ${S.onb.length===1?"solicitação":"solicitações"} · ${ab} em aberto`;
   document.getElementById("otiles").innerHTML=Object.entries(OST).map(([k,[l,c]])=>`<button class="card otile ${OB.st===k?"on":""}" data-act="ost" data-v="${k}"><span class="pill ${c}">${esc(l)}</span><b>${cnt(k)}</b></button>`).join("");
   const al=document.getElementById("oalert"); const ah=oAlertHTML(0); al.hidden=!ah; al.innerHTML=ah;
+  const oc=document.getElementById("ocompras"); const och=comprasAndamentoHTML(); oc.hidden=!och; oc.innerHTML=och;
   const sel=(id,cur,first,opts)=>{ const el=document.getElementById(id); if(el) el.innerHTML=first+opts.map(([v,t])=>`<option value="${esc(v)}" ${cur===v?"selected":""}>${esc(t)}</option>`).join(""); };
   sel("ost",OB.st,"",[["abertos","Em aberto"],["todos","Todos os status"],...Object.entries(OST).map(([k,[l]])=>[k,l])]);
   sel("odep",OB.dep,`<option value="">Todos os departamentos</option>`,[...new Set(S.onb.map(o=>o.departamento).filter(Boolean))].sort().map(v=>[v,v]));
@@ -1747,6 +1764,7 @@ function onbDetalheHTML(){
     <div class="card"><label>Acessos</label><b>${ac.filter(c=>c.feito).length}/${ac.length}</b><small>itens de conta e acesso</small></div>
     <div class="card"><label>Checklist</label><b>${pct}%</b><div class="mprog" style="width:100%"><i style="width:${pct}%"></i></div></div>
     <div class="card"><label>Admissão</label><b style="font-size:20px">${esc(fDia(o.data_admissao)||"—")}</b><small class="pz ${pz.c}">${esc(pz.t)}</small></div>
+    ${oCompras(o.id).length?`<div class="card"><label>Compras</label><b>${oCompras(o.id).filter(c=>CABERTAS.includes(c.status)).length}</b><small>em andamento · ${oCompras(o.id).filter(c=>c.status==="recebida").length} recebida(s)</small></div>`:""}
     <div class="card"><label>Termo</label><b style="font-size:16px;margin-top:6px">${ultTermo?tPill(ultTermo):(isRH()?(ck.find(c=>c.chave==="termo_assinado"&&c.feito)?`<span class="pill st-disp">Assinado</span>`:ck.find(c=>c.chave==="termo_gerado"&&c.feito)?`<span class="pill st-man">Pendente</span>`:`<span class="muted">Não gerado</span>`):`<span class="muted">Não gerado</span>`)}</b></div>
   </div>`;
 
@@ -1756,9 +1774,9 @@ function onbDetalheHTML(){
     ${ti&&S.items.some(i=>i.id===l.ativo_id)?`<button class="ib" data-act="view" data-id="${l.ativo_id}" title="Ver ativo" aria-label="Ver ${esc(l.dispositivo)}">${ICON("eye")}</button>`:""}
     ${ti&&aberto&&!l.entregue?`<button class="ib del" data-act="ounlink" data-id="${l.id}" title="Desvincular" aria-label="Desvincular ${esc(l.dispositivo)}">${ICON("x")}</button>`:""}</div>`;
   const eq=`<section class="card panel"><div class="panelhead"><h2>Equipamentos</h2>${ti&&aberto?`<button class="btn sm" data-act="opick" data-id="${o.id}" data-p="">${ICON("plus")}Vincular outro ativo</button>`:""}</div>
-    ${k.ped.map(r=>`<div class="oeq"><div class="oeqh"><span>${esc(r.p)}${r.outro?` <em class="auto">outros</em>`:""}</span>${r.links.length?`<span class="pill st-ok">Separado</span>`:`<span class="pill st-man">Pendente</span>`}</div>
+    ${k.ped.map(r=>`<div class="oeq"><div class="oeqh"><span>${esc(r.p)}${r.outro?` <em class="auto">outros</em>`:""}</span>${r.links.length?`<span class="pill st-ok">Separado</span>`:r.compra?`<span class="pill ${CST[r.compra.status][1]}">Em compra · ${esc(CST[r.compra.status][0].toLowerCase())}</span>`:`<span class="pill st-man">Pendente</span>`}</div>
       ${r.links.map(linkRow).join("")}
-      ${!r.links.length&&ti&&aberto?`<button class="linkbtn" data-act="opick" data-id="${o.id}" data-p="${esc(r.p)}">Escolher ${esc(r.outro?"ativo":r.p.toLowerCase())} disponível no inventário</button>`:""}
+      ${!r.links.length&&ti&&aberto?`<div class="cacts"><button class="linkbtn" data-act="opick" data-id="${o.id}" data-p="${esc(r.p)}">Escolher ${esc(r.outro?"ativo":r.p.toLowerCase())} disponível no inventário</button>${r.compra?"":`<button class="linkbtn" data-act="ocompra" data-id="${o.id}" data-p="${esc(r.p)}">${ICON("cart")}Solicitar compra</button>`}</div>`:""}
       ${!r.links.length&&!ti?`<p class="muted" style="margin:6px 0 0;font-size:14px">A TI ainda vai separar este item.</p>`:""}</div>`).join("")}
     ${k.extras.length?`<div class="oeq"><div class="oeqh"><span>Outros ativos vinculados</span></div>${k.extras.map(linkRow).join("")}</div>`:""}
     ${!k.ped.length&&!k.extras.length?`<p class="muted" style="margin:0">Nenhum equipamento solicitado.</p>`:""}
@@ -1811,7 +1829,7 @@ function onbDetalheHTML(){
     <div class="actions">${statusSel}${acts.join("")}</div></div>
   ${o.status==="cancelado"?`<div class="warnnote" style="margin-bottom:18px">Solicitação cancelada${o.cancelado_motivo?`: ${esc(o.cancelado_motivo)}`:""}.</div>`:""}
   ${sum}
-  <div class="odet"><div class="ocol">${eq}${chk}</div><div class="ocol">${dados}${solic}${term}${posse}${hist}</div></div>
+  <div class="odet"><div class="ocol">${eq}${compraPainel(o)}${chk}</div><div class="ocol">${dados}${solic}${term}${posse}${hist}</div></div>
   ${menos.length?`<div class="foot" style="margin-top:20px;justify-content:flex-start">${menos.join("")}</div>`:""}`;
 }
 
@@ -1884,6 +1902,10 @@ function onbCancelarModal(id){
       ${ent.length?`<li>${ent.map(l=>esc(l.dispositivo)).join(", ")}: já entregue${ent.length>1?"s":""} a ${esc(o.login||"colaborador")}, volta${ent.length>1?"m":""} para <b>Disponível</b> e sem usuário, com a devolução registrada no histórico do ativo. Se algum já estiver com outra pessoa, não é alterado.</li>`:""}
       ${ts.length?`<li>Termo ${ts.some(t=>t.status==="assinado")?"assinado passa para <b>devolvido</b>":"pendente é <b>cancelado</b>"}.</li>`:""}
     </ul>`:""}
+    ${oCompras(id).some(c=>CABERTAS.includes(c.status))?`<ul style="margin:0;padding-left:20px">
+      ${oCompras(id).some(c=>["solicitada","enviada"].includes(c.status))?`<li>Compras ainda não aprovadas são <b>canceladas</b>. Avise quem compra.</li>`:""}
+      ${oCompras(id).some(c=>["aprovada","comprada"].includes(c.status))?`<li>Compras aprovadas ou já feitas continuam abertas: quando chegarem, use “Receber” e os equipamentos entram no inventário como Disponível.</li>`:""}
+    </ul>`:""}
     <label class="fld"><span>Motivo <i>*</i></span><textarea id="oc_mot" required maxlength="300" placeholder="Ex.: candidato desistiu da vaga"></textarea></label>
     <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="ocBtn">Cancelar solicitação</button></div></form>`,"sm");
 }
@@ -1937,7 +1959,7 @@ function updatePick(){
   const det=i=>[tipoUm(i.tipo),i.subtipo,i.fabricante,i.modelo,i.processador,i.ram,i.polegadas?i.polegadas+"\"":"",i.unidade].filter(Boolean).join(" · ");
   el.innerHTML=`${filtro?`<p class="muted" style="margin:0 0 8px;font-size:14px">Mostrando ${esc(filtro)} disponíveis. <button class="linkbtn" data-act="opktodos">Mostrar todos os disponíveis</button></p>`:""}
     ${lista.length?`<div class="pk">${lista.slice(0,200).map(i=>`<button class="pkrow" data-act="olink" data-ativo="${i.id}"><b>${esc(i.dispositivo)}</b><span>${esc(det(i))}</span>${ICON("plus")}</button>`).join("")}</div>`
-      :`<div class="empty" style="padding:28px 10px"><b>Nenhum ativo disponível${filtro?` em ${esc(filtro)}`:""}</b>Cadastre o equipamento no inventário ou mude o status de um existente para Disponível.${filtro?`<br><button class="linkbtn" data-act="opktodos">Ver todos os disponíveis</button>`:""}</div>`}`;
+      :`<div class="empty" style="padding:28px 10px"><b>Nenhum ativo disponível${filtro?` em ${esc(filtro)}`:""}</b>Solicite a compra, cadastre o equipamento no inventário ou mude o status de um existente para Disponível.<br>${filtro?`<button class="linkbtn" data-act="opktodos">Ver todos os disponíveis</button> · `:""}<button class="linkbtn" data-act="ocompra" data-id="${OBP.id}" data-p="${esc(OBP.pedido)}">${ICON("cart")}Solicitar compra${OBP.pedido?` de ${esc(OBP.pedido.toLowerCase())}`:""}</button></div>`}`;
 }
 async function onbVincular(aid){
   if(!OBP) return; const {id,pedido}=OBP;
@@ -2112,7 +2134,7 @@ function exportOnb(){
     return {"Nº":o.numero,"Status":(OST[o.status]||[o.status])[0],"Nome":o.nome,"Cargo":o.cargo,"Departamento":o.departamento,"Unidade":o.unidade,"E-mail corporativo":o.email_corporativo,"Telefone":o.telefone,
       "Data de admissão":fDia(o.data_admissao),"Prazo":oPrazo(o).t,"Equipamentos":(o.equipamentos||[]).join(", "),"Outros equipamentos":o.equipamentos_outros,"Softwares e sistemas":(o.softwares||[]).join(", "),"Outros softwares":o.softwares_outros,
       "Rede e compartilhamentos":(o.rede||[]).join(", "),"Outros (rede)":o.rede_outros,"Outros":o.outros,"Login":o.login,"Solicitante":oSolic(o),"Solicitado em":fDH(o.solicitado_em),"Origem":o.origem==="formulario"?"Formulário":"Sistema",
-      "Responsável TI":o.responsavel_ti_nome||o.responsavel_ti||"","Ativos vinculados":oLinks(o.id).map(l=>l.dispositivo).join(", "),"Equipamentos preparados":`${k.ped.filter(r=>r.links.length).length}/${k.ped.length}`,"Checklist %":oPct(o.id),
+      "Responsável TI":o.responsavel_ti_nome||o.responsavel_ti||"","Ativos vinculados":oLinks(o.id).map(l=>l.dispositivo).join(", "),"Equipamentos preparados":`${k.ped.filter(r=>r.links.length).length}/${k.ped.length}`,"Checklist %":oPct(o.id),"Compras":oCompras(o.id).map(c=>`${c.quantidade}× ${c.item} (${CST[c.status][0]})`).join("; "),
       "Entregue em":fDH(o.entregue_em),"Concluído em":fDH(o.concluido_em),"Cancelado em":fDH(o.cancelado_em),"Motivo do cancelamento":o.cancelado_motivo||""}; });
   const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Onboarding");
   saveFile(`onboarding_${hojeISO()}.xlsx`,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])).then(ok=>{ if(ok) toast(`${rows.length} solicitações exportadas.`); });
@@ -2136,6 +2158,8 @@ function onbCfgHTML(){
       ${rs.map(r=>`<tr><td>${inp("mod",r,"item")}${r.chave?`<em class="auto" title="Marcado automaticamente pelo sistema">automático</em>`:""}</td><td>${inp("mod",r,"condicao",'placeholder="sempre"')}</td><td>${num("mod",r)}</td><td>${at("mod",r)}</td></tr>`).join("")}</tbody></table></div>
       ${g!=="entrega"?`<form class="ocfgadd" data-t="mod" data-grupo="${g}"><input name="item" placeholder="Novo item do checklist" required maxlength="200"><input name="condicao" placeholder="Condição (opcional, ex.: vpn|remoto)" maxlength="100"><button class="btn sm">${ICON("plus")}Adicionar</button></form>`:""}</div>`; }).join("");
   return `<div class="head"><div><button class="linkbtn" data-act="go" data-v="onboarding" style="padding:0 0 6px">← Onboarding</button><h1>Configurar onboarding</h1><div class="sub">Opções do formulário e modelo do checklist da TI</div></div></div>
+  <section class="card panel" style="margin-bottom:20px"><h2>E-mail de compras</h2><p class="muted" style="margin:0 0 10px;font-size:14px">Destinatário padrão do “Enviar pedido por e-mail” nas compras do onboarding. Separe vários com vírgula.</p>
+    <form id="cfgEmailForm" class="ocfgadd" style="margin:0"><input id="cfg_email" value="${esc(S.cfg.compras_email||"")}" placeholder="compras@grupozerbini.com.br" maxlength="300"><button class="btn sm">Salvar</button></form></section>
   <div class="grid2">
     <section class="card panel"><h2>Opções do formulário</h2><p class="muted" style="margin:0 0 6px;font-size:14px">A categoria no inventário define quais ativos aparecem para vincular. Desative em vez de excluir: solicitações antigas continuam com o texto original.</p>${opc}</section>
     <section class="card panel"><h2>Checklist da TI</h2><p class="muted" style="margin:0 0 6px;font-size:14px">Cada nova solicitação recebe os itens ativos. A condição usa trechos do que foi pedido, separados por “|” (ex.: <b>notebook|desktop</b>). Vazio = sempre. Mudanças valem para novas solicitações.</p>${mod}</section>
@@ -2171,6 +2195,8 @@ function onbClick(a, el, id){
     opick:()=>onbPick(id, el.dataset.p), opktodos:()=>{ if(OBP){ OBP.todos=true; updatePick(); } }, olink:()=>onbVincular(el.dataset.ativo),
     ounlink:()=>onbDesvincular(id), ockrm:()=>onbCheckRm(id),
     ocpf:()=>{ OB.cpfShow=!OB.cpfShow; onbRedetalhe(); },
+    ocompra:()=>{ closeModal(); compraForm(id, null, el.dataset.p||""); }, cedit:()=>compraForm(null, el.dataset.cid), creceber:()=>compraReceber(el.dataset.cid),
+    cemail:()=>compraEmail(id, el.dataset.cid), ccopy:()=>compraEnviar("copiar"), cmail:()=>compraEnviar("email"),
   };
   if(!H[a]) return false; H[a](); return true;
 }
@@ -2181,6 +2207,9 @@ function onbSubmit(f){
   if(f.id==="oEntForm"){ doEntrega(f); return true; }
   if(f.id==="oTermoForm"){ submitOnbTermo(f); return true; }
   if(f.id==="oComForm"){ onbComentar(f); return true; }
+  if(f.id==="oCompraForm"){ submitCompra(f); return true; }
+  if(f.id==="oRecForm"){ submitReceber(f); return true; }
+  if(f.id==="cfgEmailForm"){ salvarCfg("compras_email", document.getElementById("cfg_email").value.trim()); return true; }
   if(f.classList.contains("ockadd")){ onbCheckAdd(f); return true; }
   if(f.classList.contains("ocfgadd")){ onbCfgAdd(f); return true; }
   return false;
@@ -2194,6 +2223,8 @@ function onbChange(t){
   if(t.id==="otec"){ OB.tec=v; updateOnbList(); return true; }
   if(t.id==="ode"){ OB.de=v; updateOnbList(); return true; }
   if(t.id==="oate"){ OB.ate=v; updateOnbList(); return true; }
+  if(t.id==="cr_tipo"){ compraRecLinhas(); return true; }
+  if(t.classList && t.classList.contains("cesel")){ if(CEM){ t.checked?CEM.sel.add(+t.value):CEM.sel.delete(+t.value); compraTextoAtualiza(); } return true; }
   if(t.id==="oStatusSel"){ const o=S.onb.find(x=>x.id===t.dataset.id); if(o&&v!==o.status) onbUpd(o.id,{status:v},`Status: ${OST[v][0]}.`).then(ok=>{ if(!ok) onbRedetalhe(); }); return true; }
   if(t.dataset && t.dataset.ck){ onbCheckToggle(+t.dataset.ck, t.checked); return true; }
   if(t.classList && t.classList.contains("ocfg")){ onbCfgSalvar(t); return true; }
@@ -2205,6 +2236,186 @@ function onbInput(t){
   if(t.id==="of_cpf"){ const d=t.value.replace(/\D/g,"").slice(0,11); t.value=d.length>9?`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`:d.length>6?`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`:d.length>3?`${d.slice(0,3)}.${d.slice(3)}`:d; return true; }
   if(t.id==="of_tel"){ const v=t.value.replace(/\D/g,"").slice(0,11); t.value=v.length>10?`(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`:v.length>6?`(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`:v.length>2?`(${v.slice(0,2)}) ${v.slice(2)}`:v; return true; }
   return false;
+}
+
+
+// ---------- compras (quando não há equipamento disponível) ----------
+const CST = { solicitada:["Solicitada","st-sol"], enviada:["Enviada para compra","st-uso"], aprovada:["Aprovada","st-prep"], comprada:["Comprada","st-res"],
+  recebida:["Recebida","st-ok"], reprovada:["Reprovada","st-desc"], cancelada:["Cancelada","st-desc"] };
+const CABERTAS = ["solicitada","enviada","aprovada","comprada"];
+const cPill = c => { const [l,k]=CST[c.status]||[c.status,"st-desc"]; return `<span class="pill ${k}">${esc(l)}</span>`; };
+const oCompras = id => S.onbCompras.filter(c=>c.onboarding_id===id).sort((a,b)=>a.id-b.id);
+const brl = v => v==null||v==="" ? "" : Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const linkSeguro = u => /^https?:\/\//i.test(String(u||"").trim()) ? String(u).trim() : "";
+let CEM = null;   // e-mail de compras em edição
+function compraAlertas(o, out){
+  if(!OST_ABERTOS.includes(o.status)) return;
+  oCompras(o.id).filter(c=>CABERTAS.includes(c.status)).forEach(c=>{
+    const nome=`${c.quantidade}× ${c.item}`;
+    if(c.previsao && diasAte(c.previsao)<0) out.push({o,n:1,c:"late",t:`Compra de ${nome} atrasada (previsão ${fDia(c.previsao)})`});
+    else if(c.previsao && o.data_admissao && c.previsao>o.data_admissao) out.push({o,n:2,c:"warn",t:`Compra de ${nome} chega depois da admissão (previsão ${fDia(c.previsao)})`});
+    else if(c.status==="solicitada" && Date.now()-new Date(c.criado_em)>2*864e5) out.push({o,n:3,c:"warn",t:`Compra de ${nome} solicitada há mais de 2 dias e ainda não enviada`});
+  });
+}
+function compraRow(c, o, ti){
+  const aberta=CABERTAS.includes(c.status), url=linkSeguro(c.link), tot=c.valor_unit!=null?c.valor_unit*c.quantidade:null;
+  const atras=aberta&&c.previsao&&diasAte(c.previsao)<0;
+  const det=[c.fornecedor, c.valor_unit!=null?`${brl(c.valor_unit)}/un.${c.quantidade>1?` · total ${brl(tot)}`:""}`:"", c.pedido?`pedido ${c.pedido}`:"",
+    c.previsao?`previsão ${fDia(c.previsao)}`:""].filter(Boolean);
+  return `<div class="oeq"><div class="oeqh"><span>${c.quantidade}× ${esc(c.item)}</span>${cPill(c)}</div>
+    ${det.length?`<p class="cdet ${atras?"late":""}">${esc(det.join(" · "))}${atras?" · atrasada":""}</p>`:""}
+    ${url?`<p class="cdet"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${ICON("link")}Abrir link da loja</a></p>`:c.link?`<p class="cdet">${esc(c.link)}</p>`:""}
+    ${c.obs?`<p class="cdet" style="white-space:pre-wrap">${esc(c.obs)}</p>`:""}
+    <p class="cdet muted">Solicitada por ${esc(nomeDe(c.criado_por))} em ${esc(fDH(c.criado_em))}${c.recebido_em?` · recebida em ${esc(fDH(c.recebido_em))}`:""}${c.status==="recebida"&&c.ativos.length?` · ${c.ativos.length} ${c.ativos.length===1?"ativo cadastrado":"ativos cadastrados"}`:""}</p>
+    ${ti&&aberta?`<div class="cacts"><button class="btn sm" data-act="cemail" data-id="${o.id}" data-cid="${c.id}">${ICON("mail")}E-mail</button><button class="btn sm" data-act="cedit" data-cid="${c.id}">${ICON("edit")}Editar</button><button class="btn sm primary" data-act="creceber" data-cid="${c.id}">${ICON("check")}Receber</button></div>`:""}
+  </div>`;
+}
+function compraPainel(o){
+  const ti=isTI(), aberto=OST_ABERTOS.includes(o.status), cps=oCompras(o.id);
+  if(!cps.length && !(ti&&aberto)) return "";
+  const ab=cps.filter(c=>CABERTAS.includes(c.status)), tot=ab.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
+  return `<section class="card panel"><div class="panelhead"><h2>Compras</h2><div class="rowacts">
+      ${ti&&ab.length?`<button class="btn sm" data-act="cemail" data-id="${o.id}" data-cid="">${ICON("mail")}Enviar pedido por e-mail</button>`:""}
+      ${ti&&aberto?`<button class="btn sm" data-act="ocompra" data-id="${o.id}" data-p="">${ICON("plus")}Nova compra</button>`:""}</div></div>
+    ${cps.length?cps.map(c=>compraRow(c,o,ti)).join(""):`<p class="muted" style="margin:0">Nenhuma compra. Quando não houver equipamento disponível no inventário, use “Solicitar compra” no item.</p>`}
+    ${tot?`<p class="muted" style="margin:6px 0 0;font-size:14px">Total estimado em aberto: <b>${esc(brl(tot))}</b></p>`:""}
+  </section>`;
+}
+function compraForm(oid, cid, pedido){
+  const c=cid?S.onbCompras.find(x=>x.id===+cid):null, o=S.onb.find(x=>x.id===(c?c.onboarding_id:oid)); if(!o) return;
+  const op=!c&&pedido?opcEquip(pedido):null;
+  const d=c||{item:pedido||"",tipo_ativo:op?op.tipo_ativo:"",subtipo:op?op.subtipo:"",quantidade:1,link:"",fornecedor:"",valor_unit:null,obs:"",pedido:"",previsao:null,status:"solicitada"};
+  const stOps=[...CABERTAS,"reprovada","cancelada"];
+  openModal(`<h2>${c?"Editar compra":"Solicitar compra"} · ${esc(o.nome)}</h2>
+  <form class="f" id="oCompraForm" data-id="${o.id}" data-cid="${c?c.id:""}">
+    <fieldset>
+      <label class="fld"><span>Item <i>*</i></span><input name="item" required maxlength="150" value="${esc(d.item)}" placeholder="Ex.: Mouse sem fio"></label>
+      <label class="fld"><span>Quantidade</span><input name="quantidade" type="number" min="1" max="50" value="${d.quantidade}"></label>
+      <label class="fld"><span>Categoria no inventário</span><select name="tipo_ativo"><option value="">—</option>${Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${d.tipo_ativo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
+      <label class="fld"><span>Subtipo (periféricos)</span><input name="subtipo" maxlength="60" value="${esc(d.subtipo||"")}" placeholder="Ex.: Mouse"></label>
+      <label class="fld wide"><span>Link do produto</span><input name="link" type="url" maxlength="1000" value="${esc(d.link||"")}" placeholder="https://"></label>
+      <label class="fld"><span>Fornecedor / loja</span><input name="fornecedor" maxlength="100" value="${esc(d.fornecedor||"")}"></label>
+      <label class="fld"><span>Valor unitário (R$)</span><input name="valor_unit" inputmode="decimal" maxlength="15" value="${d.valor_unit!=null?String(d.valor_unit).replace(".",","):""}" placeholder="0,00"></label>
+      <label class="fld wide"><span>Justificativa / observações</span><textarea name="obs" maxlength="1000" placeholder="Ex.: sem estoque de mouse; precisa chegar antes da admissão">${esc(d.obs||"")}</textarea></label>
+    </fieldset>
+    ${c?`<fieldset><legend class="l">Andamento</legend>
+      <label class="fld"><span>Status</span><select name="status">${stOps.map(s=>`<option value="${s}" ${c.status===s?"selected":""}>${CST[s][0]}</option>`).join("")}</select></label>
+      <label class="fld"><span>Nº do pedido</span><input name="pedido" maxlength="60" value="${esc(c.pedido||"")}"></label>
+      <label class="fld"><span>Previsão de entrega</span><input name="previsao" type="date" value="${esc(c.previsao||"")}"></label>
+    </fieldset>`:`<p class="muted" style="margin:0;font-size:13px">Depois de salvar, use “Enviar pedido por e-mail” para mandar o link a quem compra. Quando chegar, use “Receber”: o equipamento entra no inventário já reservado para este colaborador.</p>`}
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="ccBtn">${c?"Salvar":"Solicitar compra"}</button></div>
+  </form>`,"md");
+}
+async function submitCompra(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim(), cid=f.dataset.cid;
+  const vs=g("valor_unit").replace(/[^\d,.-]/g,""), valor=vs?Number(vs.includes(",")?vs.replace(/\./g,"").replace(",","."):vs):null;
+  if(vs&&(isNaN(valor)||valor<0)){ toast("Valor inválido."); return; }
+  const link=g("link"); if(link&&!linkSeguro(link)){ toast("O link precisa começar com http:// ou https://"); return; }
+  const row={item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),tipo_ativo:g("tipo_ativo")||null,subtipo:g("subtipo")||null,link,fornecedor:g("fornecedor"),valor_unit:valor,obs:g("obs")};
+  if(cid){ row.status=g("status"); row.pedido=g("pedido"); row.previsao=g("previsao")||null; }
+  const btn=document.getElementById("ccBtn"); btn.disabled=true;
+  const q=cid?sb.from("onboarding_compras").update(row).eq("id",+cid):sb.from("onboarding_compras").insert({...row,onboarding_id:f.dataset.id});
+  const {error}=await q; if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await onbReload(); toast(cid?"Compra atualizada.":"Compra solicitada.");
+}
+function compraTexto(o, lista){
+  const L=[`Olá,`,``,`Solicito a compra ${lista.length>1?"dos itens abaixo":"do item abaixo"} para o onboarding de ${o.nome}${o.cargo?` (${o.cargo}${o.departamento?`, ${o.departamento}`:""})`:o.departamento?` (${o.departamento})`:""}${o.unidade?`, unidade ${o.unidade}`:""}${o.data_admissao?`, com admissão em ${fDia(o.data_admissao)}`:""}.`,``];
+  let tot=0;
+  lista.forEach((c,i)=>{ const t=c.valor_unit!=null?c.valor_unit*c.quantidade:null; if(t) tot+=t;
+    L.push(`${i+1}. ${c.quantidade}× ${c.item}${c.fornecedor?` — ${c.fornecedor}`:""}${c.valor_unit!=null?` — ${brl(c.valor_unit)}/un.${c.quantidade>1?` (total ${brl(t)})`:""}`:""}`);
+    if(c.link) L.push(`   Link: ${c.link}`); if(c.obs) L.push(`   Obs.: ${c.obs}`); });
+  if(tot) L.push(``,`Total estimado: ${brl(tot)}`);
+  L.push(``,`Acompanhamento: onboarding #${o.numero} — ${APP_URL}#onb-${o.numero}`,``,`Obrigado,`,meuNome());
+  return L.join("\n");
+}
+function compraEmail(oid, cid){
+  const o=S.onb.find(x=>x.id===oid); if(!o) return;
+  const lista=oCompras(oid).filter(c=>CABERTAS.includes(c.status)); if(!lista.length){ toast("Não há compras em aberto."); return; }
+  let para=S.cfg.compras_email||""; if(!para){ try{ para=localStorage.getItem("ga-compras-para")||""; }catch(e){} }
+  CEM={oid, sel:new Set(cid?[+cid]:lista.filter(c=>["solicitada","enviada"].includes(c.status)).map(c=>c.id))};
+  if(!CEM.sel.size) lista.forEach(c=>CEM.sel.add(c.id));
+  openModal(`<h2>Enviar pedido de compra</h2><div class="msg">
+    <div class="ochecks" style="margin-bottom:12px">${lista.map(c=>`<label class="check"><input type="checkbox" class="cesel" value="${c.id}" ${CEM.sel.has(c.id)?"checked":""}><span>${c.quantidade}× ${esc(c.item)} · ${esc(CST[c.status][0])}</span></label>`).join("")}</div>
+    <label class="fld"><span>Para</span><input id="ce_para" type="text" value="${esc(para)}" placeholder="compras@grupozerbini.com.br"></label>
+    <label class="fld" style="margin-top:10px"><span>Assunto</span><input id="ce_ass" value="${esc(`Solicitação de compra · Onboarding #${o.numero} · ${o.nome}${o.data_admissao?` (admissão ${fDia(o.data_admissao)})`:""}`)}"></label>
+    <label class="fld" style="margin-top:10px"><span>Mensagem</span><textarea id="ce_txt" rows="12" style="min-height:220px;font-family:ui-monospace,Consolas,monospace;font-size:13px"></textarea></label>
+    <p class="muted" style="margin:10px 0 0;font-size:13px">“Abrir no e-mail” abre seu programa de e-mail com tudo preenchido. Os itens marcados passam para <b>Enviada para compra</b> e o envio fica no histórico.</p>
+  </div><div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn" data-act="ccopy">${ICON("copy")}Copiar texto</button><button class="btn primary" data-act="cmail">${ICON("mail")}Abrir no e-mail</button></div>`,"md");
+  compraTextoAtualiza();
+}
+function compraTextoAtualiza(){
+  if(!CEM) return; const o=S.onb.find(x=>x.id===CEM.oid), t=document.getElementById("ce_txt"); if(!o||!t) return;
+  t.value=compraTexto(o, oCompras(CEM.oid).filter(c=>CEM.sel.has(c.id)));
+}
+async function compraMarcarEnviada(){
+  const para=(document.getElementById("ce_para")?.value||"").trim(); try{ if(para) localStorage.setItem("ga-compras-para",para); }catch(e){}
+  const ids=[...CEM.sel].filter(id=>{ const c=S.onbCompras.find(x=>x.id===id); return c&&c.status==="solicitada"; });
+  if(ids.length){ const {error}=await sb.from("onboarding_compras").update({status:"enviada"}).in("id",ids); if(error){ onbErr(error); return false; } }
+  if(!ids.length && CEM.oid) await sb.rpc("onboarding_comentar",{p_id:CEM.oid,p_texto:`Pedido de compra reenviado por e-mail${para?` para ${para}`:""}.`});
+  return true;
+}
+async function compraEnviar(modo){
+  if(!CEM||!CEM.sel.size){ toast("Marque ao menos um item."); return; }
+  const para=(document.getElementById("ce_para").value||"").trim(), ass=document.getElementById("ce_ass").value, txt=document.getElementById("ce_txt").value;
+  if(modo==="copiar"){
+    const ok=()=>{ toast("Texto copiado. Cole no e-mail."); };
+    try{ await navigator.clipboard.writeText(`Assunto: ${ass}\n\n${txt}`); ok(); }catch(e){ const t=document.getElementById("ce_txt"); t.focus(); t.select(); toast("Selecione e copie o texto (Ctrl+C)."); return; }
+  } else {
+    const url=`mailto:${encodeURIComponent(para).replace(/%40/g,"@").replace(/%2C/gi,",")}?subject=${encodeURIComponent(ass)}&body=${encodeURIComponent(txt)}`;
+    window.location.href=url;
+  }
+  if(await compraMarcarEnviada()){ closeModal(); CEM=null; await onbReload(); if(modo!=="copiar") toast("Pedido registrado como enviado."); }
+}
+function nextNames(t, n){
+  const p=TYPES[t]?TYPES[t].prefix:"ATV"; let max=0;
+  S.items.filter(x=>x.tipo===t).forEach(x=>{ const m=String(x.dispositivo||"").toUpperCase().match(new RegExp("^"+p+"(\\d+)$")); if(m) max=Math.max(max,+m[1]); });
+  return Array.from({length:n},(_,i)=>p+String(max+1+i).padStart(3,"0"));
+}
+function compraReceber(cid){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const o=S.onb.find(x=>x.id===c.onboarding_id);
+  const tipo=c.tipo_ativo||(opcEquip(c.item)||{}).tipo_ativo||"";
+  openModal(`<h2>Receber compra: ${c.quantidade}× ${esc(c.item)}</h2><form class="f" id="oRecForm" data-cid="${c.id}">
+    <p style="margin:0">Cadastre ${c.quantidade>1?"os equipamentos que chegaram":"o equipamento que chegou"}. ${OST_ABERTOS.includes(o.status)?`Ele${c.quantidade>1?"s":""} entra${c.quantidade>1?"m":""} no inventário como <b>Disponível</b> e já fica${c.quantidade>1?"m":""} <b>reservado${c.quantidade>1?"s":""}</b> para ${esc(o.nome)}.`:`A solicitação de ${esc(o.nome)} está encerrada, então ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>, sem vínculo.`}</p>
+    <fieldset>
+      <label class="fld"><span>Categoria <i>*</i></span><select id="cr_tipo" required><option value="">Escolha…</option>${Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
+      <label class="fld"><span>Fabricante (todos)</span><input id="cr_fab" maxlength="60"></label>
+      <label class="fld"><span>Modelo (todos)</span><input id="cr_mod" maxlength="80"></label>
+    </fieldset>
+    <div class="tablewrap" style="border:1px solid var(--border);border-radius:12px"><table class="imptab" style="min-width:520px"><thead><tr><th>Patrimônio *</th><th>Nº de série</th></tr></thead><tbody id="cr_rows"></tbody></table></div>
+    <p class="muted" style="margin:0;font-size:13px">O patrimônio segue a numeração da categoria. Ajuste se a etiqueta já tiver outro código.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="crBtn">${ICON("check")}Receber e cadastrar</button></div>
+  </form>`,"md");
+  compraRecLinhas();
+}
+function compraRecLinhas(){
+  const f=document.getElementById("oRecForm"); if(!f) return; const c=S.onbCompras.find(x=>x.id===+f.dataset.cid); const t=document.getElementById("cr_tipo").value;
+  const nomes=t?nextNames(t,c.quantidade):Array(c.quantidade).fill("");
+  document.getElementById("cr_rows").innerHTML=nomes.map((n,i)=>`<tr><td><input type="text" class="cr_disp" value="${esc(n)}" required aria-label="Patrimônio ${i+1}" style="text-transform:uppercase"></td><td><input type="text" class="cr_serie" aria-label="Série ${i+1}"></td></tr>`).join("");
+}
+async function submitReceber(f){
+  const tipo=document.getElementById("cr_tipo").value; if(!tipo){ toast("Escolha a categoria."); return; }
+  const fab=document.getElementById("cr_fab").value.trim(), mod=document.getElementById("cr_mod").value.trim();
+  const ser=[...f.querySelectorAll(".cr_serie")].map(i=>i.value.trim());
+  const ativos=[...f.querySelectorAll(".cr_disp")].map((i,k)=>({dispositivo:i.value.trim().toUpperCase(),fabricante:fab,modelo:mod,serie:ser[k]||""}));
+  if(ativos.some(a=>!a.dispositivo)){ toast("Informe o patrimônio de todos."); return; }
+  if(new Set(ativos.map(a=>a.dispositivo)).size!==ativos.length){ toast("Há patrimônios repetidos."); return; }
+  const btn=document.getElementById("crBtn"); btn.disabled=true;
+  const {data,error}=await sb.rpc("onboarding_compra_receber",{p_id:+f.dataset.cid,p_tipo:tipo,p_ativos:ativos});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await Promise.all([sbLoad("ativos"),onbReload()]);
+  toast(`${data.cadastrados} ${data.cadastrados===1?"equipamento cadastrado":"equipamentos cadastrados"}${data.vinculados?" e reservado"+(data.vinculados>1?"s":"")+" para o colaborador":""}.`);
+}
+async function salvarCfg(chave, valor){
+  const {error}=await sb.from("ga_config").upsert({chave,valor}); if(error){ onbErr(error); return; }
+  S.cfg[chave]=valor; toast("Salvo.");
+}
+function comprasAndamentoHTML(){
+  const rows=S.onbCompras.filter(c=>CABERTAS.includes(c.status)).map(c=>({c,o:S.onb.find(o=>o.id===c.onboarding_id)})).filter(x=>x.o)
+    .sort((a,b)=>String(a.c.previsao||a.o.data_admissao||"9").localeCompare(String(b.c.previsao||b.o.data_admissao||"9")));
+  if(!rows.length) return "";
+  return `<div class="panelhead"><h2>Compras em andamento (${rows.length})</h2></div><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Colaborador</th><th>Item</th><th>Status</th><th>Previsão</th><th>Admissão</th></tr></thead><tbody>
+    ${rows.map(({c,o})=>`<tr class="click" data-act="oopen" data-id="${o.id}"><td class="dev">${esc(o.nome)} <span class="muted">#${o.numero}</span></td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}</td>
+      <td class="pz ${c.previsao&&diasAte(c.previsao)<0?"late":""}">${esc(fDia(c.previsao)||"—")}</td><td>${esc(fDia(o.data_admissao)||"—")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 
 // ---------- link direto (QR Code da etiqueta) ----------

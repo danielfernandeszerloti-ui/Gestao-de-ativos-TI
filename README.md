@@ -57,6 +57,11 @@ Também há:
 - **Resumo da solicitação:** equipamentos x/y preparados, acessos x/y e % do checklist.
 - **Alertas:** admissão hoje, amanhã ou em até 3 dias; atrasados; sem responsável da TI há mais de 1 dia; e entregues aguardando aceite há mais de 2 dias. Os alertas aparecem no Dashboard e no número do menu.
 - **Histórico:** cada mudança de status, item do checklist, vínculo de ativo, termo e comentário é gravada pelo banco, com autor, perfil e data. Ninguém consegue editar nem apagar o histórico pela aplicação.
+- **Compras:** quando não há equipamento disponível, “Solicitar compra” registra item, link, fornecedor e valor. Depois:
+  - **Enviar pedido por e-mail** abre o e-mail pronto para quem compra; o destinatário padrão fica em Configurar;
+  - a TI acompanha o andamento até a chegada;
+  - **Receber** cadastra os equipamentos no inventário já reservados para o colaborador.
+  Pedir uma compra coloca a solicitação em "Aguardando equipamentos". Se o onboarding for cancelado, as compras que ainda não foram aprovadas são canceladas.
 - **Base para o offboarding:** a ficha mostra todos os ativos em uso com o login do colaborador.
 - **Configurar** (só administradores): opções do formulário e modelo do checklist.
 
