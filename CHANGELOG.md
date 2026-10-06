@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.4.0] — 2026-10-06
+### Adicionado
+- **Onboarding de novos colaboradores**, integrado aos ativos existentes:
+  - fluxo RH → TI → entrega → aceite, com 8 status;
+  - checklist configurável e montado conforme o pedido;
+  - reserva de ativos (status **Reservado**) e entrega atômica que atualiza ativo, usuário e histórico;
+  - termo único com vários equipamentos;
+  - alertas de admissão e de atraso, painel com filtros e exportação para Excel;
+  - importação das respostas do Google Forms;
+  - histórico que não pode ser apagado.
+- Perfil **RH**, com acesso só ao onboarding. O perfil Editor passa a se chamar **TI**.
+- Categorias **Desktops** (`DSK`) e **Periféricos** (`PER`: teclado, mouse, headset…). Campo **Unidade** nos ativos.
+- CPF guardado em tabela separada, visível só para o RH e administradores.
+
+### Alterado
+- O código de verificação dos termos com vários equipamentos inclui a lista de itens.
+
 ## [2.3.0] — 2026-09-30
 ### Adicionado
 - **Termos em papel digitalizados**:

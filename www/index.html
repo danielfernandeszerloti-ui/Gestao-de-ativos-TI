@@ -31,6 +31,8 @@
   --avail-bg:#daf6f5; --avail-fg:#0a7a80; --avail-bd:#9fe3e0;
   --maint-bg:#fff2da; --maint-fg:#955800; --maint-bd:#f3d49a;
   --disc-bg:#eff0f4; --disc-fg:#646a78; --disc-bd:#d5d8e0;
+  --res-bg:#f2eaff; --res-fg:#6d28d9; --res-bd:#d8c4fb;
+  --ok-bg:#e2f6e9; --ok-fg:#13743a; --ok-bd:#a7dfba;
   --danger:#cf3535; --danger-soft:#fdecec; --shadow:0 6px 24px rgba(28,47,107,.07);
   --f-ui:"Nunito","Segoe UI",system-ui,-apple-system,sans-serif;
   --r:12px;
@@ -43,6 +45,7 @@
   --avail-bg:#0e3336; --avail-fg:#6fe0dd; --avail-bd:#1c5a5c;
   --maint-bg:#3a2a0e; --maint-fg:#f3c66e; --maint-bd:#654a1b;
   --disc-bg:#20242d; --disc-fg:#a4a9b6; --disc-bd:#343a47;
+  --res-bg:#2a1d48; --res-fg:#cdb5ff; --res-bd:#4b3680; --ok-bg:#0f3120; --ok-fg:#7ddc9f; --ok-bd:#1f5a37;
   --danger:#f07575; --danger-soft:#3a1a1d; --shadow:0 6px 24px rgba(0,0,0,.3); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0a1320; --glow:#0e2233; --surface:#111c2c; --surface-2:#152338; --border:#223350; --row:#1a2940;
@@ -52,6 +55,7 @@
   --avail-bg:#0e3336; --avail-fg:#6fe0dd; --avail-bd:#1c5a5c;
   --maint-bg:#3a2a0e; --maint-fg:#f3c66e; --maint-bd:#654a1b;
   --disc-bg:#20242d; --disc-fg:#a4a9b6; --disc-bd:#343a47;
+  --res-bg:#2a1d48; --res-fg:#cdb5ff; --res-bd:#4b3680; --ok-bg:#0f3120; --ok-fg:#7ddc9f; --ok-bd:#1f5a37;
   --danger:#f07575; --danger-soft:#3a1a1d; --shadow:0 6px 24px rgba(0,0,0,.3); color-scheme:dark}
 
 *{box-sizing:border-box}
@@ -127,6 +131,11 @@ td.set{color:var(--accent-2)}
 .st-disp{background:var(--avail-bg);color:var(--avail-fg);border-color:var(--avail-bd)}
 .st-man{background:var(--maint-bg);color:var(--maint-fg);border-color:var(--maint-bd)}
 .st-desc{background:var(--disc-bg);color:var(--disc-fg);border-color:var(--disc-bd)}
+.st-sol{background:var(--surface-2);color:var(--heading);border-color:var(--border)}
+.st-prep{background:var(--accent-soft);color:var(--accent-2);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.st-res{background:var(--res-bg);color:var(--res-fg);border-color:var(--res-bd)}
+.st-ent{background:var(--avail-bg);color:var(--avail-fg);border-color:var(--avail-bd)}
+.st-ok{background:var(--ok-bg);color:var(--ok-fg);border-color:var(--ok-bd)}
 .empty{padding:56px 20px;text-align:center;color:var(--muted)}
 .empty b{display:block;color:var(--heading);font-size:18px;margin-bottom:6px}
 .muted{color:var(--faint)}
@@ -308,6 +317,77 @@ fieldset .seg,fieldset .check{grid-column:1/-1}
 .imptab .st.ok{color:var(--avail-fg);font-weight:700}
 .imptab .st.err{color:var(--danger);font-weight:700}
 .warnnote{background:var(--maint-bg);color:var(--maint-fg);border:1px solid var(--maint-bd);border-radius:10px;padding:10px 12px;font-size:14px}
+/* onboarding */
+.btn.sm{padding:7px 12px;font-size:14px;gap:6px}
+.ib.sm{width:30px;height:30px}
+.otiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.otile{padding:12px 14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;text-align:left;color:inherit}
+.otile b{font-size:26px;font-weight:800;color:var(--heading);font-variant-numeric:tabular-nums;line-height:1}
+.otile .pill{align-self:flex-start;font-size:11.5px;padding:2px 8px;white-space:normal}
+.otile:hover,.otile.on{border-color:var(--accent)}
+.otile.on{box-shadow:0 0 0 3px var(--accent-soft)}
+.oalert{margin-bottom:20px}
+.al{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--row);cursor:pointer}
+.al:last-child{border-bottom:0}
+.al>i{width:10px;height:10px;border-radius:50%;flex:none;background:var(--accent)}
+.al.late>i{background:var(--danger)}.al.soon>i{background:#e0a100}
+.al b{color:var(--heading);min-width:0;flex:0 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
+.al span{color:var(--muted);font-size:14px;flex:1;min-width:0}
+.al.late span{color:var(--danger);font-weight:700}
+.pz{white-space:nowrap}.pz.late{color:var(--danger);font-weight:800}.pz.soon{color:var(--maint-fg);font-weight:800}.pz.ok{color:var(--ok-fg)}
+.mprog{height:6px;border-radius:4px;background:var(--row);overflow:hidden;margin-top:6px;width:110px}
+.mprog i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:4px}
+tr.click{cursor:pointer}
+.dt{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:9px;padding:0 12px;background:var(--surface);font-size:13px;color:var(--muted);font-weight:700;flex:0 1 auto}
+.dt input{border:0;background:none;padding:11px 0;min-width:0;color:var(--ink)}
+.ostsel{flex:0 1 230px}
+.osum{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+.osum .card{padding:14px 18px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.osum label{color:var(--muted);font-weight:700;font-size:13px}
+.osum b{font-size:26px;color:var(--heading);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.osum small{color:var(--muted);font-size:13px}
+.odet{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+.ocol{display:flex;flex-direction:column;gap:20px;min-width:0}
+.oeq{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.oeqh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;color:var(--heading)}
+.oln{display:flex;align-items:center;gap:10px;padding:8px 0 0}
+.oln>div{flex:1;min-width:0}
+.oln small{display:block;color:var(--muted);font-size:13px}
+.oln .ic{width:34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent-2);display:grid;place-items:center;flex:none}
+.ogrp h3{margin:16px 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.ogrp:first-of-type h3{margin-top:4px}
+.ock{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--row);font-size:14.5px}
+.ock input{accent-color:var(--accent-2);width:18px;height:18px;margin-top:2px;flex:none}
+.ock .tx{flex:1;min-width:0;cursor:pointer}
+.ock input:disabled+.tx{cursor:default}
+.ock.done .tx>span{color:var(--muted);text-decoration:line-through}
+.ock small{display:block;color:var(--faint);font-size:12px}
+.auto{font-style:normal;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--faint);border:1px solid var(--border);border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.ockadd,.ocfgadd{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.ockadd input,.ocfgadd input,.ocfgadd select{flex:1 1 160px;min-width:0;border:1px solid var(--border);border-radius:8px;padding:7px 10px;background:var(--surface)}
+.osol{display:grid;gap:6px}
+.osol>label{color:var(--muted);font-weight:700;font-size:13px;margin-top:6px}
+.ocom{display:flex;gap:8px;align-items:flex-end;margin-bottom:12px}
+.ocom textarea{flex:1;min-width:0;min-height:44px;border:1px solid var(--border);border-radius:9px;padding:9px 11px;background:var(--surface);resize:vertical}
+.tl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;max-height:520px;overflow-y:auto}
+.tl li{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--row);font-size:14px}
+.tl time{color:var(--faint);font-size:12.5px;font-variant-numeric:tabular-nums}
+.tl .who{display:block;color:var(--muted);font-size:12.5px}
+.tl .msgc{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:8px 10px;white-space:pre-wrap;margin-top:3px}
+.ochecks{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px 14px}
+.pk{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:10px;max-height:min(52vh,420px);overflow-y:auto}
+.pkrow{display:flex;gap:12px;align-items:center;padding:11px 12px;border:0;border-bottom:1px solid var(--row);background:none;text-align:left;cursor:pointer;color:var(--ink)}
+.pkrow:last-child{border-bottom:0}
+.pkrow:hover{background:var(--accent-soft)}
+.pkrow b{min-width:84px;color:var(--heading)}
+.pkrow span{color:var(--muted);font-size:14px;flex:1;min-width:0}
+.cfgt{min-width:520px}
+.cfgt td{padding:6px 8px}
+.cfgt input[type=text],.cfgt input[type=number],.cfgt select{border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--surface);width:100%;min-width:0}
+.cfgt input[type=number]{width:72px}
+.cfgt td:has(.auto){display:flex;align-items:center}
+.resnote{background:var(--res-bg);color:var(--res-fg);border:1px solid var(--res-bd);border-radius:10px;padding:10px 12px;font-size:14px}
+@media (max-width:1100px){.odet{grid-template-columns:1fr}}
 @media (max-width:600px){.linkbox{grid-template-columns:1fr}.linkbox .qr{max-width:210px}}
 @media (min-width:861px) and (max-height:820px){
   .brand{padding:14px 18px}
@@ -354,6 +434,7 @@ fieldset .seg,fieldset .check{grid-column:1/-1}
 <input type="file" id="importUsers" accept=".xlsx,.xls,.csv" hidden>
 <input type="file" id="importTermos" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
+<input type="file" id="importOnb" accept=".xlsx,.xls,.csv" hidden>
 <div id="modalRoot"></div>
 <div class="toast" id="toast" hidden></div>
 
@@ -382,6 +463,10 @@ fieldset .seg,fieldset .check{grid-column:1/-1}
   <symbol id="i-sign" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 17c1.5-2 2.5-2 3 0s1.5 2 3 0 2-1 3 0"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="2" y="4" width="13" height="10" rx="1.5"/><path d="M6 18h5M8.5 14v4"/><rect x="17" y="4" width="5" height="16" rx="1"/><path d="M19.5 8h.01"/></symbol>
+  <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
+  <symbol id="i-onb" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
 </svg>
 
@@ -391,9 +476,9 @@ const ICON = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const norm = s => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]/g,"");
 
-const STATUS = ["Em uso","Disponível","Manutenção","Descartado"];
-const STCLS = {"Em uso":"st-uso","Disponível":"st-disp","Manutenção":"st-man","Descartado":"st-desc"};
-const STCOLOR = {"Em uso":"var(--accent-2)","Disponível":"var(--avail-fg)","Manutenção":"var(--maint-fg)","Descartado":"var(--disc-fg)"};
+const STATUS = ["Em uso","Disponível","Reservado","Manutenção","Descartado"];   // Reservado: separado para um onboarding
+const STCLS = {"Em uso":"st-uso","Disponível":"st-disp","Reservado":"st-res","Manutenção":"st-man","Descartado":"st-desc"};
+const STCOLOR = {"Em uso":"var(--accent-2)","Disponível":"var(--avail-fg)","Reservado":"var(--res-fg)","Manutenção":"var(--maint-fg)","Descartado":"var(--disc-fg)"};
 const SETORES_BASE = ["Comercial","Compras","Controladoria","Diretoria","Estoque","Expedição","Financeiro","Logística","Recepção","RH","TI"];
 const SIMNAO = ["Sim","Não"];
 
@@ -402,6 +487,7 @@ const COMMON = [
   {k:"status", l:"Status", opts:STATUS},
   {k:"usuario", l:"Usuário", list:"usuarios"},
   {k:"setor", l:"Setor", list:"setores"},
+  {k:"unidade", l:"Unidade", list:"unidades"},
   {k:"fabricante", l:"Fabricante"},
   {k:"modelo", l:"Modelo"},
   {k:"serie", l:"Nº de Série"},
@@ -411,6 +497,9 @@ const TYPES = {
     {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
     {k:"so",l:"Sistema Operacional"},{k:"bateria",l:"Duração da Bateria"},
     {k:"teclado",l:"Teclado",opts:SIMNAO,trio:true},{k:"mouse",l:"Mouse",opts:SIMNAO,trio:true},{k:"monitor",l:"Monitor",opts:SIMNAO,trio:true}]},
+  desktop:{label:"Desktops", one:"Desktop", prefix:"DSK", icon:"desktop", extra:[
+    {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"armazenamento",l:"Armazenamento"},
+    {k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},{k:"so",l:"Sistema Operacional"}]},
   celular:{label:"Celulares", one:"Celular", prefix:"CEL", icon:"phone", extra:[
     {k:"linha",l:"Número / Linha"},{k:"operadora",l:"Operadora"},{k:"imei",l:"IMEI"},{k:"armazenamento",l:"Armazenamento"},
     {k:"so",l:"Sistema Operacional"},{k:"capa",l:"Capa / Película",opts:SIMNAO}]},
@@ -427,12 +516,15 @@ const TYPES = {
     {k:"base",l:"Base carregadora",opts:SIMNAO}]},
   monitor:{label:"Monitores", one:"Monitor", prefix:"MON", icon:"monitor", extra:[
     {k:"polegadas",l:"Tamanho (pol.)"},{k:"resolucao",l:"Resolução"},{k:"entradas",l:"Entradas (HDMI, VGA…)"}]},
+  periferico:{label:"Periféricos", one:"Periférico", prefix:"PER", icon:"mouse", extra:[
+    {k:"subtipo",l:"Tipo de periférico",opts:["Teclado","Mouse","Kit teclado e mouse","Headset","Webcam","Dock / Hub USB","Outro"]},
+    {k:"conexao",l:"Conexão",opts:["USB","Bluetooth","Sem fio (receptor USB)","P2 / P3"]}]},
 };
 const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -507,12 +599,15 @@ async function initCaps(){
 // ---------- Supabase (app instalável / web) ----------
 const CFG = window.GA_CONFIG || {};
 let sb = null, SB_USER = null, SB_ROLE = null, sbChannel = null;
-const COLS = ["id","tipo","dispositivo","status","usuario","setor","fabricante","modelo","serie","obs","foto"];
+const COLS = ["id","tipo","dispositivo","status","usuario","setor","unidade","fabricante","modelo","serie","obs","foto"];
 const newId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "id-"+Date.now().toString(36)+Math.random().toString(36).slice(2,10);
 function rowToItem(r){ const {specs,criado_em,atualizado_em,...rest}=r; return {...(specs||{}), ...rest, criadoEm:criado_em, atualizadoEm:atualizado_em}; }
 function itemToRow(d){ const row={specs:{}}; for(const [k,v] of Object.entries(d)){ if(k==="criadoEm"||k==="atualizadoEm"||v===undefined) continue; if(COLS.includes(k)) row[k]=v??""; else row.specs[k]=v; } return row; }
 async function sbLoad(which){
-  const jobs=[];
+  const jobs=[], inv=SB_ROLE!=="rh";   // o RH só enxerga o módulo de onboarding
+  if((!which||which==="onb")) jobs.push(onbLoad());
+  if((!which||which==="onbcfg")) jobs.push(onbLoadCfg());
+  if(!inv){ await Promise.all(jobs); if(S.ready) refresh(); return; }
   if(!which||which==="ativos") jobs.push(sb.from("ativos").select("*").then(({data,error})=>{ if(!error) S.items=(data||[]).map(rowToItem); }));
   if(!which||which==="usuarios") jobs.push(sb.from("usuarios").select("*").then(({data,error})=>{ if(!error) S.users=data||[]; }));
   if(!which||which==="termos") jobs.push(sb.from("termos").select(TCOLS).order("criado_em",{ascending:false}).then(({data,error})=>{ if(!error) termosChegaram(data||[]); }));
@@ -520,7 +615,7 @@ async function sbLoad(which){
   await Promise.all(jobs);
   if (S.ready) refresh();
 }
-const _deb={}; const sbDeb = t => { clearTimeout(_deb[t]); _deb[t]=setTimeout(()=>sbLoad(t),250); };
+const _deb={}; const sbDeb = t => { clearTimeout(_deb[t]); _deb[t]=setTimeout(()=>{ if(t==="onbev"){ if(OB.sel) onbLoadEv(OB.sel).then(onbRedetalhe); } else sbLoad(t); },250); };
 async function initSupabase(){
   S.mode="sb";
   sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, {auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}});
@@ -538,9 +633,10 @@ async function startSession(session){
   const {data:role} = await sb.rpc("papel_atual");
   SB_ROLE = role || null;
   if (!SB_ROLE) return gate("negado");
-  S.canWrite = SB_ROLE!=="leitor";
+  S.canWrite = SB_ROLE==="admin" || SB_ROLE==="editor";
+  if (SB_ROLE==="rh" && !["onboarding"].includes(S.view)) S.view="onboarding";
   document.getElementById("logoutBtn").hidden=false;
-  setSync("ok", `${SB_USER.email} · ${SB_ROLE==="admin"?"administrador":SB_ROLE==="editor"?"editor":"somente leitura"}`);
+  setSync("ok", `${SB_USER.email} · ${({admin:"administrador",editor:"TI",rh:"RH",leitor:"somente leitura"})[SB_ROLE]||SB_ROLE}`);
   await sbLoad();
   if (!sbChannel){
     sbChannel = sb.channel("ga-dados")
@@ -548,6 +644,10 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"usuarios"},()=>sbDeb("usuarios"))
       .on("postgres_changes",{event:"*",schema:"public",table:"inventario"},()=>sbDeb("inventario"))
       .on("postgres_changes",{event:"*",schema:"public",table:"termos"},()=>sbDeb("termos"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"onboardings"},()=>sbDeb("onb"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_ativos"},()=>sbDeb("onb"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_checklist"},()=>sbDeb("onb"))
+      .on("postgres_changes",{event:"INSERT",schema:"public",table:"onboarding_eventos"},p=>{ if(OB.sel && p.new && p.new.onboarding_id===OB.sel) sbDeb("onbev"); })
       .subscribe();
   }
   closeGate(); S.ready=true; render(); openFromHash();
@@ -619,7 +719,7 @@ async function updateAcessos(){
   if(!sb||SB_ROLE!=="admin"){ el.hidden=true; return; }
   const {data,error}=await sb.from("membros").select("*").order("email");
   if(error){ el.hidden=true; return; }
-  const papeis=[["admin","Administrador"],["editor","Editor"],["leitor","Somente leitura"]];
+  const papeis=[["admin","Administrador"],["editor","TI (editor)"],["rh","RH (só onboarding)"],["leitor","Somente leitura"]];
   el.hidden=false;
   el.innerHTML=`<h2>Acesso ao sistema</h2><p class="muted" style="margin:0;font-size:14px">Libere o e-mail aqui. Depois a pessoa usa “Primeiro acesso” na tela de entrada para criar a senha.</p>
   <form id="accForm"><input id="acc_email" type="email" required placeholder="email@empresa.com.br" aria-label="E-mail"><select id="acc_papel" aria-label="Permissão">${papeis.map(([v,t])=>`<option value="${v}" ${v==="editor"?"selected":""}>${t}</option>`).join("")}</select><button class="btn primary">${ICON("plus")}Liberar</button></form>
@@ -651,24 +751,30 @@ function nextName(t){
 
 // ---------- navegação ----------
 function renderMenu(){
+  const btn = ([k,l,ic,n]) => `<button class="nav ${S.view===k||(k==="onboarding"&&S.view==="onbconfig")?"on":""}" data-act="go" data-v="${k}">${ICON(ic)}<span>${l}</span>${n!=null&&S.ready?`<span class="n">${n}</span>`:""}</button>`;
+  const nOnb = sb ? (oAlertas().length||S.onb.filter(o=>OST_ABERTOS.includes(o.status)).length||null) : null;
+  if (SB_ROLE==="rh"){ document.getElementById("menu").innerHTML = btn(["onboarding","Onboarding","onb",nOnb]); return; }
   const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
   const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
-  const tools = [["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
-  const btn = ([k,l,ic,n]) => `<button class="nav ${S.view===k?"on":""}" data-act="go" data-v="${k}">${ICON(ic)}<span>${l}</span>${n!=null&&S.ready?`<span class="n">${n}</span>`:""}</button>`;
+  const tools = [["onboarding","Onboarding","onb",nOnb],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
   document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
-function go(v){ S.view=v; S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
+function go(v){ if(SB_ROLE==="rh") v="onboarding"; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
 
 function render(){
   renderMenu();
   const m=document.getElementById("main");
+  if (SB_ROLE==="rh" && S.view!=="onboarding") S.view="onboarding";
   if (!S.ready){ m.innerHTML=`<div class="head"><div><h1>Carregando…</h1><div class="sub">Buscando os ativos cadastrados.</div></div></div>`; return; }
   if (S.view==="dashboard") m.innerHTML = dashboardHTML();
   else if (S.view==="usuarios"){ m.innerHTML = usersShell(); updateUsers(); updateAcessos(); }
   else if (S.view==="etiquetas"){ m.innerHTML = etqShell(); updateEtq(); }
   else if (S.view==="inventario"){ m.innerHTML = invShell(); updateInv(); }
   else if (S.view==="termos"){ m.innerHTML = termosShell(); updateTermos(); }
-  else { m.innerHTML = listShell(S.view); updateTable(); }
+  else if (S.view==="onboarding"){ if(OB.sel) m.innerHTML = onbDetalheHTML(); else { m.innerHTML = onbListShell(); updateOnbList(); } }
+  else if (S.view==="onbconfig") m.innerHTML = onbCfgHTML();
+  else if (TYPES[S.view]){ m.innerHTML = listShell(S.view); updateTable(); }
+  else { S.view="dashboard"; m.innerHTML = dashboardHTML(); }
 }
 function refresh(){
   renderMenu();
@@ -678,6 +784,8 @@ function refresh(){
   else if (S.view==="etiquetas") updateEtq();
   else if (S.view==="inventario") updateInv();
   else if (S.view==="termos") updateTermos();
+  else if (S.view==="onboarding"){ if(OB.sel) onbRedetalhe(); else updateOnbList(); }
+  else if (S.view==="onbconfig") {}
   else updateTable();
   const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
 }
@@ -702,8 +810,10 @@ function dashboardHTML(){
   const dl=disp.length? disp.slice(0,12).map(x=>`<div class="li" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc(TYPES[x.tipo]?.one||"")} · ${esc([x.fabricante,x.modelo].filter(Boolean).join(" "))}</span>${ICON("eye")}</div>`).join("") : `<p class="muted">Nenhum equipamento disponível no momento.</p>`;
   const man=all.filter(x=>x.status==="Manutenção").sort(sortDev);
   const ml=man.length? man.map(x=>`<div class="li" data-act="view" data-id="${x.id}"><b>${esc(x.dispositivo)}</b><span>${esc(TYPES[x.tipo]?.one||"")} · ${esc(x.obs||x.modelo||"")}</span>${ICON("eye")}</div>`).join("") : `<p class="muted">Nenhum equipamento em manutenção.</p>`;
+  const oal = sb ? oAlertHTML(6) : "";
   return `<div class="head"><div><h1>Dashboard</h1><div class="sub">${all.length} ativos cadastrados · ${S.users.length} usuários</div></div></div>
   <div class="tiles">${tiles}</div>
+  ${oal?`<section class="card panel oalert">${oal}</section>`:""}
   <div class="grid2">
     <section class="card panel"><h2>Status dos ativos</h2>${stackHTML(all)}<div class="legend">${legend}</div><div style="margin-top:18px">${cats}</div></section>
     <section class="card panel"><h2>Ativos por setor</h2><div class="bars">${bars}</div></section>
@@ -763,7 +873,7 @@ function openModal(html, size=""){
   const f=r.querySelector(".mbody input:not([type=hidden]),.mbody select,.mbody textarea")||r.querySelector(".close");
   if(f) setTimeout(()=>f.focus({preventScroll:true}),30);
 }
-function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; IMPT=[]; IMPT_ATIVO=null; }
+function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendingPhoto=null; importRows=null; importUserRows=null; IMPT=[]; IMPT_ATIVO=null; OBP=null; OIMP=null; }
 
 function viewItem(id){
   const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
@@ -780,6 +890,7 @@ function viewItem(id){
       </div>
       ${trio.length?`<div class="kv three">${trio.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}</div>`:""}
       <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
+      ${(()=>{ const l=S.onbAtivos.find(l=>l.ativo_id===x.id&&!l.removido&&!l.entregue); const o=l&&S.onb.find(o=>o.id===l.onboarding_id); return o?`<div class="resnote">Reservado para o onboarding <b>#${o.numero} · ${esc(o.nome)}</b>${o.data_admissao?` (admissão ${esc(fDia(o.data_admissao))})`:""}. <button class="linkbtn" data-act="oopen" data-id="${o.id}">Abrir solicitação</button></div>`:""; })()}
       ${sb?`<div class="hist" id="termoBox" data-ativo="${x.id}">${termoBoxHTML(x.id)}</div>`:""}
       ${sb?`<div class="hist" id="hist"><label>Histórico</label><p class="muted" style="margin:0">Carregando…</p></div>`:""}
       <div class="foot">${sb&&S.canWrite?`<button class="btn" data-act="tanexar" data-id="${x.id}">${ICON("up")}Anexar termo digitalizado</button><button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
@@ -803,6 +914,7 @@ function editItem(id, tipo){
   <form class="f" id="itemForm" data-id="${x?x.id:""}" data-tipo="${t}">
     <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
     <datalist id="dl-setores">${setores().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <datalist id="dl-unidades">${unidades().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
     <fieldset><legend class="l">Identificação</legend>${COMMON.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
     <fieldset><legend class="l">Especificações</legend>${T.extra.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
     <fieldset><legend class="l">Foto e observações</legend>
@@ -1057,7 +1169,7 @@ function confirmDelUser(id){
 
 
 // ---------- termos de responsabilidade ----------
-const TCOLS="id,token,ativo_id,tipo,dispositivo,marca,modelo,serie,condicao,obs,usuario_login,colaborador_nome,colaborador_email,cargo,telefone,entregue_por_nome,entregue_por_email,status,criado_em,expira_em,assinado_em,ip,hash,devolvido_em,devolvido_por,devolucao_obs,cancelado_em,origem,arquivo,arquivo_nome";
+const TCOLS="id,token,ativo_id,tipo,dispositivo,marca,modelo,serie,condicao,obs,usuario_login,colaborador_nome,colaborador_email,cargo,telefone,entregue_por_nome,entregue_por_email,status,criado_em,expira_em,assinado_em,ip,hash,devolvido_em,devolvido_por,devolucao_obs,cancelado_em,origem,arquivo,arquivo_nome,onboarding_id,itens";
 const TSTAT={pendente:["Pendente","st-man"],expirado:["Link expirado","st-desc"],assinado:["Assinado","st-disp"],devolvido:["Devolvido","st-uso"],cancelado:["Cancelado","st-desc"]};
 const TF={q:"",st:"",or:""};
 const tStatus=t=> t.status==="pendente" && new Date(t.expira_em)<new Date() ? "expirado" : t.status;
@@ -1098,7 +1210,7 @@ function tQuando(t){
   return `gerado em ${fData(t.criado_em)}`;
 }
 function termoBoxHTML(ativoId){
-  const ts=S.termos.filter(t=>t.ativo_id===ativoId);
+  const ts=S.termos.filter(t=>t.ativo_id===ativoId || (Array.isArray(t.itens)&&t.itens.some(i=>i.ativo_id===ativoId)));
   return `<label>Termo de responsabilidade</label>${ts.length?`<ul class="tlist">${ts.map(t=>`<li>${tPill(t)}${t.origem==="papel"?`<span class="origem" style="margin-left:0">papel</span>`:""}<span class="who"><b>${esc(t.colaborador_nome||t.usuario_login)}</b> · <span class="muted">${esc(tQuando(t))}</span></span><span class="rowacts">${tActions(t)}</span></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhum termo gerado para este equipamento${S.canWrite?". Use “Gerar termo” abaixo.":"."}</p>`}`;
 }
 function termosUsuarioHTML(login){
@@ -1198,11 +1310,11 @@ async function termoPDF(id){
 }
 function devolucaoModal(id){
   const t=S.termos.find(t=>t.id===id); if(!t) return;
-  const x=S.items.find(i=>i.id===t.ativo_id);
+  const xs=termoAtivos(t), n=xs.length;
   openModal(`<h2>Registrar devolução: ${esc(t.dispositivo)}</h2><form class="f" id="devForm" data-id="${t.id}">
-    <p style="margin:0">${esc(t.colaborador_nome||t.usuario_login)} está devolvendo o equipamento. O termo assinado continua guardado e passa a constar como devolvido.</p>
+    <p style="margin:0">${esc(t.colaborador_nome||t.usuario_login)} está devolvendo ${n>1?`os ${n} equipamentos do termo`:"o equipamento"}. O termo assinado continua guardado e passa a constar como devolvido.</p>
     <label class="fld"><span>Observações da devolução</span><textarea id="d_obs" placeholder="Ex.: devolvido completo, sem avarias"></textarea></label>
-    ${x?`<label class="check"><input type="checkbox" id="d_upd" checked><span>Marcar o equipamento como <b>Disponível</b> e remover o usuário</span></label>`:""}
+    ${n?`<label class="check"><input type="checkbox" id="d_upd" checked><span>Marcar ${n>1?`os ${n} equipamentos`:"o equipamento"} como <b>Disponível</b> e remover o usuário</span></label>`:""}
     <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="dBtn">${ICON("undo")}Registrar devolução</button></div>
   </form>`,"sm");
 }
@@ -1211,11 +1323,12 @@ async function doDevolucao(form){
   const btn=document.getElementById("dBtn"); btn.disabled=true;
   try{
     const {error}=await sb.from("termos").update({status:"devolvido",devolucao_obs:(document.getElementById("d_obs").value||"").trim()}).eq("id",t.id); if(error) throw error;
-    const x=S.items.find(i=>i.id===t.ativo_id);
-    if(x && document.getElementById("d_upd")?.checked){ const {id,...rest}=x; await store.put("ativos",x.id,{...rest,usuario:"",status:"Disponível"}); }
+    if(document.getElementById("d_upd")?.checked){ for(const x of termoAtivos(t)){ const {id,...rest}=x; await store.put("ativos",x.id,{...rest,usuario:"",status:"Disponível"}); } }
     await sbLoad("termos"); closeModal(); toast("Devolução registrada.");
   }catch(e){ btn.disabled=false; writeErr(e); }
 }
+// ativos cobertos por um termo (um ou vários equipamentos)
+function termoAtivos(t){ const ids=Array.isArray(t.itens)&&t.itens.length?t.itens.map(i=>i.ativo_id):[t.ativo_id]; return ids.map(id=>S.items.find(i=>i.id===id)).filter(Boolean); }
 function cancelarModal(id){
   const t=S.termos.find(t=>t.id===id); if(!t) return;
   openModal(`<h2>Cancelar termo?</h2><div class="msg"><p>O link enviado para <b>${esc(t.colaborador_nome||t.usuario_login)}</b> (${esc(t.dispositivo)}) deixa de funcionar. O registro continua na lista como cancelado.</p></div>
@@ -1401,6 +1514,693 @@ async function termoArquivo(id){
   saveFile(name,data).then(ok=>{ if(ok) toast("Arquivo baixado."); });
 }
 
+// ---------- onboarding de novos colaboradores ----------
+// Fluxo: RH solicita → TI analisa, prepara e vincula ativos do inventário → entrega → colaborador assina o termo → concluído.
+// As regras (status, permissões, histórico, reserva dos ativos) ficam no banco; aqui é só a tela.
+const OST = {
+  solicitado:["Solicitado","st-sol"], em_analise:["Em análise pela TI","st-uso"], aguardando_equipamentos:["Aguardando equipamentos","st-man"],
+  em_preparacao:["Em preparação","st-prep"], aguardando_entrega:["Aguardando entrega","st-res"], entregue:["Entregue / Aguardando aceite","st-ent"],
+  concluido:["Concluído","st-ok"], cancelado:["Cancelado","st-desc"] };
+const OST_ABERTOS = ["solicitado","em_analise","aguardando_equipamentos","em_preparacao","aguardando_entrega"];
+const OGRP = {acessos:"Conta e acessos", equipamentos:"Equipamentos", entrega:"Entrega"};
+const OB = {q:"", st:"abertos", dep:"", uni:"", de:"", ate:"", sol:"", tec:"", sel:null, ev:[], evFor:null, cpf:null, cpfFor:null, cpfShow:false};
+let OBP = null;       // seletor de ativo aberto
+let OIMP = null;      // importação do formulário
+const isTI = () => SB_ROLE==="admin" || SB_ROLE==="editor";
+const isRH = () => SB_ROLE==="rh";
+const podeSolicitar = () => ["admin","editor","rh"].includes(SB_ROLE);
+const veCPF = () => SB_ROLE==="rh" || SB_ROLE==="admin";
+const oPill = o => { const [l,c]=OST[o.status]||[o.status,"st-desc"]; return `<span class="pill ${c}">${esc(l)}</span>`; };
+const hojeISO = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10); };
+const dISO = s => { if(!s) return null; const [y,m,d]=String(s).slice(0,10).split("-").map(Number); return new Date(y,m-1,d); };
+const diasAte = s => { const a=dISO(s); return a ? Math.round((a-dISO(hojeISO()))/864e5) : null; };
+const fDia = s => s ? String(s).slice(0,10).split("-").reverse().join("/") : "";
+const oLinks = id => S.onbAtivos.filter(l=>l.onboarding_id===id && !l.removido);
+const oCheck = id => S.onbCheck.filter(c=>c.onboarding_id===id && !c.removido).sort((a,b)=>a.ordem-b.ordem||a.id-b.id);
+const oPct = id => { const c=oCheck(id); return c.length ? Math.round(c.filter(x=>x.feito).length/c.length*100) : 0; };
+const opcEquip = p => S.onbOpc.find(x=>x.grupo==="equipamento" && norm(x.nome)===norm(p));
+const tipoUm = t => (TYPES[t]&&TYPES[t].one) || (window.TERMO&&TERMO.TIPOS[t]) || t || "Ativo";
+function nomeDe(em){
+  if(!em) return "—"; if(!String(em).includes("@")) return em;
+  const u=S.users.find(u=>String(u.email||"").toLowerCase()===String(em).toLowerCase()); if(u&&u.nome) return u.nome;
+  return (String(em).split("@")[0]||"").split(/[._-]/).filter(Boolean).map(p=>p[0].toUpperCase()+p.slice(1)).join(" ");
+}
+const unidades = () => [...new Set([...S.onbOpc.filter(x=>x.grupo==="unidade"&&x.ativo).map(x=>x.nome), ...S.items.map(x=>x.unidade), ...S.onb.map(o=>o.unidade)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+const deptos = () => [...new Set([...setores(), ...S.onb.map(o=>o.departamento)].filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+function sugLogin(o){
+  if(o.login) return o.login;
+  const em=String(o.email_corporativo||""); if(em.includes("@")) return em.split("@")[0].toLowerCase();
+  const p=String(o.nome||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z\s]/g,"").split(/\s+/).filter(Boolean);
+  return p.length>1 ? `${p[0]}.${p[p.length-1]}` : (p[0]||"");
+}
+
+// pedidos de equipamento x ativos vinculados (para "x/y preparados")
+function casar(o){
+  const L=oLinks(o.id), usados=new Set();
+  const ped=[...(o.equipamentos||[]).map(p=>({p, op:opcEquip(p), links:[]})), ...(o.equipamentos_outros?[{p:o.equipamentos_outros, outro:true, links:[]}]:[])];
+  ped.forEach(r=>{ r.links=L.filter(l=>!usados.has(l.id) && l.item_solicitado && norm(l.item_solicitado)===norm(r.p)); r.links.forEach(l=>usados.add(l.id)); });
+  ped.forEach(r=>{ if(r.links.length||!r.op||!r.op.tipo_ativo) return;
+    const l=L.find(l=>!usados.has(l.id) && l.tipo===r.op.tipo_ativo && (!r.op.subtipo || norm(l.descricao).startsWith(norm(r.op.subtipo))));
+    if(l){ r.links=[l]; usados.add(l.id); } });
+  ped.forEach(r=>{ if(r.outro && !r.links.length){ const l=L.find(l=>!usados.has(l.id)); if(l){ r.links=[l]; usados.add(l.id); } } });
+  return {ped, extras:L.filter(l=>!usados.has(l.id))};
+}
+function oPrazo(o){
+  if(o.status==="concluido") return {t:`Concluído em ${fData(o.concluido_em)}`, c:"ok"};
+  if(o.status==="cancelado") return {t:"Cancelado", c:""};
+  if(o.status==="entregue") return {t:`Entregue em ${fData(o.entregue_em)}`, c:"ok"};
+  const d=diasAte(o.data_admissao); if(d==null) return {t:"Sem data", c:""};
+  if(d<0) return {t:`Atrasado ${-d} ${-d===1?"dia":"dias"}`, c:"late"};
+  if(d===0) return {t:"Admissão hoje", c:"soon"};
+  if(d===1) return {t:"Amanhã", c:"soon"};
+  return {t:`Em ${d} dias`, c:d<=3?"soon":""};
+}
+function oAlertas(){
+  const out=[], agora=Date.now();
+  S.onb.forEach(o=>{
+    if(OST_ABERTOS.includes(o.status)){
+      const d=diasAte(o.data_admissao);
+      if(d!=null && d<0) out.push({o,n:0,c:"late",t:`Atrasado: admissão foi em ${fDia(o.data_admissao)} e a entrega não foi registrada`});
+      else if(d!=null && d<=1) out.push({o,n:1,c:"soon",t:d===0?"Admissão hoje":"Admissão amanhã"});
+      else if(d!=null && d<=3) out.push({o,n:2,c:"soon",t:`Admissão em ${d} dias (${fDia(o.data_admissao)})`});
+      const h=(agora-new Date(o.solicitado_em))/36e5;
+      if(!o.responsavel_ti && h>24) out.push({o,n:3,c:"warn",t:`Sem responsável da TI há ${Math.floor(h/24)} ${Math.floor(h/24)===1?"dia":"dias"}`});
+    } else if(o.status==="entregue" && o.entregue_em && agora-new Date(o.entregue_em)>2*864e5)
+      out.push({o,n:4,c:"warn",t:"Entregue há mais de 2 dias, aguardando aceite do termo"});
+  });
+  return out.sort((a,b)=>a.n-b.n || String(a.o.data_admissao||"").localeCompare(String(b.o.data_admissao||"")));
+}
+function oAlertHTML(lim){
+  const al=oAlertas(); if(!al.length) return "";
+  const vis=lim?al.slice(0,lim):al;
+  return `<div class="panelhead"><h2>Alertas de onboarding (${al.length})</h2>${lim&&al.length>lim?`<button class="linkbtn" data-act="go" data-v="onboarding">Ver todos</button>`:""}</div>
+  <div class="list">${vis.map(a=>`<div class="al ${a.c}" data-act="oopen" data-id="${a.o.id}"><i></i><b>${esc(a.o.nome)}</b><span>${esc(a.t)}${a.o.departamento?` · ${esc(a.o.departamento)}`:""}</span>${ICON("eye")}</div>`).join("")}</div>`;
+}
+
+// ---------- carga ----------
+async function pageAll(build){
+  const out=[]; for(let i=0;;i+=1000){ const {data,error}=await build().range(i,i+999); if(error) throw error; out.push(...(data||[])); if(!data||data.length<1000) break; } return out;
+}
+async function onbLoad(){
+  try{
+    const [o,a,c]=await Promise.all([
+      pageAll(()=>sb.from("onboardings").select("*").order("numero",{ascending:false})),
+      pageAll(()=>sb.from("onboarding_ativos").select("*").order("id")),
+      pageAll(()=>sb.from("onboarding_checklist").select("*").order("id"))]);
+    S.onb=o; S.onbAtivos=a; S.onbCheck=c;
+  }catch(e){ console.error(e); }
+}
+async function onbLoadCfg(){
+  const [p,m]=await Promise.all([sb.from("onboarding_opcoes").select("*").order("grupo").order("ordem").order("id"),
+    sb.from("onboarding_checklist_modelo").select("*").order("grupo").order("ordem").order("id")]);
+  if(!p.error) S.onbOpc=p.data||[]; if(!m.error) S.onbMod=m.data||[];
+}
+async function onbLoadEv(id){
+  const {data,error}=await sb.from("onboarding_eventos").select("*").eq("onboarding_id",id).order("em",{ascending:false}).order("id",{ascending:false}).limit(500);
+  if(!error){ OB.ev=data||[]; OB.evFor=id; }
+}
+async function onbLoadCPF(id){
+  if(!veCPF()) return;
+  const {data}=await sb.from("onboarding_privado").select("cpf").eq("onboarding_id",id).maybeSingle();
+  OB.cpf=data?data.cpf||"":""; OB.cpfFor=id;
+}
+async function onbReload(){ await sbLoad("onb"); if(OB.sel){ await onbLoadEv(OB.sel); onbRedetalhe(); } }
+function onbErr(e){
+  if(e && e.code==="P0001"){ toast(e.message); console.error(e); return; }
+  writeErr(e);
+}
+async function onbUpd(id, patch, msg){
+  const {data,error}=await sb.from("onboardings").update(patch).eq("id",id).select("id");
+  if(error){ onbErr(error); return false; }
+  if(!data||!data.length){ toast("Você não tem permissão para alterar esta solicitação."); return false; }
+  await onbReload(); if(msg) toast(msg); return true;
+}
+
+// ---------- lista + painel ----------
+function onbListShell(){
+  return `<div class="head"><div><h1>Onboarding</h1><div class="sub" id="ocount"></div></div>
+    <div class="actions">
+      ${podeSolicitar()?`<button class="btn" data-act="oimport">${ICON("up")}Importar formulário</button>`:""}
+      <button class="btn" data-act="oexport">${ICON("down")}Exportar Excel</button>
+      ${SB_ROLE==="admin"?`<button class="btn" data-act="go" data-v="onbconfig">${ICON("gear")}Configurar</button>`:""}
+      ${podeSolicitar()?`<button class="btn primary" data-act="onew">${ICON("plus")}Nova solicitação</button>`:""}
+    </div></div>
+  <div class="otiles" id="otiles"></div>
+  <section class="card panel oalert" id="oalert" hidden></section>
+  <div class="card filters">
+    <label class="search">${ICON("search")}<input id="oq" type="search" placeholder="Pesquisar por nome, cargo, e-mail ou nº..." value="${esc(OB.q)}" aria-label="Pesquisar"></label>
+    <label class="sel">${ICON("filter")}<select id="ost" aria-label="Status"></select></label>
+    <label class="sel">${ICON("filter")}<select id="odep" aria-label="Departamento"></select></label>
+    <label class="sel">${ICON("filter")}<select id="ouni" aria-label="Unidade"></select></label>
+    <label class="sel">${ICON("filter")}<select id="osol" aria-label="Responsável (RH)"></select></label>
+    <label class="sel">${ICON("filter")}<select id="otec" aria-label="Técnico da TI"></select></label>
+    <label class="dt"><span>Admissão de</span><input type="date" id="ode" value="${esc(OB.de)}"></label>
+    <label class="dt"><span>até</span><input type="date" id="oate" value="${esc(OB.ate)}"></label>
+  </div>
+  <div class="card tablewrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Cargo</th><th>Departamento</th><th>Admissão</th><th>Solicitante</th><th>Responsável TI</th><th>Status</th><th>Prazo</th></tr></thead><tbody id="otb"></tbody></table></div>`;
+}
+const oSolic = o => o.solicitante_nome || nomeDe(o.solicitante_email);
+function onbFiltrados(){
+  const q=norm(OB.q);
+  return S.onb.filter(o=>
+    (OB.st==="todos" || (OB.st==="abertos"?OST_ABERTOS.includes(o.status):o.status===OB.st)) &&
+    (!OB.dep||o.departamento===OB.dep) && (!OB.uni||o.unidade===OB.uni) &&
+    (!OB.sol||(o.solicitante_email||"")===OB.sol) && (!OB.tec||(OB.tec==="-"?!o.responsavel_ti:o.responsavel_ti===OB.tec)) &&
+    (!OB.de||(o.data_admissao&&o.data_admissao>=OB.de)) && (!OB.ate||(o.data_admissao&&o.data_admissao<=OB.ate)) &&
+    (!q||[o.nome,o.cargo,o.email_corporativo,o.departamento,o.login,"#"+o.numero,String(o.numero)].some(v=>norm(v).includes(q))))
+  .sort((a,b)=>{ const fa=OST_ABERTOS.includes(a.status)?0:1, fb=OST_ABERTOS.includes(b.status)?0:1;
+    return fa-fb || (fa===0 ? String(a.data_admissao||"9").localeCompare(String(b.data_admissao||"9")) : b.numero-a.numero); });
+}
+function updateOnbList(){
+  const tb=document.getElementById("otb"); if(!tb) return;
+  const cnt=k=>S.onb.filter(o=>o.status===k).length, ab=S.onb.filter(o=>OST_ABERTOS.includes(o.status)).length;
+  document.getElementById("ocount").textContent=`${S.onb.length} ${S.onb.length===1?"solicitação":"solicitações"} · ${ab} em aberto`;
+  document.getElementById("otiles").innerHTML=Object.entries(OST).map(([k,[l,c]])=>`<button class="card otile ${OB.st===k?"on":""}" data-act="ost" data-v="${k}"><span class="pill ${c}">${esc(l)}</span><b>${cnt(k)}</b></button>`).join("");
+  const al=document.getElementById("oalert"); const ah=oAlertHTML(0); al.hidden=!ah; al.innerHTML=ah;
+  const sel=(id,cur,first,opts)=>{ const el=document.getElementById(id); if(el) el.innerHTML=first+opts.map(([v,t])=>`<option value="${esc(v)}" ${cur===v?"selected":""}>${esc(t)}</option>`).join(""); };
+  sel("ost",OB.st,"",[["abertos","Em aberto"],["todos","Todos os status"],...Object.entries(OST).map(([k,[l]])=>[k,l])]);
+  sel("odep",OB.dep,`<option value="">Todos os departamentos</option>`,[...new Set(S.onb.map(o=>o.departamento).filter(Boolean))].sort().map(v=>[v,v]));
+  sel("ouni",OB.uni,`<option value="">Todas as unidades</option>`,[...new Set(S.onb.map(o=>o.unidade).filter(Boolean))].sort().map(v=>[v,v]));
+  const sols=new Map(S.onb.filter(o=>o.solicitante_email).map(o=>[o.solicitante_email,oSolic(o)]));
+  sel("osol",OB.sol,`<option value="">Solicitante (RH)</option>`,[...sols].sort((a,b)=>a[1].localeCompare(b[1])));
+  const tecs=new Map(S.onb.filter(o=>o.responsavel_ti).map(o=>[o.responsavel_ti,o.responsavel_ti_nome||nomeDe(o.responsavel_ti)]));
+  sel("otec",OB.tec,`<option value="">Técnico (TI)</option>`,[["-","Sem responsável"],...[...tecs].sort((a,b)=>a[1].localeCompare(b[1]))]);
+  if(!sb){ tb.innerHTML=`<tr><td colspan="9"><div class="empty"><b>Disponível na versão com login</b>O onboarding usa o banco de dados do sistema.</div></td></tr>`; return; }
+  const rows=onbFiltrados();
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="9"><div class="empty">${S.onb.length?"<b>Nenhuma solicitação neste filtro</b>Ajuste a pesquisa ou os filtros.":`<b>Nenhuma solicitação ainda</b>${podeSolicitar()?"Use “Nova solicitação” ou importe as respostas do formulário do RH.":""}`}</div></td></tr>`; return; }
+  tb.innerHTML=rows.map(o=>{ const pz=oPrazo(o), pc=oPct(o.id);
+    return `<tr class="click" data-act="oopen" data-id="${o.id}"><td class="muted">#${o.numero}</td>
+      <td class="dev"><button class="linkbtn" style="padding:0;text-align:left" data-act="oopen" data-id="${o.id}">${esc(o.nome)}</button></td>
+      <td>${esc(o.cargo||"—")}</td><td class="set">${esc(o.departamento||"—")}</td><td>${esc(fDia(o.data_admissao)||"—")}</td>
+      <td>${esc(oSolic(o)||"—")}</td><td>${o.responsavel_ti?esc(o.responsavel_ti_nome||nomeDe(o.responsavel_ti)):`<span class="muted">—</span>`}</td>
+      <td>${oPill(o)}${o.status!=="cancelado"?`<div class="mprog" title="Checklist ${pc}%"><i style="width:${pc}%"></i></div>`:""}</td>
+      <td class="pz ${pz.c}">${esc(pz.t)}</td></tr>`; }).join("");
+}
+
+// ---------- detalhe ----------
+function onbAbrir(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return;
+  closeModal();
+  OB.sel=id; OB.ev=[]; OB.evFor=null; OB.cpf=null; OB.cpfFor=null; OB.cpfShow=false;
+  S.view="onboarding"; render(); window.scrollTo(0,0);
+  try{ history.replaceState(null,"",`#onb-${o.numero}`); }catch(e){}
+  Promise.all([onbLoadEv(id), onbLoadCPF(id)]).then(()=>{ if(OB.sel===id) onbRedetalhe(); });
+}
+function onbVoltar(){ OB.sel=null; try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} render(); }
+function onbRedetalhe(){
+  const m=document.getElementById("main"); if(!m||S.view!=="onboarding"||!OB.sel||!S.ready) return;
+  const keep={}; m.querySelectorAll("textarea[id],input[id]:not([type=checkbox])").forEach(el=>keep[el.id]=el.value);
+  const fid=document.activeElement&&m.contains(document.activeElement)?document.activeElement.id:""; const y=window.scrollY;
+  m.innerHTML=onbDetalheHTML();
+  Object.entries(keep).forEach(([id,v])=>{ const el=document.getElementById(id); if(el) el.value=v; });
+  if(fid){ const el=document.getElementById(fid); if(el) el.focus({preventScroll:true}); }
+  window.scrollTo(0,y);
+}
+const mascCPF = c => { const d=String(c||"").replace(/\D/g,""); return d.length===11?`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`:String(c||""); };
+const ocultaCPF = c => { const d=String(c||"").replace(/\D/g,""); return d.length===11?`***.${d.slice(3,6)}.${d.slice(6,9)}-**`:"***"; };
+function onbDetalheHTML(){
+  const o=S.onb.find(x=>x.id===OB.sel);
+  if(!o) return `<div class="head"><div><h1>Solicitação não encontrada</h1></div><div class="actions"><button class="btn" data-act="oback">Voltar</button></div></div>`;
+  const ti=isTI(), aberto=OST_ABERTOS.includes(o.status), eu=String(SB_USER&&SB_USER.email||"").toLowerCase();
+  const k=casar(o), ck=oCheck(o.id), L=oLinks(o.id), ac=ck.filter(c=>c.grupo==="acessos");
+  const prep=k.ped.filter(r=>r.links.length).length, pct=oPct(o.id), pz=oPrazo(o);
+  const termos=S.termos.filter(t=>t.onboarding_id===o.id);
+  const ultTermo=termos.find(t=>t.status!=="cancelado");
+  const editaCheck=ti && !["concluido","cancelado"].includes(o.status);
+  const podeEditar=(isRH()&&aberto)||(ti&&o.status!=="cancelado");
+
+  // ações
+  const acts=[];
+  if(ti&&aberto&&String(o.responsavel_ti||"").toLowerCase()!==eu) acts.push(`<button class="btn" data-act="oassumir" data-id="${o.id}">${ICON("users")}Assumir</button>`);
+  if(podeEditar) acts.push(`<button class="btn" data-act="oedit" data-id="${o.id}">${ICON("edit")}Editar dados</button>`);
+  if(ti&&L.length&&(aberto||o.status==="entregue")) acts.push(`<button class="btn" data-act="otermo" data-id="${o.id}">${ICON("sign")}Gerar termo</button>`);
+  if(ti&&aberto) acts.push(`<button class="btn primary" data-act="oentregar" data-id="${o.id}" ${L.length?"":"disabled title=\"Vincule ao menos um equipamento\""}>${ICON("check")}Registrar entrega</button>`);
+  if(ti&&o.status==="entregue") acts.push(`<button class="btn primary" data-act="oconcluir" data-id="${o.id}">${ICON("check")}Concluir</button>`);
+  const statusSel = ti&&aberto ? `<label class="sel ostsel">${ICON("filter")}<select id="oStatusSel" data-id="${o.id}" aria-label="Alterar status">${OST_ABERTOS.map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${OST[s][0]}</option>`).join("")}</select></label>` : "";
+  const menos=[];
+  if((ti&&aberto)||(isRH()&&o.status==="solicitado")) menos.push(`<button class="btn ghost" data-act="ocancelar" data-id="${o.id}">${ICON("x")}Cancelar solicitação</button>`);
+  if((SB_ROLE==="admin"&&["entregue","concluido","cancelado"].includes(o.status))||(ti&&o.status==="cancelado")) menos.push(`<button class="btn ghost" data-act="oreabrir" data-id="${o.id}">${ICON("undo")}Reabrir</button>`);
+
+  // resumo
+  const sum=`<div class="osum">
+    <div class="card"><label>Equipamentos</label><b>${prep}/${k.ped.length}</b><small>${k.ped.length?"preparados":"nenhum solicitado"}${k.extras.length?` · +${k.extras.length} extra`:""}</small></div>
+    <div class="card"><label>Acessos</label><b>${ac.filter(c=>c.feito).length}/${ac.length}</b><small>itens de conta e acesso</small></div>
+    <div class="card"><label>Checklist</label><b>${pct}%</b><div class="mprog" style="width:100%"><i style="width:${pct}%"></i></div></div>
+    <div class="card"><label>Admissão</label><b style="font-size:20px">${esc(fDia(o.data_admissao)||"—")}</b><small class="pz ${pz.c}">${esc(pz.t)}</small></div>
+    <div class="card"><label>Termo</label><b style="font-size:16px;margin-top:6px">${ultTermo?tPill(ultTermo):(isRH()?(ck.find(c=>c.chave==="termo_assinado"&&c.feito)?`<span class="pill st-disp">Assinado</span>`:ck.find(c=>c.chave==="termo_gerado"&&c.feito)?`<span class="pill st-man">Pendente</span>`:`<span class="muted">Não gerado</span>`):`<span class="muted">Não gerado</span>`)}</b></div>
+  </div>`;
+
+  // equipamentos
+  const linkRow=l=>`<div class="oln"><span class="ic">${ICON((TYPES[l.tipo]||{}).icon||"tag")}</span><div><b>${esc(tipoUm(l.tipo))} ${esc(l.dispositivo)}</b><small>${esc(l.descricao||"")}${l.entregue?` · entregue em ${fData(l.entregue_em)}`:` · vinculado por ${esc(nomeDe(l.vinculado_por))}`}</small></div>
+    ${l.entregue?`<span class="pill st-ok">Entregue</span>`:`<span class="pill st-res">Reservado</span>`}
+    ${ti&&S.items.some(i=>i.id===l.ativo_id)?`<button class="ib" data-act="view" data-id="${l.ativo_id}" title="Ver ativo" aria-label="Ver ${esc(l.dispositivo)}">${ICON("eye")}</button>`:""}
+    ${ti&&aberto&&!l.entregue?`<button class="ib del" data-act="ounlink" data-id="${l.id}" title="Desvincular" aria-label="Desvincular ${esc(l.dispositivo)}">${ICON("x")}</button>`:""}</div>`;
+  const eq=`<section class="card panel"><div class="panelhead"><h2>Equipamentos</h2>${ti&&aberto?`<button class="btn sm" data-act="opick" data-id="${o.id}" data-p="">${ICON("plus")}Vincular outro ativo</button>`:""}</div>
+    ${k.ped.map(r=>`<div class="oeq"><div class="oeqh"><span>${esc(r.p)}${r.outro?` <em class="auto">outros</em>`:""}</span>${r.links.length?`<span class="pill st-ok">Separado</span>`:`<span class="pill st-man">Pendente</span>`}</div>
+      ${r.links.map(linkRow).join("")}
+      ${!r.links.length&&ti&&aberto?`<button class="linkbtn" data-act="opick" data-id="${o.id}" data-p="${esc(r.p)}">Escolher ${esc(r.outro?"ativo":r.p.toLowerCase())} disponível no inventário</button>`:""}
+      ${!r.links.length&&!ti?`<p class="muted" style="margin:6px 0 0;font-size:14px">A TI ainda vai separar este item.</p>`:""}</div>`).join("")}
+    ${k.extras.length?`<div class="oeq"><div class="oeqh"><span>Outros ativos vinculados</span></div>${k.extras.map(linkRow).join("")}</div>`:""}
+    ${!k.ped.length&&!k.extras.length?`<p class="muted" style="margin:0">Nenhum equipamento solicitado.</p>`:""}
+    ${ti&&aberto?`<p class="muted" style="margin:10px 0 0;font-size:13px">Só aparecem ativos com status Disponível. Ao vincular, o ativo fica Reservado; na entrega passa para Em uso com o colaborador.</p>`:""}
+  </section>`;
+
+  // checklist
+  const chk=`<section class="card panel"><div class="panelhead"><h2>Checklist da TI</h2><span class="muted" style="font-size:14px">${ck.filter(c=>c.feito).length} de ${ck.length} · ${pct}%</span></div>
+    ${Object.entries(OGRP).map(([g,t])=>{ const it=ck.filter(c=>c.grupo===g); return `<div class="ogrp"><h3>${t}</h3>
+      ${it.map(c=>`<div class="ock ${c.feito?"done":""}"><input type="checkbox" id="ck_${c.id}" data-ck="${c.id}" ${c.feito?"checked":""} ${!editaCheck||c.chave?"disabled":""}>
+        <label class="tx" for="ck_${c.id}"><span>${esc(c.item)}</span>${c.chave?`<em class="auto" title="Marcado pelo sistema">automático</em>`:""}${c.manual?`<em class="auto">adicionado</em>`:""}
+        ${c.feito?`<small>${esc(nomeDe(c.feito_por))} · ${esc(fDH(c.feito_em))}</small>`:""}</label>
+        ${editaCheck&&c.manual&&!c.feito?`<button type="button" class="ib del sm" data-act="ockrm" data-id="${c.id}" title="Remover item" aria-label="Remover ${esc(c.item)}">${ICON("x")}</button>`:""}</div>`).join("")||`<p class="muted" style="margin:0;font-size:14px">Nenhum item.</p>`}
+      ${editaCheck&&g!=="entrega"?`<form class="ockadd" data-grupo="${g}" data-id="${o.id}"><input id="ockin_${g}" placeholder="Adicionar item em ${t.toLowerCase()}…" maxlength="200" aria-label="Novo item"><button class="btn sm">${ICON("plus")}Adicionar</button></form>`:""}</div>`; }).join("")}
+  </section>`;
+
+  // dados
+  const kv=(l,v)=>`<div><label>${l}</label><p>${v||"—"}</p></div>`;
+  const cpf = veCPF() ? (OB.cpfFor===o.id ? (OB.cpf ? `${esc(OB.cpfShow?mascCPF(OB.cpf):ocultaCPF(OB.cpf))} <button class="linkbtn" data-act="ocpf">${OB.cpfShow?"Ocultar":"Mostrar"}</button>` : "—") : "…") : "";
+  const dados=`<section class="card panel"><h2>Colaborador</h2><div class="kv">
+    ${kv("Nome",esc(o.nome))}${kv("Cargo",esc(o.cargo))}${kv("Departamento",esc(o.departamento))}${kv("Unidade",esc(o.unidade))}
+    ${kv("E-mail corporativo",esc(o.email_corporativo))}${kv("Telefone",esc(o.telefone))}${kv("Data de admissão",esc(fDia(o.data_admissao)))}
+    ${o.login?kv("Login",esc(o.login)):""}${veCPF()?kv("CPF",cpf):""}
+  </div><div class="kv" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+    ${kv("Solicitante",esc(oSolic(o)))}${kv("Solicitado em",esc(fDH(o.solicitado_em))+(o.origem==="formulario"?` <span class="origem" style="margin-left:2px">formulário</span>`:""))}
+    ${kv("Responsável da TI",o.responsavel_ti?esc(o.responsavel_ti_nome||nomeDe(o.responsavel_ti)):"")}
+    ${o.entregue_em?kv("Entregue",`${esc(fDH(o.entregue_em))} por ${esc(nomeDe(o.entregue_por))}`):""}
+    ${o.status==="cancelado"?kv("Cancelado",`${esc(fDH(o.cancelado_em))}${o.cancelado_motivo?` — ${esc(o.cancelado_motivo)}`:""}`):""}
+  </div></section>`;
+  const chips=(arr,outro)=>[...(arr||[]).map(v=>`<span class="chip">${esc(v)}</span>`), ...(outro?[`<span class="chip" style="background:var(--surface-2);color:var(--ink)">${esc(outro)}</span>`]:[])].join("")||`<span class="muted">—</span>`;
+  const solic=`<section class="card panel"><h2>Solicitação do RH</h2><div class="osol">
+    <label>Equipamentos</label><div class="chips">${chips(o.equipamentos,o.equipamentos_outros)}</div>
+    <label>Softwares e sistemas</label><div class="chips">${chips(o.softwares,o.softwares_outros)}</div>
+    <label>Rede e compartilhamentos</label><div class="chips">${chips(o.rede,o.rede_outros)}</div>
+    ${o.outros?`<label>Outros</label><p style="margin:0;white-space:pre-wrap">${esc(o.outros)}</p>`:""}
+  </div></section>`;
+  const term = isRH() ? "" : `<section class="card panel"><h2>Termo de responsabilidade</h2>${termos.length?`<ul class="tlist">${termos.map(t=>`<li>${tPill(t)}<span class="who"><b>${esc(t.dispositivo)}</b> · <span class="muted">${esc(tQuando(t))}</span></span><span class="rowacts">${tActions(t)}</span></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhum termo gerado${ti&&L.length?". Use “Gerar termo” depois de vincular os equipamentos.":"."}</p>`}</section>`;
+  const comLogin = ti && o.login ? S.items.filter(i=>norm(i.usuario)===norm(o.login)).sort(sortDev) : [];
+  const posse = ti && o.login ? `<section class="card panel"><h2>Equipamentos com ${esc(o.nome.split(" ")[0])}</h2>
+    <div class="chips">${comLogin.length?comLogin.map(i=>`<button class="chip" style="border:0;cursor:pointer" data-act="view" data-id="${i.id}">${esc(i.dispositivo)} · ${esc(tipoUm(i.tipo))}</button>`).join(""):`<span class="muted">Nenhum ativo em uso com o login ${esc(o.login)}.</span>`}</div>
+    <p class="muted" style="margin:10px 0 0;font-size:13px">Todos os ativos em uso com este login, inclusive de entregas anteriores. É a base para o futuro offboarding.</p></section>` : "";
+  const ev = OB.evFor===o.id ? OB.ev : null;
+  const hist=`<section class="card panel"><h2>Histórico</h2>
+    ${SB_ROLE!=="leitor"?`<form id="oComForm" data-id="${o.id}" class="ocom"><textarea id="oCom" maxlength="1000" placeholder="Escreva um comentário para a TI e o RH…" aria-label="Comentário"></textarea><button class="btn sm">Comentar</button></form>`:""}
+    ${ev==null?`<p class="muted" style="margin:0">Carregando…</p>`:ev.length?`<ul class="tl">${ev.map(e=>`<li class="${e.tipo==="comentario"?"c":""}"><time>${esc(fDH(e.em))}</time><div><span class="who">${esc(e.papel||"")} · ${esc(nomeDe(e.por))}</span>${e.tipo==="comentario"?`<div class="msgc">${esc(e.descricao)}</div>`:`<div>${esc(e.descricao)}</div>`}</div></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Sem registros.</p>`}
+    <p class="muted" style="margin:10px 0 0;font-size:12.5px">O histórico é gravado pelo banco de dados e não pode ser editado nem apagado.</p></section>`;
+
+  return `<div class="head"><div><button class="linkbtn" data-act="oback" style="padding:0 0 6px">← Onboarding</button>
+      <h1>${esc(o.nome)}</h1><div class="sub">#${o.numero} · ${esc([o.cargo,o.departamento,o.unidade].filter(Boolean).join(" · ")||"—")} &nbsp;${oPill(o)}</div></div>
+    <div class="actions">${statusSel}${acts.join("")}</div></div>
+  ${o.status==="cancelado"?`<div class="warnnote" style="margin-bottom:18px">Solicitação cancelada${o.cancelado_motivo?`: ${esc(o.cancelado_motivo)}`:""}.</div>`:""}
+  ${sum}
+  <div class="odet"><div class="ocol">${eq}${chk}</div><div class="ocol">${dados}${solic}${term}${posse}${hist}</div></div>
+  ${menos.length?`<div class="foot" style="margin-top:20px;justify-content:flex-start">${menos.join("")}</div>`:""}`;
+}
+
+// ---------- formulário (RH / TI) ----------
+function onbForm(id){
+  const o=id?S.onb.find(x=>x.id===id):null; const d=o||{equipamentos:[],softwares:[],rede:[]};
+  const grp=(g,campo,outro,titulo)=>{ const ops=S.onbOpc.filter(x=>x.grupo===g&&x.ativo).map(x=>x.nome); const sel=d[campo]||[];
+    const todos=[...ops, ...sel.filter(v=>!ops.includes(v))];
+    return `<fieldset><legend class="l">${titulo}</legend><div class="ochecks">${todos.map(n=>`<label class="check"><input type="checkbox" name="${campo}" value="${esc(n)}" ${sel.includes(n)?"checked":""}><span>${esc(n)}</span></label>`).join("")||`<span class="muted">Nenhuma opção cadastrada.</span>`}</div>
+      <label class="fld wide"><span>Outros</span><input name="${outro}" value="${esc(d[outro]||"")}" placeholder="O que não estiver na lista" maxlength="300"></label></fieldset>`; };
+  openModal(`<h2>${o?`Editar solicitação #${o.numero}`:"Nova solicitação de onboarding"}</h2>
+  <form class="f" id="onbForm" data-id="${o?o.id:""}">
+    <datalist id="dl-setores">${deptos().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <datalist id="dl-unidades">${unidades().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
+    <fieldset><legend class="l">Colaborador</legend>
+      <label class="fld wide"><span>Nome do funcionário <i>*</i></span><input name="nome" required maxlength="150" value="${esc(d.nome||"")}" autocomplete="off"></label>
+      <label class="fld"><span>Cargo</span><input name="cargo" maxlength="100" value="${esc(d.cargo||"")}"></label>
+      <label class="fld"><span>Departamento</span><input name="departamento" list="dl-setores" maxlength="100" value="${esc(d.departamento||"")}" autocomplete="off"></label>
+      <label class="fld"><span>Unidade</span><input name="unidade" list="dl-unidades" maxlength="100" value="${esc(d.unidade||"")}" autocomplete="off"></label>
+      <label class="fld"><span>Data de admissão <i>*</i></span><input name="data_admissao" type="date" required value="${esc(d.data_admissao||"")}"></label>
+      <label class="fld"><span>E-mail corporativo</span><input name="email_corporativo" type="email" maxlength="150" value="${esc(d.email_corporativo||"")}"></label>
+      <label class="fld"><span>Telefone</span><input name="telefone" id="of_tel" type="tel" inputmode="tel" maxlength="20" value="${esc(d.telefone||"")}"></label>
+      ${veCPF()?`<label class="fld"><span>CPF</span><input name="cpf" id="of_cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="${esc(o&&OB.cpfFor===o.id?mascCPF(OB.cpf):"")}" autocomplete="off"></label>`:""}
+      ${isTI()&&o?`<label class="fld"><span>Login (rede/sistemas)</span><input name="login" maxlength="60" value="${esc(d.login||"")}" placeholder="${esc(sugLogin(d))}" autocomplete="off"></label>`:""}
+    </fieldset>
+    ${grp("equipamento","equipamentos","equipamentos_outros","Equipamentos necessários")}
+    ${grp("software","softwares","softwares_outros","Softwares e sistemas")}
+    ${grp("rede","rede","rede_outros","Rede e compartilhamentos")}
+    <fieldset><legend class="l">Outros</legend><label class="fld wide"><span>Outras necessidades ou observações</span><textarea name="outros" maxlength="2000">${esc(d.outros||"")}</textarea></label></fieldset>
+    ${veCPF()?`<p class="muted" style="margin:0;font-size:13px">O CPF fica numa área separada do banco, visível só para o RH e administradores (LGPD).</p>`:""}
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="ofBtn">${o?"Salvar alterações":"Enviar solicitação"}</button></div>
+  </form>`,"md");
+  if(o&&veCPF()&&OB.cpfFor!==o.id) onbLoadCPF(o.id).then(()=>{ const el=document.getElementById("of_cpf"); if(el&&!el.value) el.value=mascCPF(OB.cpf); });
+}
+function cpfValido(c){
+  const d=String(c||"").replace(/\D/g,""); if(d.length!==11||/^(\d)\1+$/.test(d)) return false;
+  const dv=n=>{ let s=0; for(let i=0;i<n;i++) s+=+d[i]*(n+1-i); const r=(s*10)%11; return r===10?0:r; };
+  return dv(9)===+d[9] && dv(10)===+d[10];
+}
+async function submitOnb(form){
+  const fd=new FormData(form), id=form.dataset.id||null, g=k=>String(fd.get(k)||"").trim();
+  const row={nome:g("nome").replace(/\s+/g," "),cargo:g("cargo"),departamento:g("departamento"),unidade:g("unidade"),email_corporativo:g("email_corporativo").toLowerCase(),
+    telefone:g("telefone"),data_admissao:g("data_admissao")||null,equipamentos:fd.getAll("equipamentos"),equipamentos_outros:g("equipamentos_outros"),
+    softwares:fd.getAll("softwares"),softwares_outros:g("softwares_outros"),rede:fd.getAll("rede"),rede_outros:g("rede_outros"),outros:g("outros")};
+  if(form.querySelector("[name=login]")) row.login=g("login").toLowerCase();
+  const cpf=veCPF()?g("cpf").replace(/\D/g,""):"";
+  if(cpf && !cpfValido(cpf)){ toast("O CPF informado não é válido."); form.querySelector("[name=cpf]").focus(); return; }
+  const btn=document.getElementById("ofBtn"); btn.disabled=true;
+  try{
+    let oid=id;
+    if(id){ const {data,error}=await sb.from("onboardings").update(row).eq("id",id).select("id"); if(error) throw error; if(!data||!data.length){ toast("Você não tem permissão para editar esta solicitação."); btn.disabled=false; return; } }
+    else { oid=newId(); const {error}=await sb.from("onboardings").insert({...row,id:oid,solicitante_nome:meuNome(),origem:"sistema"}); if(error) throw error; }
+    if(veCPF() && (cpf || (id && OB.cpfFor===id && OB.cpf))){
+      const {error}=await sb.from("onboarding_privado").upsert({onboarding_id:oid,cpf}); if(error) throw error;
+      OB.cpf=cpf; OB.cpfFor=oid;
+    }
+    closeModal(); await sbLoad("onb");
+    if(id){ await onbReload(); toast("Solicitação atualizada."); } else { onbAbrir(oid); toast("Solicitação enviada para a TI."); }
+  }catch(e){ btn.disabled=false; onbErr(e); }
+}
+
+// ---------- ações da TI ----------
+function onbCancelarModal(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return; const L=oLinks(id);
+  openModal(`<h2>Cancelar solicitação #${o.numero}?</h2><form class="f" id="oCancForm" data-id="${o.id}">
+    <p style="margin:0">A solicitação de <b>${esc(o.nome)}</b> fica registrada como cancelada.${L.length?` Os ${L.length} ativos reservados voltam para <b>Disponível</b>.`:""}</p>
+    <label class="fld"><span>Motivo <i>*</i></span><textarea id="oc_mot" required maxlength="300" placeholder="Ex.: candidato desistiu da vaga"></textarea></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="ocBtn">Cancelar solicitação</button></div></form>`,"sm");
+}
+function onbConcluirModal(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return;
+  const pend=oCheck(id).filter(c=>!c.feito&&c.chave!=="concluido");
+  if(!pend.length) return onbUpd(id,{status:"concluido"},"Onboarding concluído.");
+  openModal(`<h2>Concluir com pendências?</h2><div class="msg"><p>Ainda há ${pend.length} ${pend.length===1?"item":"itens"} do checklist em aberto:</p>
+    <ul style="margin:0 0 10px;padding-left:20px">${pend.map(c=>`<li>${esc(c.item)}</li>`).join("")}</ul>
+    <p class="muted">O onboarding conclui sozinho quando o colaborador assina o termo e o checklist está completo.</p></div>
+    <div class="foot"><button class="btn ghost" data-act="close">Voltar</button><button class="btn primary" data-act="oconcluirok" data-id="${id}">Concluir mesmo assim</button></div>`,"sm");
+}
+function onbEntregaModal(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return; const L=oLinks(id); if(!L.length){ toast("Vincule ao menos um equipamento."); return; }
+  const k=casar(o), falta=k.ped.filter(r=>!r.links.length).map(r=>r.p);
+  const temTermo=S.termos.some(t=>t.onboarding_id===id&&t.status!=="cancelado");
+  openModal(`<h2>Registrar entrega</h2><form class="f" id="oEntForm" data-id="${o.id}">
+    <p style="margin:0">${L.length===1?"O equipamento abaixo passa":"Os "+L.length+" equipamentos abaixo passam"} para <b>Em uso</b> com <b>${esc(o.nome)}</b>${o.departamento?`, setor <b>${esc(o.departamento)}</b>`:""}${o.unidade?`, unidade <b>${esc(o.unidade)}</b>`:""}. A entrega fica registrada no histórico de cada ativo.</p>
+    <ul class="tlist">${L.map(l=>`<li><b>${esc(l.dispositivo)}</b><span class="who muted">${esc(tipoUm(l.tipo))} ${esc(l.descricao||"")}</span></li>`).join("")}</ul>
+    ${falta.length?`<div class="warnnote">Ainda sem ativo vinculado: ${esc(falta.join(", "))}.</div>`:""}
+    <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
+    <label class="fld"><span>Login do colaborador <i>*</i></span><input id="oe_login" list="dl-usuarios" required maxlength="60" value="${esc(sugLogin(o))}" autocomplete="off"></label>
+    <p class="muted" style="margin:0;font-size:13px">Se o login ainda não existir em Usuários, ele é cadastrado com o nome, o departamento e o e-mail desta solicitação.</p>
+    <label class="check"><input type="checkbox" id="oe_termo" ${temTermo?"":"checked"}><span>Gerar o termo de responsabilidade em seguida${temTermo?" (já existe um termo para esta solicitação)":""}</span></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="oeBtn">${ICON("check")}Confirmar entrega</button></div></form>`,"sm");
+}
+async function doEntrega(form){
+  const id=form.dataset.id, login=(document.getElementById("oe_login").value||"").trim().toLowerCase();
+  if(!/^[a-z0-9._@-]{2,60}$/.test(login)){ toast("Informe um login válido (letras, números, ponto, hífen)."); return; }
+  const termo=document.getElementById("oe_termo").checked, btn=document.getElementById("oeBtn"); btn.disabled=true;
+  const {data,error}=await sb.rpc("onboarding_entregar",{p_id:id,p_login:login});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  await Promise.all([sbLoad("ativos"),sbLoad("usuarios")]); await onbReload();
+  toast(`${data.entregues} ${data.entregues===1?"equipamento entregue":"equipamentos entregues"} a ${login}.`);
+  if(termo) onbTermo(id); else closeModal();
+}
+function onbPick(id, pedido){ OBP={id, pedido:pedido||"", q:"", todos:false};
+  const o=S.onb.find(x=>x.id===id); if(!o) return;
+  openModal(`<h2>Vincular ${esc(pedido||"ativo")} · ${esc(o.nome)}</h2><div class="msg">
+    <label class="search" style="margin-bottom:12px">${ICON("search")}<input id="opkq" type="search" placeholder="Pesquisar patrimônio, marca, modelo ou série..." aria-label="Pesquisar ativos"></label>
+    <div id="opklist"></div></div><div class="foot"><button class="btn ghost" data-act="close">Fechar</button></div>`,"md");
+  updatePick();
+}
+function updatePick(){
+  const el=document.getElementById("opklist"); if(!el||!OBP) return;
+  const op=opcEquip(OBP.pedido), q=norm(OBP.q);
+  const disp=S.items.filter(i=>i.status==="Disponível");
+  let lista=disp, filtro="";
+  if(op&&op.tipo_ativo&&!OBP.todos){ lista=disp.filter(i=>i.tipo===op.tipo_ativo&&(!op.subtipo||norm(i.subtipo)===norm(op.subtipo))); filtro=op.subtipo?`${tipoUm(op.tipo_ativo)} · ${op.subtipo}`:tipoUm(op.tipo_ativo); }
+  lista=lista.filter(i=>!q||[i.dispositivo,i.fabricante,i.modelo,i.serie,i.subtipo,i.processador,i.ram].some(v=>norm(v).includes(q))).sort(sortDev).reverse();
+  const det=i=>[tipoUm(i.tipo),i.subtipo,i.fabricante,i.modelo,i.processador,i.ram,i.polegadas?i.polegadas+"\"":"",i.unidade].filter(Boolean).join(" · ");
+  el.innerHTML=`${filtro?`<p class="muted" style="margin:0 0 8px;font-size:14px">Mostrando ${esc(filtro)} disponíveis. <button class="linkbtn" data-act="opktodos">Mostrar todos os disponíveis</button></p>`:""}
+    ${lista.length?`<div class="pk">${lista.slice(0,200).map(i=>`<button class="pkrow" data-act="olink" data-ativo="${i.id}"><b>${esc(i.dispositivo)}</b><span>${esc(det(i))}</span>${ICON("plus")}</button>`).join("")}</div>`
+      :`<div class="empty" style="padding:28px 10px"><b>Nenhum ativo disponível${filtro?` em ${esc(filtro)}`:""}</b>Cadastre o equipamento no inventário ou mude o status de um existente para Disponível.${filtro?`<br><button class="linkbtn" data-act="opktodos">Ver todos os disponíveis</button>`:""}</div>`}`;
+}
+async function onbVincular(aid){
+  if(!OBP) return; const {id,pedido}=OBP;
+  const ex=S.onbAtivos.find(l=>l.onboarding_id===id&&l.ativo_id===aid);
+  const q=ex ? sb.from("onboarding_ativos").update({removido:false,item_solicitado:pedido}).eq("id",ex.id)
+             : sb.from("onboarding_ativos").insert({onboarding_id:id,ativo_id:aid,item_solicitado:pedido});
+  const {error}=await q; if(error){ onbErr(error); return; }
+  const x=S.items.find(i=>i.id===aid); closeModal(); OBP=null;
+  await Promise.all([sbLoad("ativos"),onbReload()]); toast(`${x?x.dispositivo:"Ativo"} vinculado e reservado.`);
+}
+async function onbDesvincular(lid){
+  const l=S.onbAtivos.find(x=>x.id===+lid); if(!l) return;
+  const {error}=await sb.from("onboarding_ativos").update({removido:true}).eq("id",l.id); if(error){ onbErr(error); return; }
+  await Promise.all([sbLoad("ativos"),onbReload()]); toast(`${l.dispositivo} desvinculado e disponível de novo.`);
+}
+async function onbCheckToggle(cid, feito){
+  const {error}=await sb.from("onboarding_checklist").update({feito}).eq("id",cid);
+  if(error){ onbErr(error); onbRedetalhe(); return; }
+  await onbReload();
+}
+async function onbCheckAdd(form){
+  const inp=form.querySelector("input"), item=(inp.value||"").trim(); if(!item) return;
+  const {error}=await sb.from("onboarding_checklist").insert({onboarding_id:form.dataset.id,grupo:form.dataset.grupo,item,manual:true,ordem:900});
+  if(error){ onbErr(error); return; }
+  inp.value=""; await onbReload();
+}
+async function onbCheckRm(cid){
+  const {error}=await sb.from("onboarding_checklist").update({removido:true}).eq("id",cid); if(error){ onbErr(error); return; }
+  await onbReload();
+}
+async function onbComentar(form){
+  const t=document.getElementById("oCom"), txt=(t.value||"").trim(); if(!txt) return;
+  const {error}=await sb.rpc("onboarding_comentar",{p_id:form.dataset.id,p_texto:txt}); if(error){ onbErr(error); return; }
+  t.value=""; await onbLoadEv(form.dataset.id); onbRedetalhe();
+}
+
+// ---------- termo com vários equipamentos ----------
+function onbTermo(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return; const L=oLinks(id); if(!L.length){ toast("Vincule os equipamentos antes de gerar o termo."); return; }
+  const pend=S.termos.filter(t=>t.onboarding_id===id&&t.status==="pendente");
+  const u=S.users.find(u=>norm(u.login)===norm(sugLogin(o)))||{};
+  openModal(`<h2>Termo de responsabilidade · ${esc(o.nome)}</h2>
+  <form class="f" id="oTermoForm" data-id="${o.id}">
+    <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
+    <div><p style="margin:0 0 8px">Um único termo cobre ${L.length===1?"o equipamento":"os "+L.length+" equipamentos"} desta solicitação:</p>
+    <ul class="tlist">${L.map(l=>{ const x=S.items.find(i=>i.id===l.ativo_id)||{}; return `<li><b>${esc(l.dispositivo)}</b><span class="who muted">${esc([tipoUm(l.tipo),x.subtipo,x.fabricante,x.modelo,x.serie?"S/N "+x.serie:""].filter(Boolean).join(" · "))}</span></li>`; }).join("")}</ul></div>
+    ${pend.length?`<p class="muted" style="margin:0">O link pendente anterior desta solicitação será cancelado.</p>`:""}
+    <fieldset><legend class="l">Colaborador</legend>
+      <label class="fld"><span>Login <i>*</i></span><input id="ot_login" list="dl-usuarios" required value="${esc(sugLogin(o))}" autocomplete="off"></label>
+      <label class="fld"><span>Nome completo</span><input id="ot_nome" value="${esc(o.nome||u.nome||"")}"></label>
+      <label class="fld"><span>Cargo</span><input id="ot_cargo" value="${esc(o.cargo||"")}"></label>
+      <label class="fld"><span>Telefone</span><input id="ot_tel" value="${esc(o.telefone||"")}"></label>
+      <label class="fld wide"><span>E-mail corporativo</span><input id="ot_email" type="email" value="${esc(o.email_corporativo||u.email||"")}"></label>
+    </fieldset>
+    <fieldset><legend class="l">Estado dos equipamentos na entrega</legend>
+      <div class="seg" role="radiogroup" aria-label="Estado dos equipamentos">${TERMO.CONDICOES.map(([k,l])=>`<label><input type="radio" name="ot_cond" value="${k}" ${k==="usado_bom"?"checked":""}>${l}</label>`).join("")}</div>
+      <label class="fld wide"><span>Observações</span><textarea id="ot_obs" placeholder="Ex.: notebook acompanha carregador e mochila"></textarea></label>
+    </fieldset>
+    <p class="muted" style="margin:0">Entregue por: <b>${esc(meuNome())}</b> (${esc(SB_USER.email)}) · o link vale por 30 dias.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="otBtn">${ICON("link")}Gerar link de assinatura</button></div>
+  </form>`,"md");
+}
+async function submitOnbTermo(form){
+  const o=S.onb.find(x=>x.id===form.dataset.id); if(!o) return; const L=oLinks(o.id);
+  const v=id=>(document.getElementById(id)?.value||"").trim(), login=v("ot_login").toLowerCase();
+  if(!login){ toast("Informe o login do colaborador."); return; }
+  const itens=L.map(l=>{ const x=S.items.find(i=>i.id===l.ativo_id)||{}; return {ativo_id:l.ativo_id,tipo:l.tipo||x.tipo||"",dispositivo:l.dispositivo||x.dispositivo||"",marca:x.fabricante||"",modelo:[x.subtipo,x.modelo].filter(Boolean).join(" "),serie:x.serie||""}; });
+  const um=itens.length===1?itens[0]:null;
+  const row={ativo_id:itens[0].ativo_id,tipo:itens[0].tipo,dispositivo:itens.map(i=>i.dispositivo).join(", "),marca:um?um.marca:"",modelo:um?um.modelo:"",serie:um?um.serie:"",
+    condicao:(form.querySelector("input[name=ot_cond]:checked")||{}).value||"usado_bom",obs:v("ot_obs"),usuario_login:login,colaborador_nome:v("ot_nome"),
+    colaborador_email:v("ot_email").toLowerCase(),cargo:v("ot_cargo"),telefone:v("ot_tel"),entregue_por_nome:meuNome(),entregue_por_email:SB_USER.email,onboarding_id:o.id,itens};
+  const btn=document.getElementById("otBtn"); btn.disabled=true;
+  try{
+    for(const t of S.termos.filter(t=>t.onboarding_id===o.id&&t.status==="pendente")){ const {error}=await sb.from("termos").update({status:"cancelado"}).eq("id",t.id); if(error) throw error; }
+    const {data,error}=await sb.from("termos").insert(row).select("id").single(); if(error) throw error;
+    await sbLoad("termos"); await onbReload(); linkModal(data.id);
+  }catch(e){ btn.disabled=false; onbErr(e); }
+}
+
+// ---------- importação do formulário do RH (Google Forms → Planilha → Excel/CSV) ----------
+function lerData(v){
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v==="number" && v>20000 && v<80000){ const d=new Date(Math.round((v-25569)*864e5)); return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes(),d.getUTCSeconds()); }   // número de série do Excel
+  const s=String(v||"").trim(); let m;
+  if((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/))){ const y=+m[3]<100?2000+ +m[3]:+m[3]; return new Date(y,+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0),+(m[6]||0)); }
+  if((m=s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/))) return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  return null;
+}
+const isoDia = d => d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}` : null;
+function mapearColunas(hdr){
+  const map=[], usados={}; let ultimo=null;
+  hdr.forEach((h,i)=>{ const n=norm(h); let k=null;
+    if(/^carimbo|^timestamp|^datahora$/.test(n)) k="carimbo";
+    else if(/^nome(do|da)?(funcionario|colaborador|completo)?$/.test(n)||n==="colaborador"||n==="funcionario") k="nome";
+    else if(n.startsWith("cargo")||n==="funcao") k="cargo";
+    else if(n.startsWith("departamento")||n==="setor"||n==="area") k="departamento";
+    else if(n.startsWith("unidade")||n==="filial"||n==="local") k="unidade";
+    else if(n.startsWith("emailcorporativo")) k="email_corporativo";
+    else if(n.includes("admissao")) k="data_admissao";
+    else if(n.startsWith("equipamento")){ k="equipamentos"; }
+    else if(n.startsWith("software")||n.startsWith("sistema")){ k="softwares"; }
+    else if(n.startsWith("rede")||n.startsWith("compartilhamento")||n.startsWith("acessoarede")){ k="rede"; }
+    else if(n.startsWith("outro")) k=(ultimo&&!usados[ultimo+"_outros"])?ultimo+"_outros":"outros";
+    else if(n==="enderecodeemail"||n==="email"||n==="emaildosolicitante") k="solicitante";
+    else if(n==="cpf"||n.startsWith("cpf")) k="cpf";
+    else if(n.startsWith("telefone")||n.startsWith("celular")||n==="whatsapp") k="telefone";
+    if(k&&usados[k]&&k!=="outros") k=null;
+    if(k){ usados[k]=true; if(["equipamentos","softwares","rede"].includes(k)) ultimo=k; else if(!k.endsWith("_outros")) ultimo=null; }
+    map[i]=k; });
+  return map;
+}
+function separarOpcoes(txt, grupo){
+  const ops=S.onbOpc.filter(x=>x.grupo===grupo).map(x=>x.nome); const ok=[], resto=[];
+  String(txt||"").split(/[,;\n]+/).map(s=>s.trim()).filter(Boolean).forEach(p=>{
+    const op=ops.find(o=>norm(o)===norm(p))||ops.find(o=>norm(p).length>=3&&(norm(o).startsWith(norm(p))||norm(p).startsWith(norm(o))));
+    if(op){ if(!ok.includes(op)) ok.push(op); } else resto.push(p.replace(/^outros?:\s*/i,"")); });
+  return [ok, resto];
+}
+document.getElementById("importOnb").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  try{
+    const wb=XLSX.read(await f.arrayBuffer());
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:"",raw:true});
+    const hdr=(aoa[0]||[]).map(String), map=mapearColunas(hdr);
+    const linhas=aoa.slice(1).filter(r=>r.some(c=>String(c).trim()));
+    const rows=linhas.map(r=>{ const o={equipamentos:[],softwares:[],rede:[]}, out={equipamentos:[],softwares:[],rede:[]};
+      map.forEach((k,i)=>{ if(!k) return; const v=r[i];
+        if(k==="carimbo"){ o.carimbo=lerData(v); return; }
+        if(k==="data_admissao"){ o.data_admissao=isoDia(lerData(v)); return; }
+        if(["equipamentos","softwares","rede"].includes(k)){ const [ok,resto]=separarOpcoes(v,{equipamentos:"equipamento",softwares:"software",rede:"rede"}[k]); o[k]=ok; out[k]=resto; return; }
+        o[k]=String(v instanceof Date?isoDia(v):v).trim(); });
+      ["equipamentos","softwares","rede"].forEach(k=>{ const ex=[...out[k], o[k+"_outros"]].filter(Boolean).join(", "); o[k+"_outros"]=ex; });
+      o.nome=String(o.nome||"").replace(/\s+/g," ").trim();
+      o.ref="form:"+(o.carimbo?o.carimbo.toISOString():"")+"|"+norm(o.nome)+"|"+(o.data_admissao||"");
+      o.dup=S.onb.some(x=>x.origem_ref===o.ref) || S.onb.some(x=>norm(x.nome)===norm(o.nome)&&x.data_admissao===o.data_admissao&&x.status!=="cancelado");
+      o.erro=!o.nome?"Sem nome":"";
+      return o; });
+    OIMP={rows, nome:f.name, cpfCol:map.includes("cpf")};
+    const rec=hdr.filter((h,i)=>map[i]), ign=hdr.filter((h,i)=>!map[i]&&String(h).trim());
+    const novos=rows.filter(r=>!r.dup&&!r.erro);
+    openModal(`<h2>Importar respostas do formulário</h2><div class="msg">
+      <p>A planilha <b>${esc(f.name)}</b> tem <b>${rows.length}</b> respostas: <b>${novos.length}</b> novas e <b>${rows.length-novos.length}</b> já importadas ou incompletas, que serão ignoradas.</p>
+      ${novos.length?`<div class="tablewrap" style="border:1px solid var(--border);border-radius:12px;max-height:300px;overflow:auto"><table style="min-width:640px"><thead><tr><th>Nome</th><th>Cargo</th><th>Departamento</th><th>Admissão</th><th>Equipamentos</th></tr></thead><tbody>
+        ${novos.map(r=>`<tr><td class="dev">${esc(r.nome)}</td><td>${esc(r.cargo||"—")}</td><td>${esc(r.departamento||"—")}</td><td>${esc(fDia(r.data_admissao)||"—")}</td><td>${esc([...r.equipamentos,r.equipamentos_outros].filter(Boolean).join(", ")||"—")}</td></tr>`).join("")}</tbody></table></div>`:""}
+      <p class="note" style="margin-top:12px">Colunas reconhecidas: <span class="hdrs">${rec.map(esc).join(", ")||"nenhuma"}</span>${ign.length?`<br>Ignoradas: <span class="hdrs">${ign.map(esc).join(", ")}</span>`:""}
+      ${OIMP.cpfCol&&!veCPF()?`<br>A coluna CPF não será importada: só o RH e administradores podem gravar CPF.`:""}</p>
+    </div><div class="foot"><button class="btn ghost" data-act="close">Cancelar</button>${novos.length?`<button class="btn primary" data-act="doimpo" id="oiBtn">${ICON("up")}Importar ${novos.length} ${novos.length===1?"solicitação":"solicitações"}</button>`:""}</div>`,"md");
+  }catch(err){ console.error(err); toast("Não foi possível ler a planilha. Use .xlsx, .xls ou .csv."); }
+});
+async function doImportOnb(){
+  if(!OIMP) return; const fila=OIMP.rows.filter(r=>!r.dup&&!r.erro); const btn=document.getElementById("oiBtn"); btn.disabled=true;
+  let n=0, falhas=0;
+  for(const r of fila){
+    btn.textContent=`Importando ${n+1}/${fila.length}…`;
+    const id=newId();
+    const {error}=await sb.from("onboardings").insert({id,nome:r.nome,cargo:r.cargo||"",departamento:r.departamento||"",unidade:r.unidade||"",email_corporativo:String(r.email_corporativo||"").toLowerCase(),
+      telefone:r.telefone||"",data_admissao:r.data_admissao||null,equipamentos:r.equipamentos,equipamentos_outros:r.equipamentos_outros||"",softwares:r.softwares,softwares_outros:r.softwares_outros||"",
+      rede:r.rede,rede_outros:r.rede_outros||"",outros:r.outros||"",solicitante_nome:r.solicitante||"Formulário do RH",origem:"formulario",origem_ref:r.ref,
+      solicitado_em:r.carimbo?r.carimbo.toISOString():null});
+    if(error){ console.error(error); if(error.code!=="23505") falhas++; continue; }
+    const cpf=String(r.cpf||"").replace(/\D/g,"");
+    if(cpf && veCPF()){ const {error:e2}=await sb.from("onboarding_privado").upsert({onboarding_id:id,cpf}); if(e2) console.error(e2); }
+    n++;
+  }
+  OIMP=null; closeModal(); await sbLoad("onb");
+  toast(falhas?`${n} importadas, ${falhas} com erro.`:`${n} ${n===1?"solicitação importada":"solicitações importadas"}.`);
+}
+function exportOnb(){
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const rows=onbFiltrados().map(o=>{ const k=casar(o);
+    return {"Nº":o.numero,"Status":(OST[o.status]||[o.status])[0],"Nome":o.nome,"Cargo":o.cargo,"Departamento":o.departamento,"Unidade":o.unidade,"E-mail corporativo":o.email_corporativo,"Telefone":o.telefone,
+      "Data de admissão":fDia(o.data_admissao),"Prazo":oPrazo(o).t,"Equipamentos":(o.equipamentos||[]).join(", "),"Outros equipamentos":o.equipamentos_outros,"Softwares e sistemas":(o.softwares||[]).join(", "),"Outros softwares":o.softwares_outros,
+      "Rede e compartilhamentos":(o.rede||[]).join(", "),"Outros (rede)":o.rede_outros,"Outros":o.outros,"Login":o.login,"Solicitante":oSolic(o),"Solicitado em":fDH(o.solicitado_em),"Origem":o.origem==="formulario"?"Formulário":"Sistema",
+      "Responsável TI":o.responsavel_ti_nome||o.responsavel_ti||"","Ativos vinculados":oLinks(o.id).map(l=>l.dispositivo).join(", "),"Equipamentos preparados":`${k.ped.filter(r=>r.links.length).length}/${k.ped.length}`,"Checklist %":oPct(o.id),
+      "Entregue em":fDH(o.entregue_em),"Concluído em":fDH(o.concluido_em),"Cancelado em":fDH(o.cancelado_em),"Motivo do cancelamento":o.cancelado_motivo||""}; });
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Onboarding");
+  saveFile(`onboarding_${hojeISO()}.xlsx`,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])).then(ok=>{ if(ok) toast(`${rows.length} solicitações exportadas.`); });
+}
+
+// ---------- configuração (administradores) ----------
+function onbCfgHTML(){
+  if(SB_ROLE!=="admin") return `<div class="head"><div><h1>Configurar onboarding</h1><div class="sub">Somente administradores.</div></div></div>`;
+  const tipos=Object.entries(TYPES).map(([k,t])=>[k,t.one]);
+  const opGr=[["equipamento","Equipamentos do formulário"],["software","Softwares e sistemas"],["rede","Rede e compartilhamentos"],["unidade","Unidades"]];
+  const inp=(t,r,k,extra="")=>`<input type="text" class="ocfg" data-t="${t}" data-id="${r.id}" data-k="${k}" value="${esc(r[k]||"")}" ${extra}>`;
+  const num=(t,r)=>`<input type="number" class="ocfg" data-t="${t}" data-id="${r.id}" data-k="ordem" value="${r.ordem}" aria-label="Ordem">`;
+  const at=(t,r)=>`<label class="check" style="justify-content:center"><input type="checkbox" class="ocfg" data-t="${t}" data-id="${r.id}" data-k="ativo" ${r.ativo?"checked":""} aria-label="Ativo"></label>`;
+  const tsel=(r)=>`<select class="ocfg" data-t="opc" data-id="${r.id}" data-k="tipo_ativo"><option value="">—</option>${tipos.map(([k,l])=>`<option value="${k}" ${r.tipo_ativo===k?"selected":""}>${l}</option>`).join("")}</select>`;
+  const opc=opGr.map(([g,t])=>{ const rs=S.onbOpc.filter(x=>x.grupo===g), eqp=g==="equipamento";
+    return `<div class="ogrp"><h3>${t}</h3><div class="tablewrap"><table class="cfgt"><thead><tr><th>Nome</th>${eqp?"<th>Categoria no inventário</th><th>Subtipo</th>":""}<th>Ordem</th><th>Ativo</th></tr></thead><tbody>
+      ${rs.map(r=>`<tr><td>${inp("opc",r,"nome")}</td>${eqp?`<td>${tsel(r)}</td><td>${inp("opc",r,"subtipo",'placeholder="Ex.: Mouse"')}</td>`:""}<td>${num("opc",r)}</td><td>${at("opc",r)}</td></tr>`).join("")}</tbody></table></div>
+      <form class="ocfgadd" data-t="opc" data-grupo="${g}"><input name="nome" placeholder="Nova opção" required maxlength="100">${eqp?`<select name="tipo_ativo" aria-label="Categoria"><option value="">Categoria…</option>${tipos.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select><input name="subtipo" placeholder="Subtipo (opcional)" maxlength="60">`:""}<button class="btn sm">${ICON("plus")}Adicionar</button></form></div>`; }).join("");
+  const mod=Object.entries(OGRP).map(([g,t])=>{ const rs=S.onbMod.filter(x=>x.grupo===g);
+    return `<div class="ogrp"><h3>${t}</h3><div class="tablewrap"><table class="cfgt"><thead><tr><th>Item</th><th>Só quando a solicitação tiver</th><th>Ordem</th><th>Ativo</th></tr></thead><tbody>
+      ${rs.map(r=>`<tr><td>${inp("mod",r,"item")}${r.chave?`<em class="auto" title="Marcado automaticamente pelo sistema">automático</em>`:""}</td><td>${inp("mod",r,"condicao",'placeholder="sempre"')}</td><td>${num("mod",r)}</td><td>${at("mod",r)}</td></tr>`).join("")}</tbody></table></div>
+      ${g!=="entrega"?`<form class="ocfgadd" data-t="mod" data-grupo="${g}"><input name="item" placeholder="Novo item do checklist" required maxlength="200"><input name="condicao" placeholder="Condição (opcional, ex.: vpn|remoto)" maxlength="100"><button class="btn sm">${ICON("plus")}Adicionar</button></form>`:""}</div>`; }).join("");
+  return `<div class="head"><div><button class="linkbtn" data-act="go" data-v="onboarding" style="padding:0 0 6px">← Onboarding</button><h1>Configurar onboarding</h1><div class="sub">Opções do formulário e modelo do checklist da TI</div></div></div>
+  <div class="grid2">
+    <section class="card panel"><h2>Opções do formulário</h2><p class="muted" style="margin:0 0 6px;font-size:14px">A categoria no inventário define quais ativos aparecem para vincular. Desative em vez de excluir: solicitações antigas continuam com o texto original.</p>${opc}</section>
+    <section class="card panel"><h2>Checklist da TI</h2><p class="muted" style="margin:0 0 6px;font-size:14px">Cada nova solicitação recebe os itens ativos. A condição usa trechos do que foi pedido, separados por “|” (ex.: <b>notebook|desktop</b>). Vazio = sempre. Mudanças valem para novas solicitações.</p>${mod}</section>
+  </div>`;
+}
+async function onbCfgSalvar(el){
+  const tab=el.dataset.t==="opc"?"onboarding_opcoes":"onboarding_checklist_modelo", k=el.dataset.k;
+  let v=el.type==="checkbox"?el.checked:el.type==="number"?(parseInt(el.value,10)||0):String(el.value||"").trim();
+  if(k==="condicao"||k==="subtipo"||k==="tipo_ativo") v=v||null;
+  if((k==="nome"||k==="item")&&!v){ toast("O nome não pode ficar vazio."); return; }
+  const {error}=await sb.from(tab).update({[k]:v}).eq("id",+el.dataset.id); if(error){ onbErr(error); return; }
+  await sbLoad("onbcfg"); toast("Salvo.");
+}
+async function onbCfgAdd(form){
+  const fd=new FormData(form), t=form.dataset.t, g=form.dataset.grupo, x=k=>String(fd.get(k)||"").trim();
+  const lista=t==="opc"?S.onbOpc:S.onbMod, ordem=Math.max(0,...lista.filter(r=>r.grupo===g).map(r=>r.ordem))+10;
+  const row=t==="opc"?{grupo:g,nome:x("nome"),tipo_ativo:x("tipo_ativo")||null,subtipo:x("subtipo")||null,ordem}:{grupo:g,item:x("item"),condicao:x("condicao")||null,ordem};
+  const {error}=await sb.from(t==="opc"?"onboarding_opcoes":"onboarding_checklist_modelo").insert(row);
+  if(error){ if(error.code==="23505") toast("Essa opção já existe."); else onbErr(error); return; }
+  await sbLoad("onbcfg"); render(); toast("Adicionado.");
+}
+
+// eventos do módulo (chamados pelos tratadores gerais)
+function onbClick(a, el, id){
+  const H={
+    oopen:()=>onbAbrir(id), oback:()=>onbVoltar(), onew:()=>onbForm(null), oedit:()=>onbForm(id),
+    ost:()=>{ OB.st=OB.st===el.dataset.v?"abertos":el.dataset.v; updateOnbList(); },
+    oimport:()=>document.getElementById("importOnb").click(), doimpo:()=>doImportOnb(), oexport:()=>exportOnb(),
+    oassumir:()=>{ const o=S.onb.find(x=>x.id===id); onbUpd(id,{responsavel_ti:SB_USER.email,responsavel_ti_nome:meuNome(),...(o&&o.status==="solicitado"?{status:"em_analise"}:{})},"Solicitação assumida."); },
+    ocancelar:()=>onbCancelarModal(id), oconcluir:()=>onbConcluirModal(id), oconcluirok:()=>onbUpd(id,{status:"concluido"},"Onboarding concluído.").then(ok=>{ if(ok) closeModal(); }),
+    oreabrir:()=>onbUpd(id,{status:"em_analise"},"Solicitação reaberta."),
+    oentregar:()=>onbEntregaModal(id), otermo:()=>onbTermo(id),
+    opick:()=>onbPick(id, el.dataset.p), opktodos:()=>{ if(OBP){ OBP.todos=true; updatePick(); } }, olink:()=>onbVincular(el.dataset.ativo),
+    ounlink:()=>onbDesvincular(id), ockrm:()=>onbCheckRm(id),
+    ocpf:()=>{ OB.cpfShow=!OB.cpfShow; onbRedetalhe(); },
+  };
+  if(!H[a]) return false; H[a](); return true;
+}
+function onbSubmit(f){
+  if(f.id==="onbForm"){ submitOnb(f); return true; }
+  if(f.id==="oCancForm"){ const m=(document.getElementById("oc_mot").value||"").trim(); if(!m){ toast("Informe o motivo."); return true; }
+    document.getElementById("ocBtn").disabled=true; onbUpd(f.dataset.id,{status:"cancelado",cancelado_motivo:m},"Solicitação cancelada.").then(ok=>{ if(ok) closeModal(); else document.getElementById("ocBtn").disabled=false; }); return true; }
+  if(f.id==="oEntForm"){ doEntrega(f); return true; }
+  if(f.id==="oTermoForm"){ submitOnbTermo(f); return true; }
+  if(f.id==="oComForm"){ onbComentar(f); return true; }
+  if(f.classList.contains("ockadd")){ onbCheckAdd(f); return true; }
+  if(f.classList.contains("ocfgadd")){ onbCfgAdd(f); return true; }
+  return false;
+}
+function onbChange(t){
+  const v=t.value;
+  if(t.id==="ost"){ OB.st=v||"abertos"; updateOnbList(); return true; }
+  if(t.id==="odep"){ OB.dep=v; updateOnbList(); return true; }
+  if(t.id==="ouni"){ OB.uni=v; updateOnbList(); return true; }
+  if(t.id==="osol"){ OB.sol=v; updateOnbList(); return true; }
+  if(t.id==="otec"){ OB.tec=v; updateOnbList(); return true; }
+  if(t.id==="ode"){ OB.de=v; updateOnbList(); return true; }
+  if(t.id==="oate"){ OB.ate=v; updateOnbList(); return true; }
+  if(t.id==="oStatusSel"){ const o=S.onb.find(x=>x.id===t.dataset.id); if(o&&v!==o.status) onbUpd(o.id,{status:v},`Status: ${OST[v][0]}.`).then(ok=>{ if(!ok) onbRedetalhe(); }); return true; }
+  if(t.dataset && t.dataset.ck){ onbCheckToggle(+t.dataset.ck, t.checked); return true; }
+  if(t.classList && t.classList.contains("ocfg")){ onbCfgSalvar(t); return true; }
+  return false;
+}
+function onbInput(t){
+  if(t.id==="oq"){ OB.q=t.value; updateOnbList(); return true; }
+  if(t.id==="opkq"){ if(OBP){ OBP.q=t.value; updatePick(); } return true; }
+  if(t.id==="of_cpf"){ const d=t.value.replace(/\D/g,"").slice(0,11); t.value=d.length>9?`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`:d.length>6?`${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`:d.length>3?`${d.slice(0,3)}.${d.slice(3)}`:d; return true; }
+  if(t.id==="of_tel"){ const v=t.value.replace(/\D/g,"").slice(0,11); t.value=v.length>10?`(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`:v.length>6?`(${v.slice(0,2)}) ${v.slice(2,6)}-${v.slice(6)}`:v.length>2?`(${v.slice(0,2)}) ${v.slice(2)}`:v; return true; }
+  return false;
+}
+
 // ---------- link direto (QR Code da etiqueta) ----------
 // Endereço público do app (links de assinatura, QR Code das etiquetas, e-mails de login).
 // No navegador usa o próprio endereço aberto (funciona antes e depois do domínio próprio);
@@ -1413,6 +2213,9 @@ const APP_URL = (() => {
 })();
 function openFromHash(){
   const h = decodeURIComponent((location.hash||"").slice(1)).trim(); if(!h) return;
+  const mo = h.match(/^onb-(\d+)$/i);
+  if (mo){ const o=S.onb.find(o=>String(o.numero)===mo[1]); if(o){ if(OB.sel!==o.id) onbAbrir(o.id); } else toast(`Solicitação #${mo[1]} não encontrada.`); return; }
+  if (SB_ROLE==="rh") return;
   const x = S.items.find(i=>norm(i.dispositivo)===norm(h));
   if (x){ if (S.view!==x.tipo){ S.view=x.tipo; render(); } viewItem(x.id); }
   else if (/^[A-Za-z]{2,5}\d+$/.test(h)) toast(`${h.toUpperCase()} ainda não está cadastrado.`);
@@ -1709,6 +2512,7 @@ document.addEventListener("click", e=>{
   if(a==="bg"){ if(e.target===el) closeModal(); return; }
   if(a==="go") return go(el.dataset.v);
   if(a==="close") return closeModal();
+  if(onbClick(a,el,id)) return;
   if(a==="view") return viewItem(id);
   if(a==="edit") return editItem(id);
   if(a==="new") return editItem(null,S.view);
@@ -1758,6 +2562,7 @@ document.addEventListener("click", e=>{
 });
 document.addEventListener("submit", e=>{
   e.preventDefault();
+  if(onbSubmit(e.target)) return;
   if(e.target.id==="itemForm") submitItem(e.target);
   if(e.target.id==="userForm") submitUser(e.target);
   if(e.target.id==="gForm") gateSubmit(e.target);
@@ -1768,6 +2573,7 @@ document.addEventListener("submit", e=>{
     sb.from("membros").upsert({email:em,papel:pp}).then(({error})=>{ if(error) writeErr(error); else { toast(`${em} liberado.`); updateAcessos(); } }); }
 });
 document.addEventListener("input", e=>{
+  if(onbInput(e.target)) return;
   if(e.target.id==="q"){ S.q=e.target.value; updateTable(); }
   if(e.target.id==="uq"){ S.uq=e.target.value; updateUsers(); }
   if(e.target.id==="tq"){ TF.q=e.target.value; updateTermos(); }
@@ -1776,6 +2582,7 @@ document.addEventListener("input", e=>{
   if(e.target.id && e.target.id.startsWith("e_") && e.target.type!=="checkbox" && e.target.tagName!=="SELECT") etqInput(e.target);
 });
 document.addEventListener("change", e=>{
+  if(onbChange(e.target)) return;
   if(e.target.id==="fStatus"){ S.fStatus=e.target.value; updateTable(); }
   if(e.target.id==="fSetor"){ S.fSetor=e.target.value; updateTable(); }
   if(e.target.id && e.target.id.startsWith("e_")) etqInput(e.target);
@@ -1788,7 +2595,7 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
 
-try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
 if (!S.view || S.view==="") S.view="dashboard";
 render();
 initCaps();

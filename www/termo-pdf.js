@@ -3,6 +3,11 @@
   const EMPRESA = "ZERBINI DO BRASIL LTDA";
   const CNPJ = "46.563.532/0002-19";
   const INTRO = `Recebi da empresa ${EMPRESA}, CNPJ ${CNPJ}, a título de empréstimo, para uso exclusivo conforme determinado na lei, o equipamento especificado neste termo de responsabilidade, comprometendo-me a mantê-lo em perfeito estado de conservação, ficando ciente de que:`;
+  const INTRO_VARIOS = `Recebi da empresa ${EMPRESA}, CNPJ ${CNPJ}, a título de empréstimo, para uso exclusivo conforme determinado na lei, os equipamentos especificados neste termo de responsabilidade, comprometendo-me a mantê-los em perfeito estado de conservação, ficando ciente de que:`;
+  const TIPOS = { notebook: "Notebook", desktop: "Desktop", celular: "Celular", tablet: "Tablet", impressora: "Impressora", coletor: "Coletor", monitor: "Monitor", periferico: "Periférico" };
+  // termo com vários equipamentos (onboarding): lista em t.itens
+  const itensDe = t => Array.isArray(t && t.itens) && t.itens.length ? t.itens : null;
+  const introDe = t => { const it = itensDe(t); return it && it.length > 1 ? INTRO_VARIOS : INTRO; };
   const CLAUSULAS = [
     "O equipamento deverá ser utilizado ÚNICA e EXCLUSIVAMENTE a serviço da empresa, tendo em vista a atividade a ser exercida pelo utilizador.",
     "Em caso de dano, inutilização, perda ou extravio do equipamento, devo comunicar IMEDIATAMENTE ao setor competente.",
@@ -27,8 +32,10 @@
       const frac = ((m ? m[1] : "") + "000000").slice(0, 6);
       const iso = new Date(t.assinado_em).toISOString().replace(/\.\d{3}Z$/, "." + frac + "Z");
       const partes = [t.id, t.dispositivo, t.marca, t.modelo, t.serie, t.condicao, t.obs, t.colaborador_nome, t.cargo, t.telefone,
-        t.colaborador_email, t.entregue_por_nome, t.entregue_por_email, iso, await hex(t.assinatura)].filter(v => v !== null && v !== undefined);
-      return (await hex(partes.join("|"))) === t.hash;
+        t.colaborador_email, t.entregue_por_nome, t.entregue_por_email, iso, await hex(t.assinatura)];
+      const it = itensDe(t);
+      if (it) partes.push(await hex(it.map(i => ["ativo_id", "tipo", "dispositivo", "marca", "modelo", "serie"].map(k => i[k] ?? "").join(":")).join(";")));
+      return (await hex(partes.filter(v => v !== null && v !== undefined).join("|"))) === t.hash;
     } catch (e) { return null; }
   }
 
@@ -55,7 +62,7 @@
 
     // Introdução
     let y = 37;
-    font(9.3, false); const intro = d.splitTextToSize(INTRO, W); d.text(intro, X, y); y += intro.length * lh(9.3) + 2.5;
+    font(9.3, false); const intro = d.splitTextToSize(introDe(t), W); d.text(intro, X, y); y += intro.length * lh(9.3) + 2.5;
 
     // Cláusulas
     CLAUSULAS.forEach((c, i) => {
@@ -79,13 +86,38 @@
       font(9, true); const v = d.splitTextToSize(String(val || "—"), Math.max(10, maxW - lw))[0]; d.text(v, x + lw, yy);
     };
 
+    // quebra de página quando o conteúdo não cabe (termos com muitos equipamentos)
+    const need = h => { if (y + h > 282) { d.addPage(); y = 16; } };
+    const itens = itensDe(t);
+    const fit = (txt, w) => d.splitTextToSize(String(txt || "—"), w)[0] || "";
+
     // Dados do equipamento
-    y = secao("DADOS DO EQUIPAMENTO", y + 3.5);
-    const eqTop = y; d.setDrawColor(...LINE); d.setLineWidth(0.25);
+    d.setDrawColor(...LINE); d.setLineWidth(0.25);
     const row = 8;
-    rot("PATRIMÔNIO:", t.dispositivo, X + 2.5, y + 5.3, 58); rot("MARCA:", t.marca, X + 64, y + 5.3, 58); rot("MODELO:", t.modelo, X + 126, y + 5.3, 58);
-    d.line(X + 62, y, X + 62, y + row); d.line(X + 124, y, X + 124, y + row); d.line(X, y + row, R, y + row); y += row;
-    rot("Nº DE SÉRIE / IDENTIFICAÇÃO:", t.serie, X + 2.5, y + 5.3, W - 5); d.line(X, y + row, R, y + row); y += row;
+    if (itens) {
+      need(30);
+      y = secao(itens.length > 1 ? `DADOS DOS EQUIPAMENTOS (${itens.length})` : "DADOS DO EQUIPAMENTO", y + 3.5);
+      const cols = [["PATRIMÔNIO", 0, 28], ["TIPO", 28, 26], ["MARCA / MODELO", 54, 80], ["Nº DE SÉRIE", 134, 50]];
+      const cab = () => { d.setFillColor(...SOFT); d.rect(X, y, W, 6, "F"); font(6.6, true, MUTED); cols.forEach(([l, x]) => d.text(l, X + 2 + x, y + 4.1)); y += 6; };
+      cab();
+      itens.forEach(it => {
+        if (y + 6.5 > 282) { d.addPage(); y = 16; cab(); }
+        font(8.6, true); d.text(fit(it.dispositivo, 26), X + 2, y + 4.4);
+        font(8.2, false); d.text(fit(TIPOS[it.tipo] || it.tipo, 24), X + 30, y + 4.4);
+        d.text(fit([it.marca, it.modelo].filter(Boolean).join(" ") || "—", 78), X + 56, y + 4.4);
+        d.text(fit(it.serie, 48), X + 136, y + 4.4);
+        d.setDrawColor(...LINE); d.line(X, y + 6.4, R, y + 6.4); y += 6.4;
+      });
+      need(20);
+    } else {
+      y = secao("DADOS DO EQUIPAMENTO", y + 3.5);
+    }
+    const eqTop = y;
+    if (!itens) {
+      rot("PATRIMÔNIO:", t.dispositivo, X + 2.5, y + 5.3, 58); rot("MARCA:", t.marca, X + 64, y + 5.3, 58); rot("MODELO:", t.modelo, X + 126, y + 5.3, 58);
+      d.line(X + 62, y, X + 62, y + row); d.line(X + 124, y, X + 124, y + row); d.line(X, y + row, R, y + row); y += row;
+      rot("Nº DE SÉRIE / IDENTIFICAÇÃO:", t.serie, X + 2.5, y + 5.3, W - 5); d.line(X, y + row, R, y + row); y += row;
+    }
     CONDICOES.forEach(([k, l], i) => {
       const cx = X + 3 + i * 62; d.setDrawColor(...INK); d.rect(cx, y + 2.3, 3.6, 3.6, "S");
       if (t.condicao === k) { d.setLineWidth(0.5); d.line(cx + 0.6, y + 2.9, cx + 3, y + 5.3); d.line(cx + 3, y + 2.9, cx + 0.6, y + 5.3); d.setLineWidth(0.25); }
@@ -98,6 +130,7 @@
     d.roundedRect(X, eqTop, W, y - eqTop, 1.5, 1.5, "S");
 
     // Entregue por
+    need(22);
     y = secao("ENTREGUE POR", y + 7);
     font(6.8, false, MUTED); d.text("NOME:", X, y + 3.5); d.text("ASSINATURA:", X + 76, y + 3.5); d.text("DATA:", X + 150, y + 3.5);
     font(8.8, true); d.text(d.splitTextToSize(t.entregue_por_nome || "—", 60)[0], X + 9, y + 3.5);
@@ -108,6 +141,7 @@
     y += 8;
 
     // Identificação do empregado
+    need(32);
     y = secao("IDENTIFICAÇÃO DO EMPREGADO / UTILIZADOR", y + 5);
     const linha = (label, val, x, yy, x2) => {
       font(6.8, false, MUTED); d.text(label, x, yy); const lw = d.getTextWidth(label) + 2;
@@ -119,7 +153,7 @@
     linha("E-MAIL CORPORATIVO:", t.colaborador_email, X, y + 3.5, R); y += 8;
 
     // Declaração + assinatura
-    const bh = 27; d.setFillColor(...SOFT); d.roundedRect(X, y, W, bh, 2, 2, "F");
+    const bh = 27; need(bh + 2); d.setFillColor(...SOFT); d.roundedRect(X, y, W, bh, 2, 2, "F");
     font(8.3, false); d.text(DECLARACAO, X + 4, y + 6);
     font(6.8, false, MUTED); d.text("ASSINATURA DO EMPREGADO / UTILIZADOR:", X + 4, y + 22); d.text("DATA:", X + 150, y + 22);
     d.setDrawColor(...INK); d.setLineWidth(0.3); d.line(X + 58, y + 22.6, X + 144, y + 22.6); d.line(X + 158, y + 22.6, R - 4, y + 22.6);
@@ -135,7 +169,7 @@
     // Rodapé
     font(6.6, false, MUTED);
     const rod = assinado
-      ? `Assinado eletronicamente por ${t.colaborador_nome} em ${fmtDataHora(t.assinado_em)} (horário de Brasília). Código de verificação: ${codigo(t.hash)}. Registro completo na página 2.`
+      ? `Assinado eletronicamente por ${t.colaborador_nome} em ${fmtDataHora(t.assinado_em)} (horário de Brasília). Código de verificação: ${codigo(t.hash)}. Registro completo na página de evidências.`
       : `Termo gerado em ${fmtDataHora(t.criado_em)} e ainda não assinado eletronicamente. Pode ser impresso e assinado à mão.`;
     d.text(d.splitTextToSize(rod, W), X, 289);
 
@@ -150,11 +184,12 @@
       const kv = (k, v, mono) => {
         font(7.4, true, MUTED); d.text(k.toUpperCase(), X, yy);
         font(mono ? 8.2 : 9, false); if (mono) d.setFont("courier", "normal");
-        const ls = d.splitTextToSize(String(v || "—"), W - 52); d.text(ls, X + 52, yy);
+        const ls = String(v || "—").split("\n").flatMap(p => d.splitTextToSize(p, W - 52)); d.text(ls, X + 52, yy);
         yy += Math.max(1, ls.length) * lh(mono ? 8.2 : 9) + 2.4;
         d.setDrawColor(...LINE); d.setLineWidth(0.2); d.line(X, yy - 1.6, R, yy - 1.6); yy += 1.2;
       };
-      kv("Equipamento", [t.dispositivo, t.marca, t.modelo, t.serie ? "S/N " + t.serie : ""].filter(Boolean).join(" · "));
+      if (itens) kv(itens.length > 1 ? `Equipamentos (${itens.length})` : "Equipamento", itens.map(i => [i.dispositivo, TIPOS[i.tipo] || i.tipo, i.marca, i.modelo, i.serie ? "S/N " + i.serie : ""].filter(Boolean).join(" · ")).join("\n"));
+      else kv("Equipamento", [t.dispositivo, t.marca, t.modelo, t.serie ? "S/N " + t.serie : ""].filter(Boolean).join(" · "));
       kv("Estado na entrega", (CONDICOES.find(c => c[0] === t.condicao) || ["", ""])[1] + (t.obs ? " — " + t.obs : ""));
       kv("Colaborador", t.colaborador_nome);
       kv("Cargo / telefone", [t.cargo, t.telefone].filter(Boolean).join(" · "));
@@ -180,5 +215,5 @@
     return d;
   }
 
-  window.TERMO = { EMPRESA, CNPJ, INTRO, CLAUSULAS, DECLARACAO, CONDICOES, fmtData, fmtDataHora, codigo, verificar, pdf };
+  window.TERMO = { EMPRESA, CNPJ, INTRO, INTRO_VARIOS, TIPOS, itensDe, introDe, CLAUSULAS, DECLARACAO, CONDICOES, fmtData, fmtDataHora, codigo, verificar, pdf };
 })();

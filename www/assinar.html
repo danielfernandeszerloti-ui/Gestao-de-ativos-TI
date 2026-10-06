@@ -38,6 +38,11 @@ h2{font-size:15px;font-weight:800;color:var(--navy);margin:24px 0 10px;text-tran
 .kv div{min-width:0}
 .kv label{display:block;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .kv p{margin:2px 0 0;font-weight:700;overflow-wrap:anywhere}
+.itens{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:10px}
+.itens li{display:flex;flex-wrap:wrap;gap:4px 12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.itens li:last-child{border-bottom:0}
+.itens b{color:var(--navy);min-width:80px}
+.itens span{color:var(--muted);overflow-wrap:anywhere}
 .cond{display:inline-block;background:var(--soft);color:var(--blue);border-radius:6px;padding:2px 10px;font-weight:800;font-size:14px}
 form{display:flex;flex-direction:column;gap:14px}
 .fld{display:flex;flex-direction:column;gap:5px}
@@ -81,7 +86,7 @@ const T = window.TERMO, CFG = window.GA_CONFIG || {};
 const app = $("#app");
 const token = decodeURIComponent((location.hash || "").slice(1)).trim();
 const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-const TIPOS = {notebook:"Notebook",celular:"Celular",tablet:"Tablet",impressora:"Impressora",coletor:"Coletor",monitor:"Monitor"};
+const TIPOS = T.TIPOS;
 
 function estado(cls, ic, titulo, texto, extra = "") {
   app.innerHTML = `<div class="state ${cls}"><div class="ic">${ic}</div><h1>${titulo}</h1><p>${texto}</p>${extra}</div>`;
@@ -105,17 +110,23 @@ async function carregar() {
 
 function render(d) {
   const cond = (T.CONDICOES.find(c => c[0] === d.condicao) || ["", ""])[1];
-  app.innerHTML = `
-    <h1>Termo de Responsabilidade<span>Empréstimo de equipamento</span></h1>
-    <p class="intro">${esc(T.INTRO)}</p>
-    <ol class="cl">${T.CLAUSULAS.map((c, i) => `<li><i>${i + 1}</i><div>${esc(c)}</div></li>`).join("")}</ol>
+  const itens = T.itensDe(d);
+  const equip = itens ? `
+    <h2>${itens.length > 1 ? `Equipamentos (${itens.length})` : "Dados do equipamento"}</h2>
+    <ul class="itens">${itens.map(i => `<li><b>${esc(i.dispositivo)}</b><span>${esc([TIPOS[i.tipo] || i.tipo, i.marca, i.modelo].filter(Boolean).join(" · "))}${i.serie ? ` · S/N ${esc(i.serie)}` : ""}</span></li>`).join("")}</ul>
+    <div class="kv" style="margin-top:10px">` : `
     <h2>Dados do equipamento</h2>
     <div class="kv">
       <div><label>Patrimônio</label><p>${esc(d.dispositivo)}</p></div>
       <div><label>Tipo</label><p>${esc(TIPOS[d.tipo] || d.tipo || "—")}</p></div>
       <div><label>Marca</label><p>${esc(d.marca || "—")}</p></div>
       <div><label>Modelo</label><p>${esc(d.modelo || "—")}</p></div>
-      <div><label>Nº de série</label><p>${esc(d.serie || "—")}</p></div>
+      <div><label>Nº de série</label><p>${esc(d.serie || "—")}</p></div>`;
+  app.innerHTML = `
+    <h1>Termo de Responsabilidade<span>Empréstimo de equipamento</span></h1>
+    <p class="intro">${esc(T.introDe(d))}</p>
+    <ol class="cl">${T.CLAUSULAS.map((c, i) => `<li><i>${i + 1}</i><div>${esc(c)}</div></li>`).join("")}</ol>
+    ${equip}
       <div><label>Estado na entrega</label><p><span class="cond">${esc(cond)}</span></p></div>
       ${d.obs ? `<div style="grid-column:1/-1"><label>Observações</label><p>${esc(d.obs)}</p></div>` : ""}
       <div><label>Entregue por</label><p>${esc(d.entregue_por_nome || "TI")}</p></div>

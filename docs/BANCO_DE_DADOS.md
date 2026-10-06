@@ -26,18 +26,18 @@ A chave pública não dá acesso a nada sozinha. Todas as tabelas têm **RLS (Ro
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `email` | text (PK) | E-mail de login |
-| `papel` | text | `admin` · `editor` · `leitor` |
+| `papel` | text | `admin` · `editor` (TI) · `rh` · `leitor` |
 
 ### `ativos`
 
 | Coluna | Tipo | Observação |
 |---|---|---|
 | `id` | text (PK) | UUID. Os notebooks migrados usam `nb-lap066` |
-| `tipo` | text | `notebook` · `celular` · `tablet` · `impressora` · `coletor` · `monitor` |
+| `tipo` | text | `notebook` · `desktop` · `celular` · `tablet` · `impressora` · `coletor` · `monitor` · `periferico` |
 | `dispositivo` | text | Código (`LAP066`). Único por tipo, sem diferenciar maiúsculas |
-| `status` | text | `Em uso` · `Disponível` · `Manutenção` · `Descartado` |
+| `status` | text | `Em uso` · `Disponível` · `Reservado` · `Manutenção` · `Descartado` |
 | `usuario` | text | Login do colaborador (liga com `usuarios.login`) |
-| `setor`, `fabricante`, `modelo`, `serie`, `obs` | text | |
+| `setor`, `unidade`, `fabricante`, `modelo`, `serie`, `obs` | text | |
 | `foto` | text | `sb:<arquivo>.jpg`, no bucket `fotos` |
 | `specs` | jsonb | Campos da categoria: `{"ram":"16GB","processador":"I7",…}` |
 | `criado_em`, `atualizado_em` | timestamptz | `atualizado_em` é mantido por trigger |
@@ -46,7 +46,8 @@ A chave pública não dá acesso a nada sozinha. Todas as tabelas têm **RLS (Ro
 
 Um trigger registra uma linha em três situações:
 - no cadastro do ativo;
-- quando muda o `usuario`, o `status` ou o `setor`.
+- quando muda o `usuario`, o `status`, o `setor` ou a `unidade`;
+- na entrega de um onboarding (`campo = entrega`) e a cada termo (`campo = termo`).
 
 | Coluna | Observação |
 |---|---|
@@ -107,21 +108,53 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 - É o SHA-256 dos campos do termo, dos dados informados, do instante da assinatura e do SHA-256 da imagem.
 - O app recalcula esse código ao exportar o PDF e indica se ele confere.
 
+### Onboarding
+
+| Tabela | O que guarda |
+|---|---|
+| `onboardings` | A solicitação: dados do colaborador, pedidos (`equipamentos`, `softwares`, `rede` + campos "outros"), `status`, solicitante, responsável da TI, datas de entrega, conclusão e cancelamento. `origem_ref` evita importar a mesma resposta do formulário duas vezes |
+| `onboarding_privado` | CPF (LGPD). Só RH e administradores leem ou gravam |
+| `onboarding_checklist` | Itens do checklist da solicitação, com quem marcou e quando. Itens com `chave` são marcados pelo sistema |
+| `onboarding_ativos` | Ativos vinculados. `removido = true` desfaz o vínculo sem apagar o registro |
+| `onboarding_eventos` | Histórico imutável: só as funções do banco inserem |
+| `onboarding_opcoes` | Opções do formulário. Para equipamentos, há também a categoria do inventário e o subtipo |
+| `onboarding_checklist_modelo` | Modelo do checklist. `condicao` lista trechos separados por `\|` que precisam aparecer no pedido |
+
+Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_preparacao` → `aguardando_entrega` → `entregue` → `concluido`. A solicitação pode ir para `cancelado` a partir de qualquer etapa.
+
+**Regras garantidas pelo banco (gatilhos):**
+- Toda solicitação nasce `solicitado`.
+- O RH não muda o status; ele só pode cancelar enquanto a solicitação está `solicitado`.
+- O RH não edita depois da entrega.
+- `entregue` só via `onboarding_entregar()`. Só administradores reabrem uma solicitação entregue ou concluída.
+- Vincular um ativo exige status `Disponível` e o deixa `Reservado`. Desvincular ou cancelar a solicitação o devolve para `Disponível`.
+- `onboarding_entregar(p_id, p_login)`: numa única transação, ela:
+  - passa os ativos para `Em uso` com o login, o setor e a unidade;
+  - grava o histórico de cada ativo;
+  - cria ou atualiza o usuário;
+  - muda o status da solicitação.
+- Ao assinar um termo ligado ao onboarding (`termos.onboarding_id`), o sistema marca o checklist. Se a solicitação estiver `entregue` e sem pendências, ela é concluída.
+- Nada é excluído: não há política de DELETE nas tabelas do módulo.
+
+`termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.
+
 ## Regras de acesso (RLS)
 
 | Tabela | Ler | Gravar |
 |---|---|---|
-| `ativos`, `usuarios`, `inventario` | qualquer membro | `admin` e `editor` |
+| `ativos`, `usuarios`, `inventario` | membros, exceto `rh` | `admin` e `editor` |
 | `ativos_historico` | qualquer membro | só o trigger |
 | `membros` | qualquer membro | só `admin` |
 | `termos` | qualquer membro (anônimo: só via token) | `admin` e `editor` geram, cancelam e registram devolução. Só `admin` exclui (fica no histórico). A assinatura só pelo link |
+| `onboardings` e checklist, ativos e histórico do onboarding | membros, inclusive `rh` | solicitação: `rh`, `editor` e `admin` (com as regras acima); checklist e ativos: `editor` e `admin`; histórico: só funções do banco |
+| `onboarding_privado` (CPF) | `rh` e `admin` | `rh` e `admin` |
 | Storage `fotos` | público (link da imagem) | `admin` e `editor` |
 
 As funções `papel_atual()`, `pode_ler()` e `pode_editar()` leem o e-mail do token de login (`auth.jwt()`).
 
 ## Tempo real
 
-As tabelas `ativos`, `usuarios` e `inventario` estão na publicação `supabase_realtime`. Quando alguém salva, as outras telas abertas recarregam os dados em cerca de 0,3 s.
+As tabelas `ativos`, `usuarios`, `inventario`, `termos`, `onboardings`, `onboarding_checklist`, `onboarding_ativos` e `onboarding_eventos` estão na publicação `supabase_realtime`. Quando alguém salva, as outras telas abertas recarregam os dados em cerca de 0,3 s.
 
 ## Backup
 

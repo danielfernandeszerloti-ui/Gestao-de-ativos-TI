@@ -15,28 +15,52 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Módulo | O que faz |
 |---|---|
 | Dashboard | Total por categoria, status geral, ativos por setor, equipamentos disponíveis e em manutenção |
-| Notebooks / Celulares / Tablets / Impressoras / Coletores / Monitores | Lista com foto, busca e filtros, ficha com **histórico de movimentação**, cadastro, edição e exclusão |
+| Notebooks / Desktops / Celulares / Tablets / Impressoras / Coletores / Monitores / Periféricos | Lista com foto, busca e filtros, ficha com **histórico de movimentação**, cadastro, edição e exclusão |
 | Importar / Exportar Excel | Importa `.xlsx`, `.xls` ou `.csv`, atualizando pelo código do dispositivo. Exporta a lista filtrada |
 | Usuários | Colaboradores e equipamentos vinculados, com importação e exportação de Excel. Para administradores, também **quem acessa o sistema** |
+| Onboarding | Solicitação do RH para novos colaboradores, checklist da TI, reserva e entrega de ativos do inventário, termo único com todos os equipamentos, alertas de admissão e histórico que não pode ser apagado |
 | Termos | **Termo de responsabilidade digital**: gerado na ficha do equipamento, assinado pelo colaborador por link ou QR Code (sem login) e exportado em PDF com página de evidências |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
 | Inventário | Conferência bipando as etiquetas com o coletor; pendentes, conferidos e códigos sem cadastro |
 
 ### Status possíveis
-`Em uso` · `Disponível` · `Manutenção` · `Descartado`
+`Em uso` · `Disponível` · `Reservado` (separado para um onboarding) · `Manutenção` · `Descartado`
 
 ### Campos por categoria
 
-Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Setor, Fabricante, Modelo, Nº de Série, Foto e Observações.
+Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Setor, Unidade, Fabricante, Modelo, Nº de Série, Foto e Observações.
 
 | Categoria | Prefixo | Campos específicos (coluna `specs`) |
 |---|---|---|
 | Notebook | `LAP` | Processador, Geração, RAM, Tipo de Sistema, Sistema Operacional, Duração da Bateria, Teclado, Mouse, Monitor |
+| Desktop | `DSK` | Processador, Geração, RAM, Armazenamento, Tipo de Sistema, Sistema Operacional |
 | Celular | `CEL` | Número/Linha, Operadora, IMEI, Armazenamento, Sistema Operacional, Capa/Película |
 | Tablet | `TAB` | Tamanho da tela, Armazenamento, RAM, Sistema Operacional, Conectividade, Número/Linha, IMEI, Capa/Película, Carregador |
 | Impressora | `IMP` | Tipo, Endereço IP, Conexão, Toner/Ribbon |
 | Coletor | `COL` | Sistema Operacional, Endereço MAC, Endereço IP, Bateria, Base carregadora |
 | Monitor | `MON` | Tamanho (pol.), Resolução, Entradas |
+| Periférico | `PER` | Tipo (teclado, mouse, headset, webcam…), Conexão |
+
+## Onboarding de novos colaboradores
+
+Fluxo: **RH solicita → TI analisa e prepara → TI entrega → colaborador assina o termo → concluído.**
+
+1. **Solicitação.** O RH preenche **Onboarding → Nova solicitação** ou importa as respostas do Google Forms em **Importar formulário** (planilha exportada em .xlsx ou .csv). A importação reconhece as colunas do formulário, inclusive as várias colunas "Outros", e ignora respostas já importadas.
+2. **Análise.** A TI clica em **Assumir**, muda o status e trabalha no **checklist**. O checklist é montado a partir do modelo (Conta e acessos, Equipamentos, Entrega) conforme o que foi pedido: VPN só aparece se a VPN foi pedida, por exemplo. Itens extras podem ser adicionados.
+3. **Equipamentos.** Para cada item pedido, a TI escolhe um ativo **Disponível** do inventário. O ativo fica **Reservado**. Não existe estoque paralelo.
+4. **Termo.** **Gerar termo** cria um único termo de responsabilidade com todos os equipamentos vinculados.
+5. **Entrega.** **Registrar entrega** passa os ativos para **Em uso** com o login do colaborador, setor e unidade. A entrega é gravada no histórico de cada ativo, e o login é criado em Usuários se ainda não existir.
+6. **Conclusão.** Quando o colaborador assina o termo e o checklist está completo, o onboarding conclui sozinho. A TI também pode concluir manualmente.
+
+Também há:
+- **Painel:** contagem por status, filtros por status, departamento, unidade, solicitante, técnico e período de admissão, e prazo em cada linha.
+- **Resumo da solicitação:** equipamentos x/y preparados, acessos x/y e % do checklist.
+- **Alertas:** admissão hoje, amanhã ou em até 3 dias; atrasados; sem responsável da TI há mais de 1 dia; e entregues aguardando aceite há mais de 2 dias. Os alertas aparecem no Dashboard e no número do menu.
+- **Histórico:** cada mudança de status, item do checklist, vínculo de ativo, termo e comentário é gravada pelo banco, com autor, perfil e data. Ninguém consegue editar nem apagar o histórico pela aplicação.
+- **Base para o offboarding:** a ficha mostra todos os ativos em uso com o login do colaborador.
+- **Configurar** (só administradores): opções do formulário e modelo do checklist.
+
+**LGPD:** o CPF fica numa tabela separada (`onboarding_privado`), visível só para o RH e administradores. Ele não aparece na exportação para Excel.
 
 ## Termo de responsabilidade digital
 
@@ -56,8 +80,9 @@ O acesso é por e-mail e senha (Supabase Auth). Só entra quem estiver na tabela
 
 | Permissão | O que pode fazer |
 |---|---|
-| Administrador | Tudo, inclusive liberar e remover acessos (em **Usuários → Acesso ao sistema**) |
-| Editor | Cadastrar, editar, excluir, importar e fazer inventário |
+| Administrador | Tudo, inclusive liberar e remover acessos (em **Usuários → Acesso ao sistema**), configurar o onboarding e reabrir solicitações entregues |
+| TI (editor) | Cadastrar, editar, excluir, importar e fazer inventário. No onboarding: assumir, mudar status, checklist, vincular ativos, termo e entrega |
+| RH | Só o módulo de Onboarding: criar solicitações, editar os dados do colaborador enquanto a solicitação está aberta, consultar status e histórico, comentar. Não vê nem altera o inventário |
 | Somente leitura | Consultar, exportar e gerar etiquetas |
 
 **Para dar acesso a alguém:**
