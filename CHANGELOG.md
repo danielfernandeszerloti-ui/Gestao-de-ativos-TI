@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.1] — 2026-10-07
+### Adicionado
+- **Excluir solicitação** e **Excluir compra** (só administradores), para testes e lançamentos por engano:
+  - pede o motivo e, para a solicitação, a digitação do número;
+  - os registros saem de todas as telas, mas ficam guardados no banco com quem excluiu, quando e o motivo;
+  - não é possível excluir com equipamentos entregues, termo assinado ou compra aprovada/feita: é preciso cancelar antes.
+
 ## [2.6.0] — 2026-10-06
 ### Adicionado
 - **Aprovação de compras pelo sistema**:

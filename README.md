@@ -64,6 +64,7 @@ Também há:
   - **Receber** cadastra os equipamentos no inventário já reservados para o colaborador.
   Pedir uma compra coloca a solicitação em "Aguardando equipamentos". Se o onboarding for cancelado, as compras que ainda não foram aprovadas são canceladas.
 - **Base para o offboarding:** a ficha mostra todos os ativos em uso com o login do colaborador.
+- **Excluir** (só administradores): solicitações e compras de teste ou lançadas por engano saem das telas, com motivo registrado. O banco guarda quem excluiu e quando.
 - **Configurar** (só administradores): opções do formulário e modelo do checklist.
 
 **LGPD:** o CPF fica numa tabela separada (`onboarding_privado`), visível só para o RH e administradores. Ele não aparece na exportação para Excel.

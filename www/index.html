@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.6.0"></script>
+<script src="termo-pdf.js?v=2.6.1"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -389,6 +389,8 @@ tr.click{cursor:pointer}
 .cdet{margin:6px 0 0;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
 .cdet.muted{color:var(--faint);font-size:12.5px}
 .cdet.late{color:var(--danger);font-weight:700}
+.btn.ghost.del{color:var(--danger)}
+.btn.ghost.del:hover{border-color:var(--danger)}
 .cdet.okd{color:var(--ok-fg);font-weight:700}
 .st-bad{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)}
 .apr{margin-bottom:18px}
@@ -1766,6 +1768,7 @@ function onbDetalheHTML(){
   const statusSel = ti&&aberto ? `<label class="sel ostsel">${ICON("filter")}<select id="oStatusSel" data-id="${o.id}" aria-label="Alterar status">${OST_ABERTOS.map(s=>`<option value="${s}" ${o.status===s?"selected":""}>${OST[s][0]}</option>`).join("")}</select></label>` : "";
   const menos=[];
   if((ti&&(aberto||o.status==="entregue"))||(SB_ROLE==="admin"&&o.status==="concluido")||(isRH()&&o.status==="solicitado")) menos.push(`<button class="btn ghost" data-act="ocancelar" data-id="${o.id}">${ICON("x")}Cancelar solicitação</button>`);
+  if(SB_ROLE==="admin") menos.push(`<button class="btn ghost del" data-act="oexcluir" data-id="${o.id}">${ICON("trash")}Excluir solicitação</button>`);
   if((SB_ROLE==="admin"&&["entregue","concluido","cancelado"].includes(o.status))||(ti&&o.status==="cancelado")) menos.push(`<button class="btn ghost" data-act="oreabrir" data-id="${o.id}">${ICON("undo")}Reabrir</button>`);
 
   // resumo
@@ -2209,7 +2212,7 @@ function onbClick(a, el, id){
     cemail:()=>compraEmail(id, el.dataset.cid), ccopy:()=>compraEnviar("copiar"), cmail:()=>compraEnviar("email"),
     capr:()=>compraDecidir(el.dataset.cid,"aprovar"), crep:()=>compraDecidir(el.dataset.cid,"reprovar"), caprtodas:()=>compraAprovarTodas(id),
     ccomprar:()=>compraComprar(el.dataset.cid), creenv:()=>compraStatus(el.dataset.cid,"solicitada","Compra enviada de novo para aprovação."),
-    ccanc:()=>compraCancelarModal(el.dataset.cid), ccancok:()=>compraStatus(el.dataset.cid,"cancelada","Compra cancelada."),
+    ccanc:()=>compraCancelarModal(el.dataset.cid), oexcluir:()=>onbExcluirModal(id), cexcluir:()=>compraExcluirModal(el.dataset.cid), ccancok:()=>compraStatus(el.dataset.cid,"cancelada","Compra cancelada."),
   };
   if(!H[a]) return false; H[a](); return true;
 }
@@ -2225,6 +2228,8 @@ function onbSubmit(f){
   if(f.id==="cDecForm"){ submitDecisao(f); return true; }
   if(f.id==="cDecTodas"){ submitAprovarTodas(f); return true; }
   if(f.id==="cCompForm"){ submitComprar(f); return true; }
+  if(f.id==="oExcForm"){ submitExcluirOnb(f); return true; }
+  if(f.id==="cExcForm"){ submitExcluirCompra(f); return true; }
   if(f.id==="cfgEmailForm"){ salvarCfg("compras_email", document.getElementById("cfg_email").value.trim()); return true; }
   if(f.classList.contains("ockadd")){ onbCheckAdd(f); return true; }
   if(f.classList.contains("ocfgadd")){ onbCfgAdd(f); return true; }
@@ -2299,6 +2304,7 @@ function compraBotoes(c, o, ti){
   if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("cedit","edit","Editar"));
   if(ti && pend) x.push(b("cemail","mail","E-mail"));
   if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("ccanc","x","Cancelar","ghost"));
+  if(SB_ROLE==="admin" && !["aprovada","comprada","recebida"].includes(c.status)) x.push(b("cexcluir","trash","Excluir","ghost del"));
   return x.length?`<div class="cacts">${x.join("")}</div>`:"";
 }
 function compraPainel(o){
@@ -2501,6 +2507,43 @@ function aprovHTML(){
   ${dec.length?`<section class="card panel" style="margin-top:20px"><h2>Decisões recentes</h2><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Decisão</th><th>Por</th></tr></thead><tbody>
     ${dec.map(c=>{ const o=S.onb.find(o=>o.id===c.onboarding_id)||{}; return `<tr class="click" data-act="oopen" data-id="${o.id||""}"><td>${esc(fDH(c.aprovado_em))}</td><td class="dev">${esc(o.nome||"—")}</td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}${c.decisao_obs?`<br><span class="muted" style="font-size:13px">${esc(c.decisao_obs)}</span>`:""}</td><td>${esc(nomeDe(c.aprovado_por))}</td></tr>`; }).join("")}
   </tbody></table></div></section>`:""}`;
+}
+
+function onbExcluirModal(id){
+  const o=S.onb.find(x=>x.id===id); if(!o) return;
+  const ent=oLinks(id).filter(l=>l.entregue), res=oLinks(id).filter(l=>!l.entregue), cps=oCompras(id);
+  openModal(`<h2>Excluir solicitação #${o.numero}?</h2><form class="f" id="oExcForm" data-id="${o.id}">
+    <p style="margin:0">Use para testes ou solicitações criadas por engano. <b>${esc(o.nome)}</b> sai de todas as telas, com checklist, histórico e compras. O registro fica guardado no banco com quem excluiu, quando e o motivo.</p>
+    ${ent.length?`<div class="warnnote">Há equipamentos entregues (${esc(ent.map(l=>l.dispositivo).join(", "))}). Se ainda estiverem com o colaborador, cancele a solicitação antes, para eles voltarem ao estoque.</div>`:""}
+    ${res.length?`<p class="muted" style="margin:0">${esc(res.map(l=>l.dispositivo).join(", "))} ${res.length>1?"voltam":"volta"} para Disponível.</p>`:""}
+    ${cps.length?`<p class="muted" style="margin:0">${cps.length} ${cps.length>1?"compras também saem":"compra também sai"} da lista. Compras aprovadas ou já feitas precisam ser canceladas antes.</p>`:""}
+    <label class="fld"><span>Motivo <i>*</i></span><input id="ox_mot" required maxlength="200" placeholder="Ex.: solicitação de teste"></label>
+    <label class="fld"><span>Para confirmar, digite o número <b>${o.numero}</b></span><input id="ox_conf" inputmode="numeric" autocomplete="off"></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="oxBtn">${ICON("trash")}Excluir solicitação</button></div></form>`,"sm");
+}
+async function submitExcluirOnb(f){
+  const o=S.onb.find(x=>x.id===f.dataset.id); if(!o) return;
+  const mot=document.getElementById("ox_mot").value.trim();
+  if(mot.length<3){ toast("Informe o motivo."); return; }
+  if(document.getElementById("ox_conf").value.trim()!==String(o.numero)){ toast(`Digite ${o.numero} para confirmar.`); return; }
+  const btn=document.getElementById("oxBtn"); btn.disabled=true;
+  const {error}=await sb.rpc("onboarding_excluir",{p_id:o.id,p_motivo:mot});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); OB.sel=null; try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+  await Promise.all([sbLoad("onb"), sbLoad("ativos")]); render(); toast(`Solicitação #${o.numero} excluída.`);
+}
+function compraExcluirModal(cid){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return;
+  openModal(`<h2>Excluir compra?</h2><form class="f" id="cExcForm" data-cid="${c.id}">
+    <p style="margin:0">${c.quantidade}× <b>${esc(c.item)}</b> sai da lista. A exclusão fica registrada no histórico da solicitação.</p>
+    <label class="fld"><span>Motivo</span><input id="cx_mot" maxlength="200" placeholder="Ex.: lançada por engano"></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn danger" id="cxBtn">${ICON("trash")}Excluir compra</button></div></form>`,"sm");
+}
+async function submitExcluirCompra(f){
+  const btn=document.getElementById("cxBtn"); btn.disabled=true;
+  const {error}=await sb.rpc("onboarding_compra_excluir",{p_id:+f.dataset.cid,p_motivo:document.getElementById("cx_mot").value.trim()});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await onbReload(); if(S.view==="aprovacoes") render(); toast("Compra excluída.");
 }
 function compraRecLinhas(){
   const f=document.getElementById("oRecForm"); if(!f) return; const c=S.onbCompras.find(x=>x.id===+f.dataset.cid); const t=document.getElementById("cr_tipo").value;

@@ -138,7 +138,7 @@ Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_prep
 - Ao assinar um termo ligado ao onboarding (`termos.onboarding_id`), o sistema marca o checklist. Se a solicitação estiver `entregue` e sem pendências, ela é concluída.
 - Compras: só `aprovador` e `admin` aprovam ou reprovam; reprovar exige motivo (`decisao_obs`); `comprada` só a partir de `aprovada`; mudar item, quantidade, valor, link ou fornecedor de uma compra aprovada volta para `solicitada`. O aprovador não altera os dados do pedido.
 - `onboarding_compra_receber(p_id, p_tipo, p_ativos)` (exige compra aprovada) cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função.
-- Nada é excluído: não há política de DELETE nas tabelas do módulo.
+- Nada é excluído: não há política de DELETE nas tabelas do módulo. `onboarding_excluir(p_id, p_motivo)` e `onboarding_compra_excluir(p_id, p_motivo)` (só `admin`) só preenchem `excluido_em`/`excluido_por`; o RLS esconde esses registros de todas as telas.
 
 `termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.
 
