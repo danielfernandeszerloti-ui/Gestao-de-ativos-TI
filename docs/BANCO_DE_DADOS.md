@@ -117,7 +117,7 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `onboarding_checklist` | Itens do checklist da solicitação, com quem marcou e quando. Itens com `chave` são marcados pelo sistema |
 | `onboarding_ativos` | Ativos vinculados. `removido = true` desfaz o vínculo sem apagar o registro |
 | `onboarding_eventos` | Histórico imutável: só as funções do banco inserem |
-| `onboarding_compras` | Compras de equipamento. `origem = onboarding` (ligada a uma solicitação) ou `reposicao` (estoque, sem `onboarding_id`; o RH não vê). Campos: item, quantidade, link, fornecedor, valor, `status` (`solicitada` → `enviada` → `aprovada` → `comprada` → `recebida`, ou `reprovada`/`cancelada`), pedido, previsão e os ativos cadastrados no recebimento |
+| `onboarding_compras` | Compras de equipamento. `origem = onboarding` (ligada a uma solicitação), `reposicao` (estoque, sem `onboarding_id`; o RH não vê) ou `infra` (infraestrutura; `finalidade` = `novo`, `substituicao`, `renovacao` ou `manutencao`, `ativo_ref` = equipamento substituído/renovado/em manutenção, `campo_renovacao` = `garantia_ate`, `licenca_ate` ou `suporte`). Compras de infra com `ativo_ref` também entram no histórico desse equipamento. Campos: item, quantidade, link, fornecedor, valor, `status` (`solicitada` → `enviada` → `aprovada` → `comprada` → `recebida`, ou `reprovada`/`cancelada`), pedido, previsão e os ativos cadastrados no recebimento |
 | `estoque_minimos` | Mínimo e ideal por categoria (`chave` = `notebook`, `periferico:Mouse`…). Leitura: membros com acesso ao inventário e aprovadores; gravação: TI e admin |
 | `ga_config` | Configurações gerais (`compras_email`). Leitura para membros, gravação só `admin` |
 | `onboarding_opcoes` | Opções do formulário. Para equipamentos, há também a categoria do inventário e o subtipo |
@@ -138,7 +138,8 @@ Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_prep
   - muda o status da solicitação.
 - Ao assinar um termo ligado ao onboarding (`termos.onboarding_id`), o sistema marca o checklist. Se a solicitação estiver `entregue` e sem pendências, ela é concluída.
 - Compras: só `aprovador` e `admin` aprovam ou reprovam; reprovar exige motivo (`decisao_obs`); `comprada` só a partir de `aprovada`; mudar item, quantidade, valor, link ou fornecedor de uma compra aprovada volta para `solicitada`. O aprovador não altera os dados do pedido.
-- `onboarding_compra_receber(p_id, p_tipo, p_ativos)` (exige compra aprovada) cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função.
+- `onboarding_compra_receber(p_id, p_tipo, p_ativos)` (exige compra aprovada) cadastra os ativos que chegaram como `Disponível`, reserva-os para o onboarding (se ainda aberto) e marca a compra como `recebida`, numa única transação. A compra só vira `recebida` por essa função ou pela seguinte. Não aceita renovação nem manutenção.
+- `onboarding_compra_concluir(p_id, p_data, p_obs)` (TI, compra de infra aprovada de renovação ou manutenção): renovação de garantia/licença grava a nova validade na ficha (`specs`); as duas registram uma manutenção com o custo da compra e marcam a compra como concluída (`recebida`).
 - Nada é excluído: não há política de DELETE nas tabelas do módulo. `onboarding_excluir(p_id, p_motivo)` e `onboarding_compra_excluir(p_id, p_motivo)` (só `admin`) só preenchem `excluido_em`/`excluido_por`; o RLS esconde esses registros de todas as telas.
 
 `termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.

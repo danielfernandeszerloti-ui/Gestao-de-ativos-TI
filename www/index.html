@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.8.0"></script>
+<script src="termo-pdf.js?v=2.9.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -2352,6 +2352,7 @@ function onbChange(t){
   if(t.id==="ode"){ OB.de=v; updateOnbList(); return true; }
   if(t.id==="oate"){ OB.ate=v; updateOnbList(); return true; }
   if(t.id==="cr_tipo"){ compraRecLinhas(); return true; }
+  if(t.form && t.form.id==="iCompraForm" && (t.name==="finalidade"||t.name==="campo_renovacao")){ infraCompraFin(t.form); return true; }
   if(t.classList && t.classList.contains("estmin")){ estSalvarMin(t); return true; }
   if(t.classList && t.classList.contains("cesel")){ if(CEM){ t.checked?CEM.sel.add(+t.value):CEM.sel.delete(+t.value); compraTextoAtualiza(); } return true; }
   if(t.id==="oStatusSel"){ const o=S.onb.find(x=>x.id===t.dataset.id); if(o&&v!==o.status) onbUpd(o.id,{status:v},`Status: ${OST[v][0]}.`).then(ok=>{ if(!ok) onbRedetalhe(); }); return true; }
@@ -2373,7 +2374,7 @@ const CST = { solicitada:["Aguardando aprovação","st-man"], enviada:["Aguardan
   recebida:["Recebida","st-ok"], reprovada:["Reprovada","st-bad"], cancelada:["Cancelada","st-desc"] };
 const CPEND = ["solicitada","enviada"];
 const CABERTAS = ["solicitada","enviada","aprovada","comprada"];
-const cPill = c => { const [l,k]=CST[c.status]||[c.status,"st-desc"]; return `<span class="pill ${k}">${esc(l)}</span>`; };
+const cPill = c => { const [l,k]=c.status==="recebida"&&["renovacao","manutencao"].includes(c.finalidade)?["Concluída","st-ok"]:CST[c.status]||[c.status,"st-desc"]; return `<span class="pill ${k}">${esc(l)}</span>`; };
 const oCompras = id => S.onbCompras.filter(c=>c.onboarding_id===id).sort((a,b)=>a.id-b.id);
 const brl = v => v==null||v==="" ? "" : Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const linkSeguro = u => /^https?:\/\//i.test(String(u||"").trim()) ? String(u).trim() : "";
@@ -2393,7 +2394,9 @@ function compraRow(c, o, ti){
   const atras=aberta&&c.previsao&&diasAte(c.previsao)<0;
   const det=[c.fornecedor, c.valor_unit!=null?`${brl(c.valor_unit)}/un.${c.quantidade>1?` · total ${brl(tot)}`:""}`:"", c.pedido?`pedido ${c.pedido}`:"",
     c.previsao?`previsão ${fDia(c.previsao)}`:""].filter(Boolean);
+  const ref=c.ativo_ref?S.items.find(i=>i.id===c.ativo_ref):null;
   return `<div class="oeq"><div class="oeqh"><span>${c.quantidade}× ${esc(c.item)}</span>${cPill(c)}</div>
+    ${c.origem==="infra"?`<p class="cdet"><span class="pill st-prep">${esc(FINAL[c.finalidade]||"")}</span>${c.campo_renovacao?` <span class="muted">${esc(CAMPO_REN[c.campo_renovacao])}</span>`:""}${ref?` · <button class="linkbtn" style="padding:0" data-act="view" data-id="${ref.id}">${esc(tipoUm(ref.tipo))} ${esc(ref.dispositivo)}${ref.hostname?` (${esc(ref.hostname)})`:""}</button>`:""}</p>`:""}
     ${det.length?`<p class="cdet ${atras?"late":""}">${esc(det.join(" · "))}${atras?" · atrasada":""}</p>`:""}
     ${url?`<p class="cdet"><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${ICON("link")}Abrir link da loja</a></p>`:c.link?`<p class="cdet">${esc(c.link)}</p>`:""}
     ${c.obs?`<p class="cdet" style="white-space:pre-wrap">${esc(c.obs)}</p>`:""}
@@ -2407,7 +2410,7 @@ function compraBotoes(c, o, ti){
   const pend=CPEND.includes(c.status);
   if(pend && podeAprovar()) x.push(b("capr","check","Aprovar","primary"), b("crep","x","Reprovar"));
   if(c.status==="aprovada" && (ti||podeAprovar())) x.push(b("ccomprar","cart","Registrar compra", ti?"":"primary"));
-  if(ti && ["aprovada","comprada"].includes(c.status)) x.push(b("creceber","check","Receber","primary"));
+  if(ti && ["aprovada","comprada"].includes(c.status)) x.push(["renovacao","manutencao"].includes(c.finalidade)?b("cconcluir","check","Concluir","primary"):b("creceber","check","Receber","primary"));
   if(ti && c.status==="reprovada") x.push(b("creenv","undo","Reenviar para aprovação"));
   if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("cedit","edit","Editar"));
   if(ti && pend && c.onboarding_id) x.push(b("cemail","mail","E-mail"));
@@ -2428,7 +2431,7 @@ function compraPainel(o){
   </section>`;
 }
 function compraForm(oid, cid, pedido){
-  const c=cid?S.onbCompras.find(x=>x.id===+cid):null, o=c&&!c.onboarding_id?{id:"",nome:"reposição de estoque"}:S.onb.find(x=>x.id===(c?c.onboarding_id:oid)); if(!o) return;
+  const c=cid?S.onbCompras.find(x=>x.id===+cid):null, o=c&&!c.onboarding_id?{id:"",nome:c.origem==="infra"?"infraestrutura":"reposição de estoque"}:S.onb.find(x=>x.id===(c?c.onboarding_id:oid)); if(!o) return;
   const op=!c&&pedido?opcEquip(pedido):null;
   const d=c||{item:pedido||"",tipo_ativo:op?op.tipo_ativo:"",subtipo:op?op.subtipo:"",quantidade:1,link:"",fornecedor:"",valor_unit:null,obs:"",pedido:"",previsao:null,status:"solicitada"};
   const stOps=[...CABERTAS,"reprovada","cancelada"];
@@ -2525,7 +2528,7 @@ function compraReceber(cid){
   const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const o=S.onb.find(x=>x.id===c.onboarding_id)||{status:"",nome:""};
   const tipo=c.tipo_ativo||(opcEquip(c.item)||{}).tipo_ativo||"";
   openModal(`<h2>Receber compra: ${c.quantidade}× ${esc(c.item)}</h2><form class="f" id="oRecForm" data-cid="${c.id}">
-    <p style="margin:0">Cadastre ${c.quantidade>1?"os equipamentos que chegaram":"o equipamento que chegou"}. ${!c.onboarding_id?`Reposição de estoque: ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>.`:OST_ABERTOS.includes(o.status)?`Ele${c.quantidade>1?"s":""} entra${c.quantidade>1?"m":""} no inventário como <b>Disponível</b> e já fica${c.quantidade>1?"m":""} <b>reservado${c.quantidade>1?"s":""}</b> para ${esc(o.nome)}.`:`A solicitação de ${esc(o.nome)} está encerrada, então ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>, sem vínculo.`}</p>
+    <p style="margin:0">Cadastre ${c.quantidade>1?"os equipamentos que chegaram":"o equipamento que chegou"}. ${!c.onboarding_id?`${c.origem==="infra"?"Infraestrutura":"Reposição de estoque"}: ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>.${c.finalidade==="substituicao"&&c.ativo_ref?" Depois, ajuste o status do equipamento substituído (ex.: Descartado) na ficha dele.":""}`:OST_ABERTOS.includes(o.status)?`Ele${c.quantidade>1?"s":""} entra${c.quantidade>1?"m":""} no inventário como <b>Disponível</b> e já fica${c.quantidade>1?"m":""} <b>reservado${c.quantidade>1?"s":""}</b> para ${esc(o.nome)}.`:`A solicitação de ${esc(o.nome)} está encerrada, então ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>, sem vínculo.`}</p>
     <fieldset>
       <label class="fld"><span>Categoria <i>*</i></span><select id="cr_tipo" required><option value="">Escolha…</option>${Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
       <label class="fld"><span>Fabricante (todos)</span><input id="cr_fab" maxlength="60"></label>
@@ -2600,7 +2603,8 @@ function compraCancelarModal(cid){
 function aprovHTML(){
   const pend=S.onbCompras.filter(c=>CPEND.includes(c.status)), grupos=new Map();
   pend.forEach(c=>{ if(!grupos.has(c.onboarding_id)) grupos.set(c.onboarding_id,[]); grupos.get(c.onboarding_id).push(c); });
-  const repo=grupos.get(null)||[]; grupos.delete(null);
+  const semOnb=grupos.get(null)||[]; grupos.delete(null);
+  const repo=semOnb.filter(c=>c.origem!=="infra"), infc=semOnb.filter(c=>c.origem==="infra");
   const lista=[...grupos].map(([oid,cs])=>({o:S.onb.find(o=>o.id===oid),cs})).filter(g=>g.o).sort((a,b)=>String(a.o.data_admissao||"9").localeCompare(String(b.o.data_admissao||"9")));
   const totGeral=pend.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
   const dec=S.onbCompras.filter(c=>c.aprovado_por&&!CPEND.includes(c.status)).sort((a,b)=>String(b.aprovado_em).localeCompare(String(a.aprovado_em))).slice(0,15);
@@ -2614,7 +2618,9 @@ function aprovHTML(){
   ${!podeAprovar()?`<p class="note" style="margin:0 0 18px">Só o aprovador de compras e os administradores podem aprovar. Aqui você acompanha o que está pendente.</p>`:""}
   ${repo.length?`<section class="card panel apr"><div class="panelhead"><div><h2 style="margin:0">Reposição de estoque</h2><div class="muted" style="font-size:14px">Compras para manter o mínimo de equipamentos disponíveis, sem colaborador definido</div></div>${!SO_ONB()?`<div class="rowacts"><button class="btn sm" data-act="go" data-v="estoque">${ICON("box")}Ver estoque</button></div>`:""}</div>
     ${repo.map(c=>compraRow(c,{id:""},false)).join("")}</section>`:""}
-  ${lista.length||repo.length?lista.map(card).join(""):`<div class="card empty"><b>Tudo em dia</b>Quando a TI pedir a compra de um equipamento para um novo colaborador, ela aparece aqui para você aprovar.</div>`}
+  ${infc.length?`<section class="card panel apr"><div class="panelhead"><div><h2 style="margin:0">Infraestrutura</h2><div class="muted" style="font-size:14px">Equipamentos novos, substituições, renovações de garantia, licença ou suporte e manutenções com custo</div></div>${!SO_ONB()?`<div class="rowacts"><button class="btn sm" data-act="go" data-v="infra">${ICON("layers")}Ver infraestrutura</button></div>`:""}</div>
+    ${infc.map(c=>compraRow(c,{id:""},false)).join("")}</section>`:""}
+  ${lista.length||semOnb.length?lista.map(card).join(""):`<div class="card empty"><b>Tudo em dia</b>Quando a TI pedir a compra de um equipamento para um novo colaborador, ela aparece aqui para você aprovar.</div>`}
   ${dec.length?`<section class="card panel" style="margin-top:20px"><h2>Decisões recentes</h2><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Decisão</th><th>Por</th></tr></thead><tbody>
     ${dec.map(c=>{ const o=S.onb.find(o=>o.id===c.onboarding_id)||{nome:c.onboarding_id?"—":"Reposição de estoque"}; return `<tr class="click" data-act="oopen" data-id="${o.id||""}"><td>${esc(fDH(c.aprovado_em))}</td><td class="dev">${esc(o.nome||"—")}</td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}${c.decisao_obs?`<br><span class="muted" style="font-size:13px">${esc(c.decisao_obs)}</span>`:""}</td><td>${esc(nomeDe(c.aprovado_por))}</td></tr>`; }).join("")}
   </tbody></table></div></section>`:""}`;
@@ -2917,6 +2923,10 @@ function infraFichaHTML(x){
   // sistemas dependentes
   const ss=sistemasDe(x.id);
   if(INFRA(x.tipo)||ss.length) h+=`<div class="hist"><label>Sistemas que dependem deste equipamento</label>${ss.length?`<div class="chips">${ss.map(s=>`<button class="pill ${CRIT[s.criticidade][1]}" style="cursor:pointer" data-act="isis" data-sid="${s.id}">${esc(s.nome)} · ${CRIT[s.criticidade][0]}</button>`).join("")}</div>`:`<p class="muted" style="margin:0">Nenhum sistema vinculado. Cadastre em <button class="linkbtn" style="padding:0" data-act="go" data-v="sistemas">Sistemas</button>.</p>`}</div>`;
+  // compras ligadas ao equipamento
+  const cps=S.onbCompras.filter(c=>c.ativo_ref===x.id&&c.status!=="cancelada");
+  if(INFRA(x.tipo)||cps.length) h+=`<div class="hist"><div class="panelhead" style="margin:0 0 6px"><label style="margin:0">Compras (${cps.length})</label>${ti&&INFRA(x.tipo)?`<button class="btn sm" data-act="icompra" data-id="${x.id}">${ICON("cart")}Solicitar compra</button>`:""}</div>
+    ${cps.length?cps.map(c=>compraRow(c,{id:""},ti)).join(""):`<p class="muted" style="margin:0">Substituição, renovação de garantia/licença/suporte ou peça para manutenção: o pedido vai para o aprovador em Aprovações.</p>`}</div>`;
   // manutenções (todos os ativos)
   const ms=ultimaManut(x.id);
   h+=`<div class="hist"><div class="panelhead" style="margin:0 0 6px"><label style="margin:0">Manutenções (${ms.length})</label>${ti?`<button class="btn sm" data-act="imant" data-id="${x.id}">${ICON("plus")}Registrar manutenção</button>`:""}</div>
@@ -3027,6 +3037,9 @@ function infraHTML(){
     <div class="actions"><button class="btn" data-act="go" data-v="racks">${ICON("rack")}Racks</button><button class="btn" data-act="go" data-v="sistemas">${ICON("layers")}Sistemas</button></div></div>
   <div class="tiles">${tiles}</div>
   ${al?`<section class="card panel oalert">${al}</section>`:`<section class="card panel oalert"><h2>Infraestrutura e ciclo de vida</h2><p class="muted" style="margin:0">Nada vencendo. Preencha garantia, aquisição e vida útil nas fichas para o sistema avisar com antecedência.</p></section>`}
+  ${(()=>{ const cs=S.onbCompras.filter(c=>c.origem==="infra"&&(CABERTAS.includes(c.status)||c.status==="reprovada"));
+    return `<section class="card panel" style="margin-bottom:20px"><div class="panelhead"><h2>Compras de infraestrutura${cs.length?` (${cs.length})`:""}</h2>${S.canWrite?`<button class="btn sm" data-act="icompra" data-id="">${ICON("cart")}Nova compra</button>`:""}</div>
+      ${cs.length?cs.map(c=>compraRow(c,{id:""},S.canWrite)).join(""):`<p class="muted" style="margin:0">Nenhuma compra em andamento. Para substituir, renovar ou consertar um equipamento, use “Solicitar compra” na ficha dele.</p>`}</section>`; })()}
   <div class="grid2">
     <section class="card panel"><h2>Sistemas críticos</h2>${crit.length?`<div class="list">${crit.map(s=>{ const dep=depsDe(s), prob=dep.filter(d=>d.x&&["Manutenção","Descartado"].includes(d.x.status));
       return `<div class="li" data-act="isis" data-sid="${s.id}"><b>${esc(s.nome)}</b><span>${CRIT[s.criticidade][0]} · ${dep.length} ${dep.length===1?"dependência":"dependências"}${prob.length?` · <b style="color:var(--danger)">${prob.length} com problema</b>`:""}</span>${ICON("eye")}</div>`; }).join("")}</div>`:`<p class="muted" style="margin:0">Nenhum sistema de criticidade alta cadastrado.</p>`}</section>
@@ -3131,6 +3144,70 @@ async function submitSisDep(f){
   closeModal(); await infraLoad(); render(); toast("Dependência adicionada.");
 }
 function abrirSistema(sid){ IF.sisSel=+sid; closeModal(); go("sistemas"); setTimeout(()=>{ const el=document.getElementById("sis-"+sid); if(el) el.scrollIntoView({block:"center",behavior:"smooth"}); },60); }
+
+const FINAL = {novo:"Equipamento novo",substituicao:"Substituição",renovacao:"Renovação",manutencao:"Manutenção"};
+const CAMPO_REN = {garantia_ate:"garantia",licenca_ate:"licença",suporte:"contrato de suporte"};
+function infraCompraForm(ativoId){
+  const x=ativoId?ativoDe(ativoId):null;
+  const sp=x?substPrev(x):"";
+  const just=x?[sp?`Substituição prevista para ${fDia(sp)}`:"", x.garantia_ate?`garantia ${diasAte(x.garantia_ate)<0?"vencida em":"até"} ${fDia(x.garantia_ate)}`:"", x.licenca_ate?`licença ${diasAte(x.licenca_ate)<0?"vencida em":"até"} ${fDia(x.licenca_ate)}`:"",
+    x.data_aquisicao?`adquirido em ${fDia(x.data_aquisicao)}`:"", sistemasDe(x.id).length?`atende ${sistemasDe(x.id).map(s=>s.nome).join(", ")}`:""].filter(Boolean).join("; "):"";
+  const nome=x?`${tipoUm(x.tipo)} ${x.dispositivo}${x.hostname?` (${x.hostname})`:""}`:"";
+  const fins=x?["substituicao","renovacao","manutencao"]:["novo"];
+  const sug={substituicao:x?`Substituição de ${nome}`:"",renovacao:x?`Renovação de garantia · ${nome}`:"",manutencao:x?`Peça/serviço para ${nome}`:"",novo:""};
+  openModal(`<h2>Solicitar compra${x?` · ${esc(x.dispositivo)}`:" de infraestrutura"}</h2>
+  <form class="f" id="iCompraForm" data-id="${x?x.id:""}" data-sug='${esc(JSON.stringify(sug))}'>
+    ${x?`<div class="seg" role="radiogroup" aria-label="Finalidade">${fins.map((k,i)=>`<label><input type="radio" name="finalidade" value="${k}" ${i===0?"checked":""}>${FINAL[k]}</label>`).join("")}</div>`:`<input type="hidden" name="finalidade" value="novo">`}
+    <fieldset>
+      <label class="fld" id="ic_campo" hidden><span>O que renovar</span><select name="campo_renovacao">${Object.entries(CAMPO_REN).map(([k,l])=>`<option value="${k}">${l[0].toUpperCase()+l.slice(1)}</option>`).join("")}</select></label>
+      <label class="fld" id="ic_tipo" ${x?"hidden":""}><span>Categoria</span><select name="tipo_ativo">${Object.entries(TYPES).filter(([k,t])=>t.infra).map(([k,t])=>`<option value="${k}" ${x&&x.tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
+      <label class="fld wide"><span>Item <i>*</i></span><input name="item" required maxlength="150" value="${esc(x?sug.substituicao:"")}" placeholder="Ex.: Switch 24 portas PoE gerenciável"></label>
+      <label class="fld"><span>Quantidade</span><input name="quantidade" type="number" min="1" max="50" value="1"></label>
+      <label class="fld"><span>Valor unitário (R$)</span><input name="valor_unit" inputmode="decimal" maxlength="15" placeholder="0,00"></label>
+      <label class="fld wide"><span>Link do produto / proposta</span><input name="link" type="url" maxlength="1000" placeholder="https://"></label>
+      <label class="fld"><span>Fornecedor</span><input name="fornecedor" maxlength="100"></label>
+      <label class="fld wide"><span>Justificativa</span><textarea name="obs" maxlength="1000">${esc(just)}</textarea></label>
+    </fieldset>
+    <p class="muted" style="margin:0;font-size:13px">Vai para o aprovador em <b>Aprovações</b>. Depois de aprovada: equipamento novo ou substituição → “Receber” cadastra o novo ativo; renovação ou manutenção → “Concluir” atualiza a validade ou registra a manutenção com o custo na ficha.</p>
+    <div class="foot">${x?`<button type="button" class="btn ghost" data-act="view" data-id="${x.id}">Voltar</button>`:`<button type="button" class="btn ghost" data-act="close">Cancelar</button>`}<button class="btn primary" id="icpBtn">${ICON("cart")}Enviar para aprovação</button></div>
+  </form>`,"md");
+}
+function infraCompraFin(f){
+  const fin=(f.querySelector("input[name=finalidade]:checked")||f.querySelector("input[name=finalidade]")).value, sug=JSON.parse(f.dataset.sug||"{}");
+  f.querySelector("#ic_campo").hidden=fin!=="renovacao";
+  f.querySelector("#ic_tipo").hidden=!["novo","substituicao"].includes(fin)||(fin==="substituicao");
+  const it=f.querySelector("[name=item]"); if(Object.values(sug).includes(it.value)||!it.value) it.value=sug[fin]||"";
+  if(fin==="renovacao"){ const cr=f.querySelector("[name=campo_renovacao]").value; const x=ativoDe(f.dataset.id); if(x&&Object.values(sug).includes(it.value)||it.value.startsWith("Renovação de")) it.value=`Renovação de ${CAMPO_REN[cr]} · ${x?`${tipoUm(x.tipo)} ${x.dispositivo}`:""}`; }
+}
+async function submitInfraCompra(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim(), fin=g("finalidade"), x=f.dataset.id?ativoDe(f.dataset.id):null;
+  const vs=g("valor_unit").replace(/[^\d,.-]/g,""), valor=vs?Number(vs.includes(",")?vs.replace(/\./g,"").replace(",","."):vs):null;
+  if(vs&&(isNaN(valor)||valor<0)){ toast("Valor inválido."); return; }
+  const link=g("link"); if(link&&!linkSeguro(link)){ toast("O link precisa começar com http:// ou https://"); return; }
+  const row={onboarding_id:null,finalidade:fin,ativo_ref:x?x.id:null,item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),
+    tipo_ativo:fin==="substituicao"?x.tipo:fin==="novo"?g("tipo_ativo"):null,campo_renovacao:fin==="renovacao"?g("campo_renovacao"):null,link,fornecedor:g("fornecedor"),valor_unit:valor,obs:g("obs")};
+  document.getElementById("icpBtn").disabled=true;
+  const {error}=await sb.from("onboarding_compras").insert(row);
+  if(error){ document.getElementById("icpBtn").disabled=false; onbErr(error); return; }
+  await sbLoad("onb"); if(x) viewItem(x.id); else { closeModal(); render(); } toast("Compra enviada para aprovação.");
+}
+function compraConcluirForm(cid){
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const x=ativoDe(c.ativo_ref);
+  const precisaData=c.finalidade==="renovacao"&&["garantia_ate","licenca_ate"].includes(c.campo_renovacao);
+  const atual=x&&c.campo_renovacao?x[c.campo_renovacao]:"", base=atual&&diasAte(atual)>0?dISO(atual):new Date(); base.setFullYear(base.getFullYear()+1);
+  openModal(`<h2>Concluir: ${esc(c.item)}</h2><form class="f" id="iConclForm" data-cid="${c.id}">
+    <p style="margin:0">${c.finalidade==="renovacao"?`A renovação fica registrada nas manutenções de <b>${esc(x?x.dispositivo:"")}</b>${precisaData?` e a ${esc(CAMPO_REN[c.campo_renovacao])} passa a valer até a nova data`:""}.`:`A manutenção fica registrada na ficha de <b>${esc(x?x.dispositivo:"")}</b> com o custo da compra.`}</p>
+    ${precisaData?`<label class="fld"><span>Nova validade <i>*</i></span><input id="cc_data" type="date" required value="${isoDia(base)}"></label>`:""}
+    <label class="fld"><span>Observação</span><input id="cc_obs" maxlength="300" placeholder="Ex.: NF 1234, contrato renovado por 12 meses"></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn primary" id="ccoBtn">${ICON("check")}Concluir</button></div></form>`,"sm");
+}
+async function submitConcluir(f){
+  const d=document.getElementById("cc_data"), btn=document.getElementById("ccoBtn"); btn.disabled=true;
+  const c=S.onbCompras.find(x=>x.id===+f.dataset.cid);
+  const {error}=await sb.rpc("onboarding_compra_concluir",{p_id:+f.dataset.cid,p_data:d?d.value||null:null,p_obs:document.getElementById("cc_obs").value.trim()});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  await Promise.all([sbLoad("ativos"),sbLoad("onb"),infraLoad()]); if(c&&c.ativo_ref) viewItem(c.ativo_ref); else closeModal(); toast("Concluído.");
+}
 function infraClick(a, el){
   const id=el.dataset.id, H={
     iconx:()=>conxForm(id, el.dataset.cid), iconxrm:()=>infraRemover("infra_conexoes",el.dataset.cid,id,"Conexão removida."),
@@ -3138,12 +3215,12 @@ function infraClick(a, el){
     imant:()=>mantForm(id), imantrm:()=>infraRemover("ativos_manutencoes",el.dataset.mid,id,"Manutenção removida."),
     irack:()=>rackForm(el.dataset.rid), irackrm:()=>{ closeModal(); infraRemover("infra_racks",el.dataset.rid,null,"Rack removido."); },
     isis:()=>abrirSistema(el.dataset.sid), isisedit:()=>sisForm(el.dataset.sid), isisrm:()=>{ closeModal(); infraRemover("infra_sistemas",el.dataset.sid,null,"Sistema removido."); },
-    isisdep:()=>sisDepForm(el.dataset.sid), isisdeprm:()=>infraRemover("infra_sistema_itens",el.dataset.did,null,"Dependência removida."),
+    isisdep:()=>sisDepForm(el.dataset.sid), icompra:()=>infraCompraForm(id||null), cconcluir:()=>compraConcluirForm(el.dataset.cid), isisdeprm:()=>infraRemover("infra_sistema_itens",el.dataset.did,null,"Dependência removida."),
   };
   if(!H[a]) return false; H[a](); return true;
 }
 function infraSubmit(f){
-  const H={iConxForm:submitConx,iVmForm:submitVm,iMantForm:submitMant,iRackForm:submitRack,iSisForm:submitSis,iSisDepForm:submitSisDep};
+  const H={iCompraForm:submitInfraCompra,iConclForm:submitConcluir,iConxForm:submitConx,iVmForm:submitVm,iMantForm:submitMant,iRackForm:submitRack,iSisForm:submitSis,iSisDepForm:submitSisDep};
   if(!H[f.id]) return false; H[f.id](f); return true;
 }
 

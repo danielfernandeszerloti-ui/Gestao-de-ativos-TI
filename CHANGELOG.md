@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.9.0] — 2026-10-13
+### Adicionado
+- **Infraestrutura nas Aprovações**: botão **Solicitar compra** na ficha de cada equipamento de infra e **Nova compra** na Visão geral. Finalidades:
+  - **Equipamento novo** e **Substituição**: depois de aprovada, **Receber** cadastra o novo ativo como Disponível;
+  - **Renovação** de garantia, licença ou contrato de suporte: **Concluir** grava a nova validade na ficha;
+  - **Manutenção** (peça ou serviço): **Concluir** registra a manutenção com o custo da compra.
+- A justificativa já vem preenchida com substituição prevista, garantia/licença, data de aquisição e sistemas que dependem do equipamento.
+- Grupo **Infraestrutura** na tela Aprovações; seção **Compras** na ficha do equipamento; cada mudança de status entra no histórico do ativo.
+
 ## [2.8.0] — 2026-10-13
 ### Adicionado
 - **Infraestrutura**: switches, servidores, roteadores, firewalls, access points e nobreaks no mesmo inventário (etiqueta, QR Code, inventário, fotos e histórico).
