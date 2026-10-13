@@ -20,6 +20,7 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Usuários | Colaboradores e equipamentos vinculados, com importação e exportação de Excel. Para administradores, também **quem acessa o sistema** |
 | Onboarding | Solicitação do RH para novos colaboradores, checklist da TI, reserva e entrega de ativos do inventário, termo único com todos os equipamentos, alertas de admissão e histórico que não pode ser apagado |
 | Estoque | Estoque calculado pelo inventário (sem lançamento manual): disponível, reservado, pedidos de onboarding, reposição em andamento, projetado e saídas em 90 dias. Mínimo e ideal por categoria, e **Repor** envia a compra para o aprovador |
+| Infraestrutura | Switches, servidores, roteadores, firewalls, access points e nobreaks com ficha técnica por categoria, racks (posição em U), portas e conexões, VMs, sistemas dependentes, manutenções, garantia e substituição prevista, com alertas |
 | Termos | **Termo de responsabilidade digital**: gerado na ficha do equipamento, assinado pelo colaborador por link ou QR Code (sem login) e exportado em PDF com página de evidências |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
 | Inventário | Conferência bipando as etiquetas com o coletor; pendentes, conferidos e códigos sem cadastro |
@@ -40,6 +41,7 @@ Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Se
 | Impressora | `IMP` | Tipo, Endereço IP, Conexão, Toner/Ribbon |
 | Coletor | `COL` | Sistema Operacional, Endereço MAC, Endereço IP, Bateria, Base carregadora |
 | Monitor | `MON` | Tamanho (pol.), Resolução, Entradas |
+| Switch · Servidor · Roteador · Firewall · Access point · Nobreak | `SW` · `SRV` · `RT` · `FW` · `AP` · `NBK` | Rede e localização (hostname, IP, MAC, local, rack, U), ficha técnica da categoria e ciclo de vida (aquisição, garantia, vida útil, substituição, suporte) |
 | Periférico | `PER` | Tipo (teclado, mouse, headset, webcam…), Conexão |
 
 ## Onboarding de novos colaboradores

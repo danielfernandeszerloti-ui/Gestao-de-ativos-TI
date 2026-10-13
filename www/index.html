@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.7.0"></script>
+<script src="termo-pdf.js?v=2.8.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -395,6 +395,21 @@ tr.click{cursor:pointer}
 .st-bad{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)}
 .apr{margin-bottom:18px}
 .esttab{min-width:960px}
+.itab{min-width:560px}
+.itab th{font-size:13px;padding:8px 10px}
+.itab td{padding:7px 10px;font-size:14px}
+.racks{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;align-items:start}
+.rack{display:grid;grid-template-columns:30px minmax(0,1fr);column-gap:6px;border:3px solid var(--heading);border-radius:6px;padding:6px;background:var(--surface-2)}
+.rack .rn{grid-column:1;font-size:10.5px;color:var(--faint);text-align:right;line-height:22px;font-variant-numeric:tabular-nums}
+.rack .rs{grid-column:2;border-bottom:1px dashed var(--border)}
+.rack .ru{grid-column:2;display:flex;align-items:center;gap:8px;margin:1px 0;padding:0 8px;border-radius:4px;border:1px solid var(--use-bd);background:var(--use-bg);color:var(--use-fg);cursor:pointer;text-align:left;overflow:hidden;font-size:12.5px;z-index:1}
+.rack .ru:hover{border-color:var(--accent)}
+.rack .ru.man{background:var(--maint-bg);color:var(--maint-fg);border-color:var(--maint-bd)}
+.rack .ru svg.i{width:15px;height:15px;flex:none}
+.rack .ru b{white-space:nowrap}
+.rack .ru span{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sisc{margin-bottom:18px}
+.sisc.sel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .esttab .esub{display:block;font-weight:600;font-size:12px;color:var(--faint)}
 .esttab td.num,.esttab th{text-align:center}
 .esttab th:first-child,.esttab td:first-child{text-align:left}
@@ -489,6 +504,14 @@ tr.click{cursor:pointer}
   <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
   <symbol id="i-onb" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-switch" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 11h1M9 11h1M12 11h1M15 11h1M6 14h1M9 14h1M12 14h1M15 14h1M18.5 12.5h.01"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6"/></symbol>
+  <symbol id="i-router" viewBox="0 0 24 24"><rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 16.5h.01M10 16.5h.01M8 13l-2-6M16 13l2-6"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0"/><path d="M12 19.5h.01"/></symbol>
+  <symbol id="i-battery" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M13 7l-3 5h4l-3 5"/></symbol>
+  <symbol id="i-rack" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1.5"/><path d="M4 8h16M4 14h16M8 5h.01M8 11h.01M8 17h.01"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></symbol>
   <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
   <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.5L22 8H6"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></symbol>
@@ -517,6 +540,14 @@ const COMMON = [
   {k:"modelo", l:"Modelo"},
   {k:"serie", l:"Nº de Série"},
 ];
+const GR="Rede e localização", GV="Ciclo de vida";
+const INFRA_REDE = [
+  {k:"hostname",l:"Hostname",g:GR},{k:"ip",l:"IP de gerência",g:GR},{k:"mac",l:"Endereço MAC",g:GR},
+  {k:"local",l:"Local / sala",g:GR},{k:"rack",l:"Rack",rack:true,g:GR},{k:"u_inicio",l:"Posição no rack (U inicial)",type:"number",g:GR},{k:"u_altura",l:"Altura (U)",type:"number",g:GR}];
+const INFRA_VIDA = [
+  {k:"data_aquisicao",l:"Data de aquisição",type:"date",g:GV},{k:"garantia_ate",l:"Garantia até",type:"date",g:GV},
+  {k:"vida_util",l:"Vida útil (anos)",type:"number",g:GV},{k:"substituicao",l:"Substituição prevista (vazio = aquisição + vida útil)",type:"date",g:GV},
+  {k:"suporte",l:"Contrato de suporte / fornecedor",g:GV}];
 const TYPES = {
   notebook:{label:"Notebooks", one:"Notebook", prefix:"LAP", icon:"laptop", extra:[
     {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
@@ -544,12 +575,49 @@ const TYPES = {
   periferico:{label:"Periféricos", one:"Periférico", prefix:"PER", icon:"mouse", extra:[
     {k:"subtipo",l:"Tipo de periférico",opts:["Teclado","Mouse","Kit teclado e mouse","Headset","Webcam","Dock / Hub USB","Outro"]},
     {k:"conexao",l:"Conexão",opts:["USB","Bluetooth","Sem fio (receptor USB)","P2 / P3"]}]},
+  // ----- infraestrutura (mesma tabela de ativos; ficha técnica em specs) -----
+  switch:{label:"Switches", one:"Switch", prefix:"SW", icon:"switch", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"gerenciavel",l:"Gerenciável",opts:SIMNAO,g:"Ficha técnica"},{k:"portas",l:"Portas RJ45",type:"number",g:"Ficha técnica"},{k:"portas_sfp",l:"Portas SFP",type:"number",g:"Ficha técnica"},
+    {k:"velocidade",l:"Velocidade",opts:["100 Mbps","1 Gbps","2,5 Gbps","10 Gbps"],g:"Ficha técnica"},{k:"poe",l:"PoE",opts:SIMNAO,g:"Ficha técnica"},{k:"poe_w",l:"Orçamento PoE (W)",type:"number",g:"Ficha técnica"},
+    {k:"camada",l:"Camada",opts:["L2","L2+","L3"],g:"Ficha técnica"},{k:"firmware",l:"Firmware",g:"Ficha técnica"},{k:"vlans",l:"VLANs",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
+  servidor:{label:"Servidores", one:"Servidor", prefix:"SRV", icon:"server", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"formato",l:"Formato",opts:["Rack","Torre","Blade","Mini PC"],g:"Ficha técnica"},{k:"processador",l:"Processador",g:"Ficha técnica"},{k:"nucleos",l:"Núcleos / threads",g:"Ficha técnica"},
+    {k:"ram",l:"Memória RAM",g:"Ficha técnica"},{k:"armazenamento",l:"Armazenamento",g:"Ficha técnica"},{k:"raid",l:"RAID",g:"Ficha técnica"},
+    {k:"so",l:"Sistema operacional",g:"Ficha técnica"},{k:"hipervisor",l:"Hipervisor",opts:["Nenhum","VMware ESXi","Hyper-V","Proxmox","XenServer"],g:"Ficha técnica"},
+    {k:"fontes",l:"Fontes redundantes",opts:SIMNAO,g:"Ficha técnica"},{k:"ip_idrac",l:"IP de gerência remota (iDRAC/iLO)",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
+  roteador:{label:"Roteadores", one:"Roteador", prefix:"RT", icon:"router", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"operadora",l:"Operadora / link",g:"Ficha técnica"},{k:"ip_wan",l:"IP WAN",g:"Ficha técnica"},{k:"banda",l:"Banda contratada",g:"Ficha técnica"},
+    {k:"portas",l:"Portas",type:"number",g:"Ficha técnica"},{k:"firmware",l:"Firmware",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
+  firewall:{label:"Firewalls", one:"Firewall", prefix:"FW", icon:"shield", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"ip_wan",l:"IP WAN",g:"Ficha técnica"},{k:"throughput",l:"Throughput",g:"Ficha técnica"},{k:"vpn",l:"VPN",opts:SIMNAO,g:"Ficha técnica"},
+    {k:"firmware",l:"Firmware",g:"Ficha técnica"},{k:"licenca",l:"Licença / assinatura",g:"Ficha técnica"},{k:"licenca_ate",l:"Licença válida até",type:"date",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
+  access_point:{label:"Access points", one:"Access point", prefix:"AP", icon:"wifi", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"padrao",l:"Padrão Wi-Fi",opts:["Wi-Fi 4","Wi-Fi 5","Wi-Fi 6","Wi-Fi 6E","Wi-Fi 7"],g:"Ficha técnica"},{k:"bandas",l:"Bandas",opts:["2,4 GHz","2,4 + 5 GHz","2,4 + 5 + 6 GHz"],g:"Ficha técnica"},
+    {k:"ssids",l:"SSIDs",g:"Ficha técnica"},{k:"controladora",l:"Controladora",g:"Ficha técnica"},{k:"alimentacao",l:"Alimentação",opts:["PoE","Fonte"],g:"Ficha técnica"},
+    {k:"firmware",l:"Firmware",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
+  nobreak:{label:"Nobreaks", one:"Nobreak", prefix:"NBK", icon:"battery", infra:true, extra:[
+    ...INFRA_REDE,
+    {k:"potencia_va",l:"Potência (VA)",type:"number",g:"Ficha técnica"},{k:"potencia_w",l:"Potência (W)",type:"number",g:"Ficha técnica"},
+    {k:"autonomia",l:"Autonomia (min)",type:"number",g:"Ficha técnica"},{k:"tensao",l:"Tensão",opts:["110 V","220 V","Bivolt"],g:"Ficha técnica"},
+    {k:"baterias",l:"Baterias (modelo e quantidade)",g:"Ficha técnica"},{k:"troca_bateria",l:"Próxima troca de bateria",type:"date",g:"Ficha técnica"},
+    {k:"cargas",l:"Equipamentos ligados",g:"Ficha técnica"},
+    ...INFRA_VIDA]},
 };
 const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, estMin:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, estMin:[], racks:[], conex:[], vms:[], sist:[], sistItens:[], manut:[], uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -633,6 +701,7 @@ async function sbLoad(which){
   if((!which||which==="onb")) jobs.push(onbLoad());
   if((!which||which==="onbcfg")) jobs.push(onbLoadCfg());
   if(!inv){ await Promise.all(jobs); if(S.ready) refresh(); return; }
+  if(!which||which==="infra") jobs.push(infraLoad());
   if(!which||which==="estmin") jobs.push(sb.from("estoque_minimos").select("*").then(({data,error})=>{ if(!error) S.estMin=data||[]; }));
   if(!which||which==="ativos") jobs.push(sb.from("ativos").select("*").then(({data,error})=>{ if(!error) S.items=(data||[]).map(rowToItem); }));
   if(!which||which==="usuarios") jobs.push(sb.from("usuarios").select("*").then(({data,error})=>{ if(!error) S.users=data||[]; }));
@@ -675,6 +744,12 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_checklist"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_compras"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"estoque_minimos"},()=>sbDeb("estmin"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"infra_racks"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"infra_conexoes"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"infra_vms"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"infra_sistemas"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"infra_sistema_itens"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"ativos_manutencoes"},()=>sbDeb("infra"))
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"onboarding_eventos"},p=>{ if(OB.sel && p.new && p.new.onboarding_id===OB.sel) sbDeb("onbev"); })
       .subscribe();
   }
@@ -739,8 +814,9 @@ async function loadHist(id){
   const el=document.getElementById("hist"); if(!el||!sb) return;
   const {data,error}=await sb.from("ativos_historico").select("campo,de,para,por,em").eq("ativo_id",id).order("em",{ascending:false}).limit(40);
   if(error||!data||!data.length){ el.hidden=true; return; }
-  const nome={cadastro:"Cadastrado",usuario:"Usuário",status:"Status",setor:"Setor",termo:"Termo"};
-  el.innerHTML=`<label>Histórico</label><ul>${data.map(h=>`<li><time>${fmtDT(h.em)}</time><span>${h.campo==="cadastro"?`<b>Cadastrado</b> como ${esc(h.para||"")}`:`<b>${nome[h.campo]||esc(h.campo)}</b>: ${esc(h.de||"—")} → ${esc(h.para||"—")}`}</span>${h.por?`<em>por ${esc(h.por)}</em>`:""}</li>`).join("")}</ul>`;
+  const nome={cadastro:"Cadastrado",usuario:"Usuário",status:"Status",setor:"Setor",unidade:"Unidade",termo:"Termo",manutencao:"Manutenção",entrega:"Entrega",devolucao:"Devolução"};
+  const so=["manutencao","entrega"];
+  el.innerHTML=`<label>Histórico</label><ul>${data.map(h=>`<li><time>${fmtDT(h.em)}</time><span>${h.campo==="cadastro"?`<b>Cadastrado</b> como ${esc(h.para||"")}`:so.includes(h.campo)?`<b>${nome[h.campo]}</b>: ${esc(h.para||"")}`:`<b>${nome[h.campo]||esc(h.campo)}</b>: ${esc(h.de||"—")} → ${esc(h.para||"—")}`}</span>${h.por?`<em>por ${esc(h.por)}</em>`:""}</li>`).join("")}</ul>`;
 }
 async function updateAcessos(){
   const el=document.getElementById("acessos"); if(!el) return;
@@ -784,11 +860,13 @@ function renderMenu(){
   const nApr = sb ? (S.onbCompras.filter(c=>["solicitada","enviada"].includes(c.status)).length||null) : null;
   if (SB_ROLE==="rh"){ document.getElementById("menu").innerHTML = btn(["onboarding","Onboarding","onb",nOnb]); return; }
   if (SB_ROLE==="aprovador"){ document.getElementById("menu").innerHTML = btn(["aprovacoes","Aprovações","cart",nApr]) + btn(["onboarding","Onboarding","onb",null]); return; }
-  const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
+  const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).filter(([k,t])=>!t.infra).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
+  const nInf = sb ? (infraAlertas().filter(a=>a.c==="late").length||null) : null;
+  const infra = [["infra","Visão geral","layers",nInf], ...Object.entries(TYPES).filter(([k,t])=>t.infra).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["racks","Racks","rack",null], ["sistemas","Sistemas","layers",null]];
   const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
   const nEst = sb ? (estPrecisa().length||null) : null;
   const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Aprovações","cart",nApr],["estoque","Estoque","box",nEst],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
-  document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
+  document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Infraestrutura</div>` + infra.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
 function go(v){ if(SO_ONB() && !viewsPermitidas().includes(v)) v=viewsPermitidas()[0]; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
 
@@ -805,6 +883,9 @@ function render(){
   else if (S.view==="onboarding"){ if(OB.sel) m.innerHTML = onbDetalheHTML(); else { m.innerHTML = onbListShell(); updateOnbList(); } }
   else if (S.view==="onbconfig") m.innerHTML = onbCfgHTML();
   else if (S.view==="aprovacoes") m.innerHTML = aprovHTML();
+  else if (S.view==="infra") m.innerHTML = infraHTML();
+  else if (S.view==="racks") m.innerHTML = racksHTML();
+  else if (S.view==="sistemas") m.innerHTML = sistemasHTML();
   else if (S.view==="estoque"){ m.innerHTML = estoqueHTML(); if(!EST.hist) estLoadHist().then(()=>{ if(S.view==="estoque") refresh(); }); }
   else if (TYPES[S.view]){ m.innerHTML = listShell(S.view); updateTable(); }
   else { S.view="dashboard"; m.innerHTML = dashboardHTML(); }
@@ -820,6 +901,7 @@ function refresh(){
   else if (S.view==="onboarding"){ if(OB.sel) onbRedetalhe(); else updateOnbList(); }
   else if (S.view==="onbconfig") {}
   else if (S.view==="aprovacoes") document.getElementById("main").innerHTML = aprovHTML();
+  else if (["infra","racks","sistemas"].includes(S.view)){ const y=window.scrollY; render(); window.scrollTo(0,y); }
   else if (S.view==="estoque"){ const ae=document.activeElement; if(!(ae&&ae.classList&&ae.classList.contains("estmin"))){ const y=window.scrollY; document.getElementById("main").innerHTML = estoqueHTML(); window.scrollTo(0,y); } }
   else updateTable();
   const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
@@ -832,12 +914,12 @@ function stackHTML(list){
 }
 function dashboardHTML(){
   const all=S.items;
-  const tiles=Object.entries(TYPES).map(([k,t])=>{
+  const tiles=Object.entries(TYPES).filter(([k,t])=>!t.infra).map(([k,t])=>{
     const l=byType(k), u=l.filter(x=>x.status==="Em uso").length, d=l.filter(x=>x.status==="Disponível").length;
     return `<button class="card tile" data-act="go" data-v="${k}"><span class="ti"><span>${ICON(t.icon)}</span>${t.label}</span><span class="big">${l.length}</span><span class="mini">${u} em uso · ${d} disponíveis</span></button>`;
   }).join("");
   const legend=STATUS.map(s=>`<span><em style="background:${STCOLOR[s]}"></em>${s} <b>${all.filter(x=>x.status===s).length}</b></span>`).join("");
-  const cats=Object.entries(TYPES).map(([k,t])=>{const l=byType(k); return `<div class="catrow"><span>${t.label}</span>${stackHTML(l)}<b>${l.length}</b></div>`;}).join("");
+  const cats=Object.entries(TYPES).filter(([k,t])=>!t.infra||byType(k).length).map(([k,t])=>{const l=byType(k); return `<div class="catrow"><span>${t.label}</span>${stackHTML(l)}<b>${l.length}</b></div>`;}).join("");
   const sc={}; all.forEach(x=>{ if(x.setor) sc[x.setor]=(sc[x.setor]||0)+1; });
   const se=Object.entries(sc).sort((a,b)=>b[1]-a[1]); const mx=se[0]?se[0][1]:1;
   const bars=se.length? se.map(([s,n])=>`<div class="bar"><span>${esc(s)}</span><div class="track"><div class="fill" style="width:${n/mx*100}%"></div></div><b>${n}</b></div>`).join("") : `<p class="muted">Nenhum ativo com setor informado.</p>`;
@@ -850,6 +932,7 @@ function dashboardHTML(){
   <div class="tiles">${tiles}</div>
   ${oal?`<section class="card panel oalert">${oal}</section>`:""}
   ${(()=>{ const e=estAlertHTML(); return e?`<section class="card panel oalert">${e}</section>`:""; })()}
+  ${(()=>{ const e=sb?infraAlertHTML(6):""; return e?`<section class="card panel oalert">${e}</section>`:""; })()}
   <div class="grid2">
     <section class="card panel"><h2>Status dos ativos</h2>${stackHTML(all)}<div class="legend">${legend}</div><div style="margin-top:18px">${cats}</div></section>
     <section class="card panel"><h2>Ativos por setor</h2><div class="bars">${bars}</div></section>
@@ -872,12 +955,12 @@ function listShell(t){
     <label class="sel">${ICON("filter")}<select id="fStatus" aria-label="Status"><option value="">Todos os Status</option>${STATUS.map(s=>`<option ${S.fStatus===s?"selected":""}>${s}</option>`).join("")}</select></label>
     <label class="sel">${ICON("filter")}<select id="fSetor" aria-label="Setor"></select></label>
   </div>
-  <div class="card tablewrap"><table><thead><tr><th>Imagem</th><th>Dispositivo</th><th>Status</th><th>Usuário</th><th>Setor</th><th>Fabricante</th><th>Modelo</th><th class="th-r">Ações</th></tr></thead><tbody id="tb"></tbody></table></div>`;
+  <div class="card tablewrap"><table><thead><tr>${T.infra?"<th>Imagem</th><th>Dispositivo</th><th>Status</th><th>Hostname / IP</th><th>Local / rack</th><th>Fabricante / modelo</th><th>Garantia</th>":"<th>Imagem</th><th>Dispositivo</th><th>Status</th><th>Usuário</th><th>Setor</th><th>Fabricante</th><th>Modelo</th>"}<th class="th-r">Ações</th></tr></thead><tbody id="tb"></tbody></table></div>`;
 }
 function filtered(t){
   const q=norm(S.q);
   return byType(t).filter(x=>(!S.fStatus||x.status===S.fStatus)&&(!S.fSetor||x.setor===S.fSetor)&&
-    (!q||[x.dispositivo,x.usuario,x.fabricante,x.modelo,x.serie].some(v=>norm(v).includes(q)))).sort(sortDev);
+    (!q||[x.dispositivo,x.usuario,x.fabricante,x.modelo,x.serie,x.hostname,x.ip,x.local].some(v=>norm(v).includes(q)))).sort(sortDev);
 }
 function updateTable(){
   const t=S.view, T=TYPES[t]; const tb=document.getElementById("tb"); if(!tb) return;
@@ -892,8 +975,10 @@ function updateTable(){
   tb.innerHTML=rows.map(x=>`<tr>
     <td>${x.foto?`<img class="thumb" src="${esc(photoUrl(x.foto))}" alt="" loading="lazy">`:`<div class="thumb ph">${ICON(T.icon)}</div>`}</td>
     <td class="dev">${esc(x.dispositivo)}</td><td>${pill(x.status)}</td>
-    <td>${x.usuario?esc(x.usuario):"-"}</td><td class="set">${esc(x.setor||"-")}</td>
-    <td>${esc(x.fabricante||"-")}</td><td>${esc(x.modelo||"-")}</td>
+    ${T.infra?`<td>${esc(x.hostname||"-")}${x.ip?`<br><span class="muted">${esc(x.ip)}</span>`:""}</td><td class="set">${esc(x.local||"-")}${rackDe(x.rack)?`<br><span class="muted">${esc(rackDe(x.rack).nome)}${x.u_inicio?` · U${esc(x.u_inicio)}`:""}</span>`:""}</td>
+      <td>${esc([x.fabricante,x.modelo].filter(Boolean).join(" ")||"-")}</td><td>${x.garantia_ate?`<span class="pz ${prazoTxt(x.garantia_ate,"vence").c}">${esc(fDia(x.garantia_ate))}</span>`:`<span class="muted">—</span>`}</td>`:
+    `<td>${x.usuario?esc(x.usuario):"-"}</td><td class="set">${esc(x.setor||"-")}</td>
+    <td>${esc(x.fabricante||"-")}</td><td>${esc(x.modelo||"-")}</td>`}
     <td><div class="rowacts">
       <button class="ib" data-act="view" data-id="${x.id}" title="Ver detalhes" aria-label="Ver ${esc(x.dispositivo)}">${ICON("eye")}</button>
       <button class="ib" data-act="edit" data-id="${x.id}" title="Editar" aria-label="Editar ${esc(x.dispositivo)}">${ICON("edit")}</button>
@@ -914,9 +999,10 @@ function closeModal(){ document.getElementById("modalRoot").innerHTML=""; pendin
 function viewItem(id){
   const x=S.items.find(i=>i.id===id); if(!x) return; const T=TYPES[x.tipo]||TYPES.notebook;
   const val=v=>`<p>${esc(v||"—")}</p>`;
-  const main=[...COMMON.filter(f=>f.k!=="dispositivo"&&f.k!=="status"), ...T.extra.filter(f=>!f.trio)];
+  const main=[...COMMON.filter(f=>f.k!=="dispositivo"&&f.k!=="status"&&!(T.infra&&f.k==="usuario")), ...(T.infra?[]:T.extra.filter(f=>!f.trio))];
+  const grupos=T.infra?[...new Set(T.extra.map(f=>f.g))].filter(g=>g!==GV).map(g=>`<div class="hist"><label>${g}</label><div class="kv">${T.extra.filter(f=>f.g===g&&x[f.k]&&!(rackDe(x.rack)&&["rack","u_inicio","u_altura"].includes(f.k))).map(f=>`<div><label>${f.l}</label>${val(valCampo(f,x[f.k]))}</div>`).join("")||`<p class="muted" style="margin:0">Não preenchido.</p>`}</div></div>`).join(""):"";
   const trio=T.extra.filter(f=>f.trio);
-  openModal(`<h2>Detalhes do ${T.one}: ${esc(x.dispositivo)}</h2>
+  openModal(`<h2>${T.infra?`${T.one} ${esc(x.dispositivo)}${x.hostname?` · ${esc(x.hostname)}`:""}`:`Detalhes do ${T.one}: ${esc(x.dispositivo)}`}</h2>
   <div class="detail">
     <div class="photo">${x.foto?`<img src="${esc(photoUrl(x.foto))}" alt="Foto de ${esc(x.dispositivo)}">`:`<div class="ph">${ICON("image")}Sem foto cadastrada</div>`}</div>
     <div style="display:flex;flex-direction:column;gap:26px;min-width:0">
@@ -925,11 +1011,13 @@ function viewItem(id){
         ${main.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}
       </div>
       ${trio.length?`<div class="kv three">${trio.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}</div>`:""}
+      ${grupos}
       <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
+      ${sb?infraFichaHTML(x):""}
       ${(()=>{ const l=S.onbAtivos.find(l=>l.ativo_id===x.id&&!l.removido&&!l.entregue); const o=l&&S.onb.find(o=>o.id===l.onboarding_id); return o?`<div class="resnote">Reservado para o onboarding <b>#${o.numero} · ${esc(o.nome)}</b>${o.data_admissao?` (admissão ${esc(fDia(o.data_admissao))})`:""}. <button class="linkbtn" data-act="oopen" data-id="${o.id}">Abrir solicitação</button></div>`:""; })()}
-      ${sb?`<div class="hist" id="termoBox" data-ativo="${x.id}">${termoBoxHTML(x.id)}</div>`:""}
+      ${sb&&!T.infra?`<div class="hist" id="termoBox" data-ativo="${x.id}">${termoBoxHTML(x.id)}</div>`:""}
       ${sb?`<div class="hist" id="hist"><label>Histórico</label><p class="muted" style="margin:0">Carregando…</p></div>`:""}
-      <div class="foot">${sb&&S.canWrite?`<button class="btn" data-act="tanexar" data-id="${x.id}">${ICON("up")}Anexar termo digitalizado</button><button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
+      <div class="foot">${sb&&S.canWrite&&!T.infra?`<button class="btn" data-act="tanexar" data-id="${x.id}">${ICON("up")}Anexar termo digitalizado</button><button class="btn" data-act="tgerar" data-id="${x.id}">${ICON("sign")}Gerar termo</button>`:""}<button class="btn" data-act="edit" data-id="${x.id}">${ICON("edit")}Editar</button></div>
     </div>
   </div>`);
   if (sb) loadHist(x.id);
@@ -937,13 +1025,15 @@ function viewItem(id){
 
 function fieldHTML(f, v){
   const id="f_"+f.k; const lab=`<span>${f.l}${f.req?" <i>*</i>":""}</span>`;
+  if (f.rack) return `<label class="fld">${lab}<select id="${id}" name="${f.k}"><option value="">—</option>${S.racks.map(r=>`<option value="${r.id}" ${String(v)===String(r.id)?"selected":""}>${esc(r.nome)}</option>`).join("")}</select></label>`;
+  if (f.type) return `<label class="fld">${lab}<input id="${id}" name="${f.k}" type="${f.type}" value="${esc(v)}" ${f.type==="number"?'min="0" step="any"':""} autocomplete="off"></label>`;
   if (f.opts) return `<label class="fld">${lab}<select id="${id}" name="${f.k}"><option value="">—</option>${f.opts.map(o=>`<option ${v===o?"selected":""}>${o}</option>`).join("")}${v&&!f.opts.includes(v)?`<option selected>${esc(v)}</option>`:""}</select></label>`;
   return `<label class="fld">${lab}<input id="${id}" name="${f.k}" value="${esc(v)}" ${f.req?"required":""} ${f.list?`list="dl-${f.list}"`:""} autocomplete="off"></label>`;
 }
 function editItem(id, tipo){
   const x = id ? S.items.find(i=>i.id===id) : null;
   const t = x ? x.tipo : tipo; const T=TYPES[t];
-  const d = x || {status:"Disponível", dispositivo:nextName(t), setor:"TI"};
+  const d = x || {status:T.infra?"Em uso":"Disponível", dispositivo:nextName(t), setor:"TI", ...(T.infra?{u_altura:"1"}:{})};
   if (t==="notebook" && !x){ d.tipoSistema="64 bits"; d.teclado="Não"; d.mouse="Não"; d.monitor="Não"; }
   pendingPhoto=null;
   openModal(`<h2>${x?`Editar ${T.one}: ${esc(x.dispositivo)}`:`Novo ${T.one}`}</h2>
@@ -952,7 +1042,7 @@ function editItem(id, tipo){
     <datalist id="dl-setores">${setores().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
     <datalist id="dl-unidades">${unidades().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
     <fieldset><legend class="l">Identificação</legend>${COMMON.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
-    <fieldset><legend class="l">Especificações</legend>${T.extra.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>
+    ${T.infra?[...new Set(T.extra.map(f=>f.g))].map(g=>`<fieldset><legend class="l">${g}</legend>${T.extra.filter(f=>f.g===g).map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>`).join(""):`<fieldset><legend class="l">Especificações</legend>${T.extra.map(f=>fieldHTML(f,d[f.k])).join("")}</fieldset>`}
     <fieldset><legend class="l">Foto e observações</legend>
       <div class="upl"><div class="prev" id="prev">${d.foto?`<img src="${esc(photoUrl(d.foto))}" alt="">`:ICON("image")}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn" data-act="pickphoto">${ICON("up")}${d.foto?"Trocar foto":"Enviar foto"}</button>
@@ -2588,7 +2678,7 @@ function estLinhas(){
   const subs=new Set([...S.items.filter(i=>i.tipo==="periferico").map(i=>estSub(i.subtipo)),
     ...S.onbOpc.filter(o=>o.grupo==="equipamento"&&o.tipo_ativo==="periferico"&&o.subtipo).map(o=>o.subtipo),
     ...S.estMin.filter(m=>m.tipo_ativo==="periferico").map(m=>estSub(m.subtipo))]);
-  const cats=[...Object.keys(TYPES).filter(k=>k!=="periferico").map(k=>({k,t:k,sub:null,nome:TYPES[k].label,um:TYPES[k].one})),
+  const cats=[...Object.keys(TYPES).filter(k=>k!=="periferico"&&!TYPES[k].infra).map(k=>({k,t:k,sub:null,nome:TYPES[k].label,um:TYPES[k].one})),
     ...[...subs].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(s=>({k:estChave("periferico",s),t:"periferico",sub:s,nome:`${s} (periférico)`,um:s}))];
   const dem=[]; S.onb.filter(o=>OST_ABERTOS.includes(o.status)).forEach(o=>casar(o).ped.forEach(r=>{ if(!r.links.length&&!r.compra&&r.op&&r.op.tipo_ativo) dem.push({o,t:r.op.tipo_ativo,sub:r.op.subtipo}); }));
   const rep=S.onbCompras.filter(c=>c.origem==="reposicao"&&CABERTAS.includes(c.status));
@@ -2720,6 +2810,341 @@ function comprasAndamentoHTML(){
   return `<div class="panelhead"><h2>Compras em andamento (${rows.length})</h2></div><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Colaborador</th><th>Item</th><th>Status</th><th>Previsão</th><th>Admissão</th></tr></thead><tbody>
     ${rows.map(({c,o})=>`<tr class="click" data-act="oopen" data-id="${o.id}"><td class="dev">${esc(o.nome)} <span class="muted">#${o.numero}</span></td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}</td>
       <td class="pz ${c.previsao&&diasAte(c.previsao)<0?"late":""}">${esc(fDia(c.previsao)||"—")}</td><td>${esc(fDia(o.data_admissao)||"—")}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+
+// ---------- infraestrutura ----------
+// Os equipamentos de infra estão em S.items (mesma tabela de ativos). Aqui: racks, conexões, VMs,
+// sistemas dependentes, manutenções (valem para qualquer ativo) e alertas de ciclo de vida.
+const INFRA = t => !!(TYPES[t] && TYPES[t].infra);
+const CONX_T = {rede:"Rede (cobre)",fibra:"Fibra",uplink:"Uplink",energia:"Energia",console:"Console",outro:"Outro"};
+const CRIT = {baixa:["Baixa","st-sol"],media:["Média","st-uso"],alta:["Alta","st-man"],critica:["Crítica","st-bad"]};
+const MANT = {preventiva:"Preventiva",corretiva:"Corretiva",atualizacao:"Atualização (firmware/SO)",troca_peca:"Troca de peça",garantia:"Acionamento de garantia",inspecao:"Inspeção"};
+const IF = { sisSel:null };
+const rackDe = id => S.racks.find(r=>String(r.id)===String(id));
+const ativoDe = id => S.items.find(i=>i.id===id);
+const nomeAtivo = x => x ? `${x.dispositivo}${x.hostname?` (${x.hostname})`:""}` : "ativo removido";
+async function infraLoad(){
+  if(!sb || SO_ONB()) return;
+  try{
+    const q=t=>pageAll(()=>sb.from(t).select("*").eq("removido",false).order("id"));
+    const [r,c,v,s,si,m]=await Promise.all([q("infra_racks"),q("infra_conexoes"),q("infra_vms"),q("infra_sistemas"),q("infra_sistema_itens"),q("ativos_manutencoes")]);
+    S.racks=r; S.conex=c; S.vms=v; S.sist=s; S.sistItens=si; S.manut=m;
+  }catch(e){ console.error(e); }
+}
+function valCampo(f, v){
+  if(v==null||v==="") return "";
+  if(f.type==="date") return fDia(v);
+  if(f.rack){ const r=rackDe(v); return r?r.nome:""; }
+  return String(v);
+}
+// ciclo de vida
+function substPrev(x){
+  if(x.substituicao) return x.substituicao;
+  if(x.data_aquisicao && +x.vida_util>0){ const d=dISO(x.data_aquisicao); d.setFullYear(d.getFullYear()+(+x.vida_util)); return isoDia(d); }
+  return "";
+}
+function prazoTxt(iso, verbo){ const d=diasAte(iso); if(d==null) return {t:"—",c:""};
+  if(d<0) return {t:`${verbo==="vence"?"vencida":"atrasada"} há ${-d} ${-d===1?"dia":"dias"}`,c:"late"};
+  if(d===0) return {t:"hoje",c:"late"};
+  return {t:`em ${d<60?d+" "+(d===1?"dia":"dias"):Math.round(d/30)+" meses"}`,c:d<=60?"soon":""}; }
+function ultimaManut(id){ return S.manut.filter(m=>m.ativo_id===id).sort((a,b)=>String(b.data).localeCompare(String(a.data))||b.id-a.id); }
+function infraAlertas(){
+  const out=[];
+  S.items.filter(x=>x.status!=="Descartado").forEach(x=>{
+    const nm=`${tipoUm(x.tipo)} ${x.dispositivo}`;
+    if(x.garantia_ate){ const d=diasAte(x.garantia_ate); if(d<0&&d>=-90) out.push({x,n:2,c:"warn",t:`${nm}: garantia venceu em ${fDia(x.garantia_ate)}`}); else if(d>=0&&d<=60) out.push({x,n:1,c:"soon",t:`${nm}: garantia vence em ${fDia(x.garantia_ate)}`}); }
+    const sp=substPrev(x); if(sp){ const d=diasAte(sp); if(d<0) out.push({x,n:1,c:"late",t:`${nm}: substituição prevista para ${fDia(sp)} (atrasada)`}); else if(d<=180) out.push({x,n:3,c:"soon",t:`${nm}: substituição prevista para ${fDia(sp)}`}); }
+    if(x.licenca_ate){ const d=diasAte(x.licenca_ate); if(d<=60) out.push({x,n:d<0?0:1,c:d<0?"late":"soon",t:`${nm}: licença ${d<0?"vencida":"vence"} em ${fDia(x.licenca_ate)}`}); }
+    if(x.troca_bateria){ const d=diasAte(x.troca_bateria); if(d<=60) out.push({x,n:d<0?0:1,c:d<0?"late":"soon",t:`${nm}: troca de bateria ${d<0?"atrasada desde":"prevista para"} ${fDia(x.troca_bateria)}`}); }
+    const um=ultimaManut(x.id).find(m=>m.proxima); if(um){ const d=diasAte(um.proxima); if(d<=15) out.push({x,n:d<0?0:2,c:d<0?"late":"soon",t:`${nm}: ${MANT[um.tipo].toLowerCase()} ${d<0?"atrasada desde":"prevista para"} ${fDia(um.proxima)}`}); }
+    if(INFRA(x.tipo)&&x.status==="Manutenção") out.push({x,n:0,c:"late",t:`${nm} em manutenção${sistemasDe(x.id).length?` · afeta ${sistemasDe(x.id).map(s=>s.nome).join(", ")}`:""}`});
+  });
+  return out.sort((a,b)=>a.n-b.n);
+}
+function infraAlertHTML(lim){
+  const al=infraAlertas(); if(!al.length) return "";
+  const vis=lim?al.slice(0,lim):al;
+  return `<div class="panelhead"><h2>Infraestrutura e ciclo de vida (${al.length})</h2>${lim&&al.length>lim?`<button class="linkbtn" data-act="go" data-v="infra">Ver todos</button>`:""}</div>
+  <div class="list">${vis.map(a=>`<div class="al ${a.c}" data-act="view" data-id="${a.x.id}"><i></i><span style="color:var(--ink)">${esc(a.t)}</span>${ICON("eye")}</div>`).join("")}</div>`;
+}
+// dependências
+function sistemasDe(ativoId){
+  const vms=S.vms.filter(v=>v.host_id===ativoId).map(v=>v.id);
+  const ids=new Set(S.sistItens.filter(i=>i.ativo_id===ativoId||(i.vm_id&&vms.includes(i.vm_id))).map(i=>i.sistema_id));
+  return S.sist.filter(s=>ids.has(s.id));
+}
+function conexoesDe(id){ return S.conex.filter(c=>c.origem_id===id||c.destino_id===id); }
+
+// ---------- ficha: seções extras ----------
+function infraFichaHTML(x){
+  const ti=S.canWrite, T=TYPES[x.tipo]||{};
+  let h="";
+  // ciclo de vida (qualquer ativo que tenha as datas)
+  const sp=substPrev(x);
+  if(x.data_aquisicao||x.garantia_ate||sp){
+    const g=x.garantia_ate?prazoTxt(x.garantia_ate,"vence"):null, s=sp?prazoTxt(sp,"subst"):null;
+    const idade=x.data_aquisicao?Math.max(0,Math.floor((Date.now()-dISO(x.data_aquisicao))/(365.25*864e5))):null;
+    h+=`<div class="hist"><label>Ciclo de vida</label><div class="kv three">
+      <div><label>Aquisição</label><p>${esc(fDia(x.data_aquisicao)||"—")}${idade!=null?` <span class="muted">(${idade} ${idade===1?"ano":"anos"})</span>`:""}</p></div>
+      <div><label>Garantia</label><p>${x.garantia_ate?`${esc(fDia(x.garantia_ate))} <span class="pz ${g.c}">${esc(g.t)}</span>`:"—"}</p></div>
+      <div><label>Substituição prevista</label><p>${sp?`${esc(fDia(sp))} <span class="pz ${s.c}">${esc(s.t)}</span>`:"—"}</p></div></div></div>`;
+  }
+  if(INFRA(x.tipo)){
+    // rack
+    const r=rackDe(x.rack);
+    if(r) h+=`<div class="hist"><label>Rack</label><p style="margin:0">${esc(r.nome)}${r.local?` · ${esc(r.local)}`:""}${x.u_inicio?` · U${esc(x.u_inicio)}${+x.u_altura>1?`–U${+x.u_inicio+(+x.u_altura)-1}`:""}`:""} <button class="linkbtn" data-act="go" data-v="racks">Ver rack</button></p></div>`;
+    // conexões
+    const cs=conexoesDe(x.id);
+    h+=`<div class="hist"><div class="panelhead" style="margin:0 0 6px"><label style="margin:0">Portas e conexões (${cs.length})</label>${ti?`<button class="btn sm" data-act="iconx" data-id="${x.id}">${ICON("plus")}Nova conexão</button>`:""}</div>
+      ${cs.length?`<div class="tablewrap"><table class="itab"><thead><tr><th>Porta aqui</th><th>Conectado a</th><th>Porta lá</th><th>Tipo</th><th>VLAN</th><th>Velocidade</th>${ti?"<th></th>":""}</tr></thead><tbody>
+        ${cs.map(c=>{ const aqui=c.origem_id===x.id, outroId=aqui?c.destino_id:c.origem_id, outro=outroId?ativoDe(outroId):null;
+          const nome=outroId?(outro?`<button class="linkbtn" style="padding:0" data-act="view" data-id="${outro.id}">${esc(nomeAtivo(outro))}</button>`:`<span class="muted">ativo removido</span>`):esc(c.destino_desc);
+          return `<tr><td><b>${esc((aqui?c.origem_porta:c.destino_porta)||"—")}</b></td><td>${nome}</td><td>${esc((aqui?c.destino_porta:c.origem_porta)||"—")}</td><td>${esc(CONX_T[c.tipo]||c.tipo)}</td><td>${esc(c.vlan||"—")}</td><td>${esc(c.velocidade||"—")}</td>
+          ${ti?`<td><div class="rowacts"><button class="ib sm" data-act="iconx" data-id="${x.id}" data-cid="${c.id}" title="Editar" aria-label="Editar conexão">${ICON("edit")}</button><button class="ib sm del" data-act="iconxrm" data-id="${x.id}" data-cid="${c.id}" title="Remover" aria-label="Remover conexão">${ICON("x")}</button></div></td>`:""}</tr>`; }).join("")}
+      </tbody></table></div>`:`<p class="muted" style="margin:0">Nenhuma conexão registrada.${x.tipo==="switch"&&x.portas?` Este switch tem ${esc(x.portas)} portas.`:""}</p>`}</div>`;
+    // VMs
+    if(x.tipo==="servidor"){
+      const vs=S.vms.filter(v=>v.host_id===x.id);
+      h+=`<div class="hist"><div class="panelhead" style="margin:0 0 6px"><label style="margin:0">Máquinas virtuais (${vs.length})</label>${ti?`<button class="btn sm" data-act="ivm" data-id="${x.id}">${ICON("plus")}Nova VM</button>`:""}</div>
+        ${vs.length?`<div class="tablewrap"><table class="itab"><thead><tr><th>Nome</th><th>Função</th><th>SO</th><th>IP</th><th>vCPU / RAM / disco</th><th>Status</th>${ti?"<th></th>":""}</tr></thead><tbody>
+          ${vs.map(v=>`<tr><td><b>${esc(v.nome)}</b></td><td>${esc(v.funcao||"—")}</td><td>${esc(v.so||"—")}</td><td>${esc(v.ip||"—")}</td><td>${[v.vcpu?v.vcpu+" vCPU":"",v.ram_gb?v.ram_gb+" GB":"",v.disco_gb?v.disco_gb+" GB disco":""].filter(Boolean).join(" · ")||"—"}</td>
+          <td><span class="pill ${v.status==="ligada"?"st-ok":"st-desc"}">${v.status==="ligada"?"Ligada":"Desligada"}</span></td>
+          ${ti?`<td><div class="rowacts"><button class="ib sm" data-act="ivm" data-id="${x.id}" data-vid="${v.id}" title="Editar" aria-label="Editar VM">${ICON("edit")}</button><button class="ib sm del" data-act="ivmrm" data-id="${x.id}" data-vid="${v.id}" title="Remover" aria-label="Remover VM">${ICON("x")}</button></div></td>`:""}</tr>`).join("")}
+        </tbody></table></div>`:`<p class="muted" style="margin:0">Nenhuma VM registrada${x.hipervisor&&x.hipervisor!=="Nenhum"?` (hipervisor: ${esc(x.hipervisor)})`:""}.</p>`}</div>`;
+    }
+  }
+  // sistemas dependentes
+  const ss=sistemasDe(x.id);
+  if(INFRA(x.tipo)||ss.length) h+=`<div class="hist"><label>Sistemas que dependem deste equipamento</label>${ss.length?`<div class="chips">${ss.map(s=>`<button class="pill ${CRIT[s.criticidade][1]}" style="cursor:pointer" data-act="isis" data-sid="${s.id}">${esc(s.nome)} · ${CRIT[s.criticidade][0]}</button>`).join("")}</div>`:`<p class="muted" style="margin:0">Nenhum sistema vinculado. Cadastre em <button class="linkbtn" style="padding:0" data-act="go" data-v="sistemas">Sistemas</button>.</p>`}</div>`;
+  // manutenções (todos os ativos)
+  const ms=ultimaManut(x.id);
+  h+=`<div class="hist"><div class="panelhead" style="margin:0 0 6px"><label style="margin:0">Manutenções (${ms.length})</label>${ti?`<button class="btn sm" data-act="imant" data-id="${x.id}">${ICON("plus")}Registrar manutenção</button>`:""}</div>
+    ${ms.length?`<ul class="tl" style="max-height:none">${ms.map(m=>`<li><time>${esc(fDia(m.data))}</time><div><span class="who">${esc(MANT[m.tipo]||m.tipo)}${m.responsavel?` · ${esc(m.responsavel)}`:""}${m.custo!=null?` · ${esc(brl(m.custo))}`:""}${m.chamado?` · chamado ${esc(m.chamado)}`:""}</span>${esc(m.descricao)}${m.proxima?`<br><span class="muted" style="font-size:13px">Próxima: ${esc(fDia(m.proxima))}</span>`:""}
+      ${ti?` <button class="linkbtn" style="padding:0;font-size:12.5px" data-act="imantrm" data-id="${x.id}" data-mid="${m.id}">remover</button>`:""}</div></li>`).join("")}</ul>`:`<p class="muted" style="margin:0">Nenhuma manutenção registrada.</p>`}</div>`;
+  return h;
+}
+
+// ---------- formulários ----------
+function conxForm(ativoId, cid){
+  const x=ativoDe(ativoId); if(!x) return; const c=cid?S.conex.find(c=>c.id===+cid):null;
+  const aqui=!c||c.origem_id===ativoId;
+  const outroId=c?(aqui?c.destino_id:c.origem_id):null, outro=outroId?ativoDe(outroId):null;
+  const v={porta:c?(aqui?c.origem_porta:c.destino_porta):"", outro:outro?outro.dispositivo:(c&&!outroId?c.destino_desc:""), porta2:c?(aqui?c.destino_porta:c.origem_porta):"",
+    tipo:c?c.tipo:"rede", vlan:c?c.vlan:"", vel:c?c.velocidade:"", obs:c?c.obs:""};
+  openModal(`<h2>${c?"Editar conexão":"Nova conexão"} · ${esc(x.dispositivo)}</h2>
+  <form class="f" id="iConxForm" data-id="${x.id}" data-cid="${c?c.id:""}" data-aqui="${aqui?1:0}">
+    <datalist id="dl-infra">${S.items.filter(i=>i.id!==x.id).sort(sortDev).map(i=>`<option value="${esc(i.dispositivo)}">${esc([tipoUm(i.tipo),i.hostname,i.usuario].filter(Boolean).join(" · "))}</option>`).join("")}</datalist>
+    <fieldset>
+      <label class="fld"><span>Porta neste equipamento</span><input name="porta" maxlength="40" value="${esc(v.porta)}" placeholder="Ex.: Gi1/0/24, eth0, saída 3"></label>
+      <label class="fld"><span>Tipo</span><select name="tipo">${Object.entries(CONX_T).map(([k,l])=>`<option value="${k}" ${v.tipo===k?"selected":""}>${l}</option>`).join("")}</select></label>
+      <label class="fld wide"><span>Conectado a <i>*</i></span><input name="outro" list="dl-infra" required maxlength="120" value="${esc(v.outro)}" placeholder="Patrimônio (ex.: SW002, SRV001) ou descrição (ex.: Patch panel A-12, link da operadora)"></label>
+      <label class="fld"><span>Porta no outro lado</span><input name="porta2" maxlength="40" value="${esc(v.porta2)}"></label>
+      <label class="fld"><span>VLAN</span><input name="vlan" maxlength="40" value="${esc(v.vlan)}"></label>
+      <label class="fld"><span>Velocidade</span><input name="vel" maxlength="20" value="${esc(v.vel)}" placeholder="Ex.: 1 Gbps"></label>
+      <label class="fld wide"><span>Observações</span><input name="obs" maxlength="300" value="${esc(v.obs)}"></label>
+    </fieldset>
+    <p class="muted" style="margin:0;font-size:13px">Se o patrimônio estiver cadastrado, a conexão aparece também na ficha do outro equipamento.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="view" data-id="${x.id}">Voltar</button><button class="btn primary" id="icBtn">Salvar conexão</button></div>
+  </form>`,"md");
+}
+async function submitConx(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim(), id=f.dataset.id, aqui=f.dataset.aqui==="1";
+  const outroTxt=g("outro"); if(!outroTxt){ toast("Informe onde está conectado."); return; }
+  const outro=S.items.find(i=>i.id!==id&&norm(i.dispositivo)===norm(outroTxt));
+  const lado={porta:g("porta"), porta2:g("porta2")};
+  const row={tipo:g("tipo"), vlan:g("vlan"), velocidade:g("vel"), obs:g("obs")};
+  if(aqui){ Object.assign(row,{origem_id:id,origem_porta:lado.porta,destino_id:outro?outro.id:null,destino_desc:outro?"":outroTxt,destino_porta:lado.porta2}); }
+  else { if(!outro){ toast("Do lado de destino, informe o patrimônio de um equipamento cadastrado."); return; } Object.assign(row,{destino_id:id,destino_porta:lado.porta,origem_id:outro.id,origem_porta:lado.porta2}); }
+  const cid=f.dataset.cid; document.getElementById("icBtn").disabled=true;
+  const {error}=cid?await sb.from("infra_conexoes").update(row).eq("id",+cid):await sb.from("infra_conexoes").insert(row);
+  if(error){ document.getElementById("icBtn").disabled=false; writeErr(error); return; }
+  await infraLoad(); viewItem(id); toast("Conexão salva.");
+}
+function vmForm(hostId, vid){
+  const x=ativoDe(hostId); if(!x) return; const v=vid?S.vms.find(v=>v.id===+vid):{status:"ligada"};
+  openModal(`<h2>${vid?"Editar VM":"Nova máquina virtual"} · ${esc(x.dispositivo)}</h2>
+  <form class="f" id="iVmForm" data-id="${x.id}" data-vid="${vid||""}"><fieldset>
+    <label class="fld"><span>Nome <i>*</i></span><input name="nome" required maxlength="80" value="${esc(v.nome||"")}"></label>
+    <label class="fld"><span>Função</span><input name="funcao" maxlength="120" value="${esc(v.funcao||"")}" placeholder="Ex.: ERP, AD/DNS, arquivos"></label>
+    <label class="fld"><span>Sistema operacional</span><input name="so" maxlength="80" value="${esc(v.so||"")}"></label>
+    <label class="fld"><span>IP</span><input name="ip" maxlength="60" value="${esc(v.ip||"")}"></label>
+    <label class="fld"><span>vCPU</span><input name="vcpu" type="number" min="0" value="${v.vcpu??""}"></label>
+    <label class="fld"><span>RAM (GB)</span><input name="ram_gb" type="number" min="0" step="0.5" value="${v.ram_gb??""}"></label>
+    <label class="fld"><span>Disco (GB)</span><input name="disco_gb" type="number" min="0" value="${v.disco_gb??""}"></label>
+    <label class="fld"><span>Status</span><select name="status"><option value="ligada" ${v.status==="ligada"?"selected":""}>Ligada</option><option value="desligada" ${v.status==="desligada"?"selected":""}>Desligada</option></select></label>
+    <label class="fld wide"><span>Observações</span><input name="obs" maxlength="300" value="${esc(v.obs||"")}"></label>
+  </fieldset><div class="foot"><button type="button" class="btn ghost" data-act="view" data-id="${x.id}">Voltar</button><button class="btn primary" id="ivBtn">Salvar VM</button></div></form>`,"md");
+}
+async function submitVm(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim(), n=k=>g(k)===""?null:Number(g(k));
+  const row={host_id:f.dataset.id,nome:g("nome"),funcao:g("funcao"),so:g("so"),ip:g("ip"),vcpu:n("vcpu"),ram_gb:n("ram_gb"),disco_gb:n("disco_gb"),status:g("status"),obs:g("obs")};
+  document.getElementById("ivBtn").disabled=true;
+  const {error}=f.dataset.vid?await sb.from("infra_vms").update(row).eq("id",+f.dataset.vid):await sb.from("infra_vms").insert(row);
+  if(error){ document.getElementById("ivBtn").disabled=false; writeErr(error); return; }
+  await infraLoad(); viewItem(f.dataset.id); toast("VM salva.");
+}
+function mantForm(ativoId){
+  const x=ativoDe(ativoId); if(!x) return;
+  openModal(`<h2>Registrar manutenção · ${esc(x.dispositivo)}</h2>
+  <form class="f" id="iMantForm" data-id="${x.id}"><fieldset>
+    <label class="fld"><span>Data <i>*</i></span><input name="data" type="date" required value="${hojeISO()}" max="${hojeISO()}"></label>
+    <label class="fld"><span>Tipo</span><select name="tipo">${Object.entries(MANT).map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></label>
+    <label class="fld wide"><span>O que foi feito <i>*</i></span><textarea name="descricao" required maxlength="1000" placeholder="Ex.: atualização de firmware para 17.9.4; troca da fonte 2"></textarea></label>
+    <label class="fld"><span>Responsável / empresa</span><input name="responsavel" maxlength="120"></label>
+    <label class="fld"><span>Custo (R$)</span><input name="custo" inputmode="decimal" maxlength="15" placeholder="0,00"></label>
+    <label class="fld"><span>Chamado / OS</span><input name="chamado" maxlength="60"></label>
+    <label class="fld"><span>Próxima intervenção</span><input name="proxima" type="date"></label>
+    <label class="fld"><span>Status do equipamento</span><select name="status"><option value="">Manter (${esc(x.status)})</option>${STATUS.filter(s=>s!==x.status&&s!=="Reservado").map(s=>`<option>${s}</option>`).join("")}</select></label>
+  </fieldset><div class="foot"><button type="button" class="btn ghost" data-act="view" data-id="${x.id}">Voltar</button><button class="btn primary" id="imBtn">Registrar</button></div></form>`,"md");
+}
+async function submitMant(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim();
+  const cs=g("custo").replace(/[^\d,.-]/g,""), custo=cs?Number(cs.includes(",")?cs.replace(/\./g,"").replace(",","."):cs):null;
+  if(cs&&(isNaN(custo)||custo<0)){ toast("Custo inválido."); return; }
+  const row={ativo_id:f.dataset.id,data:g("data"),tipo:g("tipo"),descricao:g("descricao"),responsavel:g("responsavel"),custo,chamado:g("chamado"),proxima:g("proxima")||null};
+  document.getElementById("imBtn").disabled=true;
+  const {error}=await sb.from("ativos_manutencoes").insert(row);
+  if(error){ document.getElementById("imBtn").disabled=false; writeErr(error); return; }
+  const st=g("status"), x=ativoDe(f.dataset.id);
+  if(st&&x){ const {id,...rest}=x; try{ await store.put("ativos",id,{...rest,status:st}); }catch(e){ writeErr(e); } }
+  await infraLoad(); viewItem(f.dataset.id); toast("Manutenção registrada.");
+}
+async function infraRemover(tab, rid, voltar, msg){
+  const {error}=await sb.from(tab).update({removido:true}).eq("id",+rid); if(error){ writeErr(error); return; }
+  await infraLoad(); if(voltar) viewItem(voltar); else render(); toast(msg);
+}
+
+// ---------- visão geral ----------
+function infraHTML(){
+  const cats=Object.entries(TYPES).filter(([k,t])=>t.infra);
+  const tiles=cats.map(([k,t])=>{ const l=byType(k), op=l.filter(x=>x.status==="Em uso").length, mn=l.filter(x=>x.status==="Manutenção").length;
+    return `<button class="card tile" data-act="go" data-v="${k}"><span class="ti"><span>${ICON(t.icon)}</span>${t.label}</span><span class="big">${l.length}</span><span class="mini">${op} em operação${mn?` · ${mn} em manutenção`:""}</span></button>`; }).join("");
+  const al=infraAlertHTML(0);
+  const crit=S.sist.filter(s=>s.criticidade==="critica"||s.criticidade==="alta");
+  const custo=S.manut.filter(m=>m.custo!=null&&diasAte(m.data)>=-365).reduce((s,m)=>s+Number(m.custo),0);
+  return `<div class="head"><div><h1>Infraestrutura</h1><div class="sub">${cats.reduce((s,[k])=>s+byType(k).length,0)} equipamentos · ${S.racks.length} racks · ${S.vms.length} VMs · ${S.sist.length} sistemas</div></div>
+    <div class="actions"><button class="btn" data-act="go" data-v="racks">${ICON("rack")}Racks</button><button class="btn" data-act="go" data-v="sistemas">${ICON("layers")}Sistemas</button></div></div>
+  <div class="tiles">${tiles}</div>
+  ${al?`<section class="card panel oalert">${al}</section>`:`<section class="card panel oalert"><h2>Infraestrutura e ciclo de vida</h2><p class="muted" style="margin:0">Nada vencendo. Preencha garantia, aquisição e vida útil nas fichas para o sistema avisar com antecedência.</p></section>`}
+  <div class="grid2">
+    <section class="card panel"><h2>Sistemas críticos</h2>${crit.length?`<div class="list">${crit.map(s=>{ const dep=depsDe(s), prob=dep.filter(d=>d.x&&["Manutenção","Descartado"].includes(d.x.status));
+      return `<div class="li" data-act="isis" data-sid="${s.id}"><b>${esc(s.nome)}</b><span>${CRIT[s.criticidade][0]} · ${dep.length} ${dep.length===1?"dependência":"dependências"}${prob.length?` · <b style="color:var(--danger)">${prob.length} com problema</b>`:""}</span>${ICON("eye")}</div>`; }).join("")}</div>`:`<p class="muted" style="margin:0">Nenhum sistema de criticidade alta cadastrado.</p>`}</section>
+    <section class="card panel"><h2>Manutenções recentes</h2>${S.manut.length?`<div class="list">${[...S.manut].sort((a,b)=>String(b.data).localeCompare(String(a.data))).slice(0,8).map(m=>{ const x=ativoDe(m.ativo_id); return `<div class="li" ${x?`data-act="view" data-id="${x.id}"`:""}><b>${esc(x?x.dispositivo:"—")}</b><span>${esc(fDia(m.data))} · ${esc(MANT[m.tipo])} · ${esc(m.descricao)}</span>${ICON("eye")}</div>`; }).join("")}</div>
+      ${custo?`<p class="muted" style="margin:10px 0 0;font-size:14px">Custo de manutenção nos últimos 12 meses: <b>${esc(brl(custo))}</b></p>`:""}`:`<p class="muted" style="margin:0">Nenhuma manutenção registrada.</p>`}</section>
+  </div>`;
+}
+
+// ---------- racks ----------
+function racksHTML(){
+  const ti=S.canWrite;
+  const noRack=S.items.filter(x=>INFRA(x.tipo)&&!rackDe(x.rack)&&x.status!=="Descartado"&&["switch","servidor","roteador","firewall","nobreak"].includes(x.tipo));
+  const rackCard=r=>{
+    const devs=S.items.filter(x=>String(x.rack)===String(r.id)&&x.status!=="Descartado");
+    const pos=devs.filter(x=>+x.u_inicio>0), semPos=devs.filter(x=>!(+x.u_inicio>0));
+    const ocup={}; let conflito=false;
+    pos.forEach(x=>{ const a=Math.max(1,+x.u_altura||1); for(let u=+x.u_inicio;u<+x.u_inicio+a;u++){ if(ocup[u]) conflito=true; ocup[u]=1; } });
+    const H=r.altura_u, livres=H-Object.keys(ocup).filter(u=>u<=H).length;
+    const blocos=pos.map(x=>{ const a=Math.max(1,+x.u_altura||1), topo=+x.u_inicio+a-1, row=H-topo+1;
+      return `<button class="ru ${x.status==="Manutenção"?"man":""}" style="grid-row:${Math.max(1,row)} / span ${a}" data-act="view" data-id="${x.id}" title="${esc(nomeAtivo(x))} · U${x.u_inicio}${a>1?"–U"+topo:""}">${ICON(TYPES[x.tipo].icon)}<b>${esc(x.dispositivo)}</b><span>${esc(x.hostname||[x.fabricante,x.modelo].filter(Boolean).join(" "))}</span></button>`; }).join("");
+    return `<section class="card panel rackc"><div class="panelhead"><div><h2 style="margin:0">${esc(r.nome)}</h2><div class="muted" style="font-size:14px">${esc(r.local||"Sem local")} · ${H}U · ${livres} livres${conflito?` · <b style="color:var(--danger)">posições sobrepostas</b>`:""}</div></div>${ti?`<button class="btn sm" data-act="irack" data-rid="${r.id}">${ICON("edit")}Editar</button>`:""}</div>
+      <div class="rack" style="grid-template-rows:repeat(${H},22px)">${Array.from({length:H},(_,i)=>`<span class="rn" style="grid-row:${i+1}">${H-i}</span><span class="rs" style="grid-row:${i+1}"></span>`).join("")}${blocos}</div>
+      ${semPos.length?`<p class="muted" style="margin:10px 0 0;font-size:13px">No rack, sem posição: ${semPos.map(x=>`<button class="linkbtn" style="padding:0" data-act="view" data-id="${x.id}">${esc(x.dispositivo)}</button>`).join(", ")}</p>`:""}
+      ${r.obs?`<p class="muted" style="margin:8px 0 0;font-size:13px">${esc(r.obs)}</p>`:""}</section>`;
+  };
+  return `<div class="head"><div><button class="linkbtn" data-act="go" data-v="infra" style="padding:0 0 6px">← Infraestrutura</button><h1>Racks</h1><div class="sub">${S.racks.length} ${S.racks.length===1?"rack":"racks"}. Para posicionar um equipamento, edite a ficha dele e informe rack, U inicial e altura.</div></div>
+    <div class="actions">${ti?`<button class="btn primary" data-act="irack" data-rid="">${ICON("plus")}Novo rack</button>`:""}</div></div>
+  ${S.racks.length?`<div class="racks">${S.racks.map(rackCard).join("")}</div>`:`<div class="card empty"><b>Nenhum rack cadastrado</b>Cadastre os racks e depois informe a posição de cada equipamento na ficha.</div>`}
+  ${noRack.length?`<section class="card panel" style="margin-top:20px"><h2>Fora de rack (${noRack.length})</h2><div class="chips">${noRack.map(x=>`<button class="chip" style="border:0;cursor:pointer" data-act="view" data-id="${x.id}">${esc(x.dispositivo)} · ${esc(tipoUm(x.tipo))}</button>`).join("")}</div></section>`:""}`;
+}
+function rackForm(rid){
+  const r=rid?S.racks.find(r=>r.id===+rid):{altura_u:42};
+  openModal(`<h2>${rid?"Editar rack":"Novo rack"}</h2><form class="f" id="iRackForm" data-rid="${rid||""}"><fieldset>
+    <label class="fld"><span>Nome <i>*</i></span><input name="nome" required maxlength="60" value="${esc(r.nome||"")}" placeholder="Ex.: Rack 01 – CPD"></label>
+    <label class="fld"><span>Altura (U)</span><input name="altura_u" type="number" min="1" max="60" value="${r.altura_u}"></label>
+    <label class="fld wide"><span>Local</span><input name="local" maxlength="120" value="${esc(r.local||"")}" placeholder="Ex.: Sala do servidor – térreo"></label>
+    <label class="fld wide"><span>Observações</span><input name="obs" maxlength="300" value="${esc(r.obs||"")}"></label>
+  </fieldset><div class="foot">${rid?`<button type="button" class="btn ghost del" data-act="irackrm" data-rid="${rid}">${ICON("trash")}Remover rack</button>`:""}<button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="irBtn">Salvar</button></div></form>`,"sm");
+}
+async function submitRack(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim();
+  const row={nome:g("nome"),altura_u:Math.min(60,Math.max(1,parseInt(g("altura_u"),10)||42)),local:g("local"),obs:g("obs")};
+  document.getElementById("irBtn").disabled=true;
+  const {error}=f.dataset.rid?await sb.from("infra_racks").update(row).eq("id",+f.dataset.rid):await sb.from("infra_racks").insert(row);
+  if(error){ document.getElementById("irBtn").disabled=false; writeErr(error); return; }
+  closeModal(); await infraLoad(); render(); toast("Rack salvo.");
+}
+
+// ---------- sistemas ----------
+function depsDe(s){ return S.sistItens.filter(i=>i.sistema_id===s.id).map(i=>{ const vm=i.vm_id?S.vms.find(v=>v.id===i.vm_id):null; const x=i.ativo_id?ativoDe(i.ativo_id):(vm?ativoDe(vm.host_id):null); return {i,vm,x}; }); }
+function sistemasHTML(){
+  const ti=S.canWrite, ord={critica:0,alta:1,media:2,baixa:3};
+  const lista=[...S.sist].sort((a,b)=>ord[a.criticidade]-ord[b.criticidade]||a.nome.localeCompare(b.nome,"pt-BR"));
+  const card=s=>{ const dep=depsDe(s), prob=dep.filter(d=>d.x&&["Manutenção","Descartado"].includes(d.x.status)||(d.vm&&d.vm.status==="desligada"));
+    return `<section class="card panel sisc ${IF.sisSel===s.id?"sel":""}" id="sis-${s.id}"><div class="panelhead"><div><h2 style="margin:0">${esc(s.nome)} <span class="pill ${CRIT[s.criticidade][1]}">${CRIT[s.criticidade][0]}</span></h2>
+      <div class="muted" style="font-size:14px">${esc([s.descricao,s.responsavel?`Responsável: ${s.responsavel}`:""].filter(Boolean).join(" · ")||"—")}</div></div>
+      ${ti?`<div class="rowacts"><button class="btn sm" data-act="isisdep" data-sid="${s.id}">${ICON("plus")}Dependência</button><button class="btn sm" data-act="isisedit" data-sid="${s.id}">${ICON("edit")}Editar</button></div>`:""}</div>
+      ${prob.length?`<div class="warnnote" style="margin-bottom:10px">${prob.length} ${prob.length===1?"dependência com problema":"dependências com problema"}: ${esc(prob.map(d=>d.vm&&d.vm.status==="desligada"?`VM ${d.vm.nome} desligada`:`${d.x.dispositivo} (${d.x.status})`).join(", "))}</div>`:""}
+      ${dep.length?`<div class="tablewrap"><table class="itab"><thead><tr><th>Depende de</th><th>Papel</th><th>Onde roda</th><th>Status</th>${ti?"<th></th>":""}</tr></thead><tbody>
+        ${dep.map(d=>`<tr><td><b>${d.vm?`VM ${esc(d.vm.nome)}`:d.x?`<button class="linkbtn" style="padding:0" data-act="view" data-id="${d.x.id}">${esc(tipoUm(d.x.tipo))} ${esc(d.x.dispositivo)}</button>`:"ativo removido"}</b></td><td>${esc(d.i.papel||"—")}</td>
+          <td>${d.vm&&d.x?`<button class="linkbtn" style="padding:0" data-act="view" data-id="${d.x.id}">${esc(nomeAtivo(d.x))}</button>`:d.x?esc([d.x.hostname,d.x.ip].filter(Boolean).join(" · ")||"—"):"—"}</td>
+          <td>${d.vm?`<span class="pill ${d.vm.status==="ligada"?"st-ok":"st-desc"}">${d.vm.status==="ligada"?"Ligada":"Desligada"}</span> `:""}${d.x?pill(d.x.status):""}</td>
+          ${ti?`<td><button class="ib sm del" data-act="isisdeprm" data-did="${d.i.id}" title="Remover dependência" aria-label="Remover dependência">${ICON("x")}</button></td>`:""}</tr>`).join("")}</tbody></table></div>`:`<p class="muted" style="margin:0">Nenhuma dependência. Adicione os servidores, VMs, switches e links de que este sistema precisa.</p>`}
+    </section>`; };
+  return `<div class="head"><div><button class="linkbtn" data-act="go" data-v="infra" style="padding:0 0 6px">← Infraestrutura</button><h1>Sistemas</h1><div class="sub">O que depende de cada equipamento. Ajuda a avaliar o impacto antes de uma manutenção.</div></div>
+    <div class="actions">${ti?`<button class="btn primary" data-act="isisedit" data-sid="">${ICON("plus")}Novo sistema</button>`:""}</div></div>
+  ${lista.length?lista.map(card).join(""):`<div class="card empty"><b>Nenhum sistema cadastrado</b>Cadastre ERP, WMS, e-mail, arquivos, internet… e ligue cada um aos equipamentos e VMs de que depende.</div>`}`;
+}
+function sisForm(sid){
+  const s=sid?S.sist.find(s=>s.id===+sid):{criticidade:"media"};
+  openModal(`<h2>${sid?"Editar sistema":"Novo sistema"}</h2><form class="f" id="iSisForm" data-sid="${sid||""}"><fieldset>
+    <label class="fld"><span>Nome <i>*</i></span><input name="nome" required maxlength="80" value="${esc(s.nome||"")}" placeholder="Ex.: ERP, WMS, Internet, Arquivos"></label>
+    <label class="fld"><span>Criticidade</span><select name="criticidade">${Object.entries(CRIT).map(([k,[l]])=>`<option value="${k}" ${s.criticidade===k?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label class="fld wide"><span>Descrição</span><input name="descricao" maxlength="200" value="${esc(s.descricao||"")}"></label>
+    <label class="fld"><span>Responsável</span><input name="responsavel" maxlength="100" value="${esc(s.responsavel||"")}"></label>
+    <label class="fld wide"><span>Observações</span><input name="obs" maxlength="300" value="${esc(s.obs||"")}"></label>
+  </fieldset><div class="foot">${sid?`<button type="button" class="btn ghost del" data-act="isisrm" data-sid="${sid}">${ICON("trash")}Remover sistema</button>`:""}<button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="isBtn">Salvar</button></div></form>`,"sm");
+}
+async function submitSis(f){
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim();
+  const row={nome:g("nome"),criticidade:g("criticidade"),descricao:g("descricao"),responsavel:g("responsavel"),obs:g("obs")};
+  document.getElementById("isBtn").disabled=true;
+  const {error}=f.dataset.sid?await sb.from("infra_sistemas").update(row).eq("id",+f.dataset.sid):await sb.from("infra_sistemas").insert(row);
+  if(error){ document.getElementById("isBtn").disabled=false; writeErr(error); return; }
+  closeModal(); await infraLoad(); render(); toast("Sistema salvo.");
+}
+function sisDepForm(sid){
+  const s=S.sist.find(s=>s.id===+sid); if(!s) return;
+  const opts=[...S.items.filter(i=>i.status!=="Descartado").sort(sortDev).map(i=>[`a:${i.id}`,`${tipoUm(i.tipo)} ${i.dispositivo}${i.hostname?` (${i.hostname})`:""}`]),
+    ...S.vms.map(v=>{ const h=ativoDe(v.host_id); return [`v:${v.id}`,`VM ${v.nome}${h?` em ${h.dispositivo}`:""}`]; })];
+  openModal(`<h2>Dependência de ${esc(s.nome)}</h2><form class="f" id="iSisDepForm" data-sid="${s.id}">
+    <label class="fld"><span>Equipamento ou VM <i>*</i></span><select name="alvo" required><option value="">Escolha…</option>${opts.map(([v,l])=>`<option value="${v}">${esc(l)}</option>`).join("")}</select></label>
+    <label class="fld"><span>Papel</span><input name="papel" maxlength="80" placeholder="Ex.: banco de dados, aplicação, link principal, switch de acesso"></label>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="idBtn">Adicionar</button></div></form>`,"sm");
+}
+async function submitSisDep(f){
+  const fd=new FormData(f), alvo=String(fd.get("alvo")||""); if(!alvo){ toast("Escolha o equipamento ou a VM."); return; }
+  const row={sistema_id:+f.dataset.sid,papel:String(fd.get("papel")||"").trim()};
+  if(alvo.startsWith("a:")) row.ativo_id=alvo.slice(2); else row.vm_id=+alvo.slice(2);
+  document.getElementById("idBtn").disabled=true;
+  const {error}=await sb.from("infra_sistema_itens").insert(row); if(error){ document.getElementById("idBtn").disabled=false; writeErr(error); return; }
+  closeModal(); await infraLoad(); render(); toast("Dependência adicionada.");
+}
+function abrirSistema(sid){ IF.sisSel=+sid; closeModal(); go("sistemas"); setTimeout(()=>{ const el=document.getElementById("sis-"+sid); if(el) el.scrollIntoView({block:"center",behavior:"smooth"}); },60); }
+function infraClick(a, el){
+  const id=el.dataset.id, H={
+    iconx:()=>conxForm(id, el.dataset.cid), iconxrm:()=>infraRemover("infra_conexoes",el.dataset.cid,id,"Conexão removida."),
+    ivm:()=>vmForm(id, el.dataset.vid), ivmrm:()=>infraRemover("infra_vms",el.dataset.vid,id,"VM removida."),
+    imant:()=>mantForm(id), imantrm:()=>infraRemover("ativos_manutencoes",el.dataset.mid,id,"Manutenção removida."),
+    irack:()=>rackForm(el.dataset.rid), irackrm:()=>{ closeModal(); infraRemover("infra_racks",el.dataset.rid,null,"Rack removido."); },
+    isis:()=>abrirSistema(el.dataset.sid), isisedit:()=>sisForm(el.dataset.sid), isisrm:()=>{ closeModal(); infraRemover("infra_sistemas",el.dataset.sid,null,"Sistema removido."); },
+    isisdep:()=>sisDepForm(el.dataset.sid), isisdeprm:()=>infraRemover("infra_sistema_itens",el.dataset.did,null,"Dependência removida."),
+  };
+  if(!H[a]) return false; H[a](); return true;
+}
+function infraSubmit(f){
+  const H={iConxForm:submitConx,iVmForm:submitVm,iMantForm:submitMant,iRackForm:submitRack,iSisForm:submitSis,iSisDepForm:submitSisDep};
+  if(!H[f.id]) return false; H[f.id](f); return true;
 }
 
 // ---------- link direto (QR Code da etiqueta) ----------
@@ -3035,6 +3460,7 @@ document.addEventListener("click", e=>{
   if(a==="go") return go(el.dataset.v);
   if(a==="close") return closeModal();
   if(onbClick(a,el,id)) return;
+  if(infraClick(a,el)) return;
   if(a==="view") return viewItem(id);
   if(a==="edit") return editItem(id);
   if(a==="new") return editItem(null,S.view);
@@ -3085,6 +3511,7 @@ document.addEventListener("click", e=>{
 document.addEventListener("submit", e=>{
   e.preventDefault();
   if(onbSubmit(e.target)) return;
+  if(infraSubmit(e.target)) return;
   if(e.target.id==="itemForm") submitItem(e.target);
   if(e.target.id==="userForm") submitUser(e.target);
   if(e.target.id==="gForm") gateSubmit(e.target);
@@ -3117,7 +3544,7 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
 
-try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding","aprovacoes","estoque"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding","aprovacoes","estoque","infra","racks","sistemas"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
 if (!S.view || S.view==="") S.view="dashboard";
 render();
 initCaps();

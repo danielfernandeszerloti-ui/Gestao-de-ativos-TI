@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.8.0] — 2026-10-13
+### Adicionado
+- **Infraestrutura**: switches, servidores, roteadores, firewalls, access points e nobreaks no mesmo inventário (etiqueta, QR Code, inventário, fotos e histórico).
+- **Ficha técnica por categoria**:
+  - rede e localização: hostname, IP de gerência, MAC, local, rack e posição em U;
+  - campos próprios de cada tipo: portas/PoE, CPU/RAM/RAID/hipervisor, licença do firewall, autonomia e troca de bateria do nobreak…;
+  - ciclo de vida: aquisição, garantia, vida útil, substituição prevista e contrato de suporte.
+- **Relacionamentos**:
+  - racks com desenho das posições (U);
+  - portas e conexões entre equipamentos (aparecem nos dois lados);
+  - máquinas virtuais por servidor;
+  - **Sistemas** com criticidade e dependências (equipamentos e VMs), mostrando o impacto de uma falha ou manutenção.
+- **Manutenções** para qualquer ativo: tipo, responsável, custo, chamado e próxima intervenção, também gravadas no histórico.
+- **Alertas**: garantia, substituição, licença, troca de bateria, manutenção prevista e equipamento de infra em manutenção. Aparecem na tela Visão geral e no Dashboard.
+
 ## [2.7.0] — 2026-10-13
 ### Adicionado
 - **Estoque e ressuprimento**: tela **Estoque** calculada a partir do inventário. Por categoria (periféricos: por tipo), mostra:

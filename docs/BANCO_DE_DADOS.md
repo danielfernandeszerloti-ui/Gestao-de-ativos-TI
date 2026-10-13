@@ -143,6 +143,20 @@ Status: `solicitado` → `em_analise` → `aguardando_equipamentos` → `em_prep
 
 `termos.itens` (jsonb) guarda a lista de equipamentos de um termo com vários itens. A lista entra no código de verificação SHA-256.
 
+### Infraestrutura
+
+Os equipamentos de infraestrutura ficam em `ativos` (`tipo` = `switch`, `servidor`, `roteador`, `firewall`, `access_point`, `nobreak`). A ficha técnica fica em `specs`, por exemplo `hostname`, `ip`, `rack`, `u_inicio`, `u_altura`, `garantia_ate`, `data_aquisicao`, `vida_util` e `substituicao`.
+
+| Tabela | O que guarda |
+|---|---|
+| `infra_racks` | Racks: nome, local e altura em U |
+| `infra_conexoes` | Conexões entre `origem_id` e `destino_id` (ou `destino_desc` livre), com portas, tipo, VLAN e velocidade |
+| `infra_vms` | Máquinas virtuais de um servidor (`host_id`) |
+| `infra_sistemas` / `infra_sistema_itens` | Sistemas (criticidade, responsável) e do que dependem (ativo ou VM) |
+| `ativos_manutencoes` | Manutenções de qualquer ativo: tipo, descrição, responsável, custo, chamado e próxima data. Cada registro também vai para `ativos_historico` (`campo = manutencao`) |
+
+Nessas tabelas nada é apagado: `removido = true`. Leitura para quem acessa o inventário; gravação para TI e admin.
+
 ## Regras de acesso (RLS)
 
 | Tabela | Ler | Gravar |
