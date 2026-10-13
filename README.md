@@ -19,6 +19,7 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Importar / Exportar Excel | Importa `.xlsx`, `.xls` ou `.csv`, atualizando pelo código do dispositivo. Exporta a lista filtrada |
 | Usuários | Colaboradores e equipamentos vinculados, com importação e exportação de Excel. Para administradores, também **quem acessa o sistema** |
 | Onboarding | Solicitação do RH para novos colaboradores, checklist da TI, reserva e entrega de ativos do inventário, termo único com todos os equipamentos, alertas de admissão e histórico que não pode ser apagado |
+| Estoque | Estoque calculado pelo inventário (sem lançamento manual): disponível, reservado, pedidos de onboarding, reposição em andamento, projetado e saídas em 90 dias. Mínimo e ideal por categoria, e **Repor** envia a compra para o aprovador |
 | Termos | **Termo de responsabilidade digital**: gerado na ficha do equipamento, assinado pelo colaborador por link ou QR Code (sem login) e exportado em PDF com página de evidências |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
 | Inventário | Conferência bipando as etiquetas com o coletor; pendentes, conferidos e códigos sem cadastro |

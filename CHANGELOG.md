@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.7.0] — 2026-10-13
+### Adicionado
+- **Estoque e ressuprimento**: tela **Estoque** calculada a partir do inventário. Por categoria (periféricos: por tipo), mostra:
+  - disponível, reservado, em uso e em manutenção;
+  - pedidos de onboarding ainda sem equipamento;
+  - reposição em andamento, projetado e saídas dos últimos 90 dias.
+- Mínimo e ideal por categoria, com situação: OK, Repor, Vai faltar, Reposição a caminho, Sem mínimo.
+- **Repor**: sugere a quantidade (ideal − projetado), monta a justificativa e envia para o aprovador em **Aprovações**, num grupo “Reposição de estoque”. **Receber** cadastra os equipamentos como Disponível.
+- Alerta “Estoque para repor” no Dashboard e contador no menu. Exportação do estoque para Excel.
+
 ## [2.6.1] — 2026-10-07
 ### Adicionado
 - **Excluir solicitação** e **Excluir compra** (só administradores), para testes e lançamentos por engano:

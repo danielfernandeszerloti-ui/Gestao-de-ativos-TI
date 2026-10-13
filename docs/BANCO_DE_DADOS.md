@@ -117,7 +117,8 @@ O botão **Novo inventário** sobrescreve essa linha. Exporte o resultado antes.
 | `onboarding_checklist` | Itens do checklist da solicitação, com quem marcou e quando. Itens com `chave` são marcados pelo sistema |
 | `onboarding_ativos` | Ativos vinculados. `removido = true` desfaz o vínculo sem apagar o registro |
 | `onboarding_eventos` | Histórico imutável: só as funções do banco inserem |
-| `onboarding_compras` | Compras de equipamento: item, quantidade, link, fornecedor, valor, `status` (`solicitada` → `enviada` → `aprovada` → `comprada` → `recebida`, ou `reprovada`/`cancelada`), pedido, previsão e os ativos cadastrados no recebimento |
+| `onboarding_compras` | Compras de equipamento. `origem = onboarding` (ligada a uma solicitação) ou `reposicao` (estoque, sem `onboarding_id`; o RH não vê). Campos: item, quantidade, link, fornecedor, valor, `status` (`solicitada` → `enviada` → `aprovada` → `comprada` → `recebida`, ou `reprovada`/`cancelada`), pedido, previsão e os ativos cadastrados no recebimento |
+| `estoque_minimos` | Mínimo e ideal por categoria (`chave` = `notebook`, `periferico:Mouse`…). Leitura: membros com acesso ao inventário e aprovadores; gravação: TI e admin |
 | `ga_config` | Configurações gerais (`compras_email`). Leitura para membros, gravação só `admin` |
 | `onboarding_opcoes` | Opções do formulário. Para equipamentos, há também a categoria do inventário e o subtipo |
 | `onboarding_checklist_modelo` | Modelo do checklist. `condicao` lista trechos separados por `\|` que precisam aparecer no pedido |

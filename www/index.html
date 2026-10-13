@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.6.1"></script>
+<script src="termo-pdf.js?v=2.7.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -394,6 +394,15 @@ tr.click{cursor:pointer}
 .cdet.okd{color:var(--ok-fg);font-weight:700}
 .st-bad{background:var(--danger-soft);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)}
 .apr{margin-bottom:18px}
+.esttab{min-width:960px}
+.esttab .esub{display:block;font-weight:600;font-size:12px;color:var(--faint)}
+.esttab td.num,.esttab th{text-align:center}
+.esttab th:first-child,.esttab td:first-child{text-align:left}
+.esttab th{font-size:13.5px;padding:12px 8px;cursor:help}
+.esttab td{padding:8px}
+.esttab .estmin{width:64px;border:1px solid var(--border);border-radius:8px;padding:6px 8px;background:var(--surface);text-align:center}
+.esttab tr.elow td{background:color-mix(in srgb,var(--danger-soft) 55%,transparent)}
+.esttab b.neg{color:var(--danger)}
 .cdet a{display:inline-flex;align-items:center;gap:6px;color:var(--accent-2);font-weight:700;text-decoration:none}
 .cdet a svg.i{width:15px;height:15px}
 .cacts{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;align-items:center}
@@ -480,6 +489,7 @@ tr.click{cursor:pointer}
   <symbol id="i-mouse" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v4"/></symbol>
   <symbol id="i-onb" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0"/><path d="M19 8v6M16 11h6"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></symbol>
   <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12.2a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.5L22 8H6"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
@@ -539,7 +549,7 @@ const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, estMin:[], uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -623,6 +633,7 @@ async function sbLoad(which){
   if((!which||which==="onb")) jobs.push(onbLoad());
   if((!which||which==="onbcfg")) jobs.push(onbLoadCfg());
   if(!inv){ await Promise.all(jobs); if(S.ready) refresh(); return; }
+  if(!which||which==="estmin") jobs.push(sb.from("estoque_minimos").select("*").then(({data,error})=>{ if(!error) S.estMin=data||[]; }));
   if(!which||which==="ativos") jobs.push(sb.from("ativos").select("*").then(({data,error})=>{ if(!error) S.items=(data||[]).map(rowToItem); }));
   if(!which||which==="usuarios") jobs.push(sb.from("usuarios").select("*").then(({data,error})=>{ if(!error) S.users=data||[]; }));
   if(!which||which==="termos") jobs.push(sb.from("termos").select(TCOLS).order("criado_em",{ascending:false}).then(({data,error})=>{ if(!error) termosChegaram(data||[]); }));
@@ -663,6 +674,7 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_ativos"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_checklist"},()=>sbDeb("onb"))
       .on("postgres_changes",{event:"*",schema:"public",table:"onboarding_compras"},()=>sbDeb("onb"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"estoque_minimos"},()=>sbDeb("estmin"))
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"onboarding_eventos"},p=>{ if(OB.sel && p.new && p.new.onboarding_id===OB.sel) sbDeb("onbev"); })
       .subscribe();
   }
@@ -774,7 +786,8 @@ function renderMenu(){
   if (SB_ROLE==="aprovador"){ document.getElementById("menu").innerHTML = btn(["aprovacoes","Aprovações","cart",nApr]) + btn(["onboarding","Onboarding","onb",null]); return; }
   const items = [["dashboard","Dashboard","grid",null], ...Object.entries(TYPES).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["usuarios","Usuários","users",S.users.length]];
   const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
-  const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Aprovações","cart",nApr],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
+  const nEst = sb ? (estPrecisa().length||null) : null;
+  const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Aprovações","cart",nApr],["estoque","Estoque","box",nEst],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
   document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
 function go(v){ if(SO_ONB() && !viewsPermitidas().includes(v)) v=viewsPermitidas()[0]; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
@@ -792,6 +805,7 @@ function render(){
   else if (S.view==="onboarding"){ if(OB.sel) m.innerHTML = onbDetalheHTML(); else { m.innerHTML = onbListShell(); updateOnbList(); } }
   else if (S.view==="onbconfig") m.innerHTML = onbCfgHTML();
   else if (S.view==="aprovacoes") m.innerHTML = aprovHTML();
+  else if (S.view==="estoque"){ m.innerHTML = estoqueHTML(); if(!EST.hist) estLoadHist().then(()=>{ if(S.view==="estoque") refresh(); }); }
   else if (TYPES[S.view]){ m.innerHTML = listShell(S.view); updateTable(); }
   else { S.view="dashboard"; m.innerHTML = dashboardHTML(); }
 }
@@ -806,6 +820,7 @@ function refresh(){
   else if (S.view==="onboarding"){ if(OB.sel) onbRedetalhe(); else updateOnbList(); }
   else if (S.view==="onbconfig") {}
   else if (S.view==="aprovacoes") document.getElementById("main").innerHTML = aprovHTML();
+  else if (S.view==="estoque"){ const ae=document.activeElement; if(!(ae&&ae.classList&&ae.classList.contains("estmin"))){ const y=window.scrollY; document.getElementById("main").innerHTML = estoqueHTML(); window.scrollTo(0,y); } }
   else updateTable();
   const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
 }
@@ -834,6 +849,7 @@ function dashboardHTML(){
   return `<div class="head"><div><h1>Dashboard</h1><div class="sub">${all.length} ativos cadastrados · ${S.users.length} usuários</div></div></div>
   <div class="tiles">${tiles}</div>
   ${oal?`<section class="card panel oalert">${oal}</section>`:""}
+  ${(()=>{ const e=estAlertHTML(); return e?`<section class="card panel oalert">${e}</section>`:""; })()}
   <div class="grid2">
     <section class="card panel"><h2>Status dos ativos</h2>${stackHTML(all)}<div class="legend">${legend}</div><div style="margin-top:18px">${cats}</div></section>
     <section class="card panel"><h2>Ativos por setor</h2><div class="bars">${bars}</div></section>
@@ -2212,7 +2228,7 @@ function onbClick(a, el, id){
     cemail:()=>compraEmail(id, el.dataset.cid), ccopy:()=>compraEnviar("copiar"), cmail:()=>compraEnviar("email"),
     capr:()=>compraDecidir(el.dataset.cid,"aprovar"), crep:()=>compraDecidir(el.dataset.cid,"reprovar"), caprtodas:()=>compraAprovarTodas(id),
     ccomprar:()=>compraComprar(el.dataset.cid), creenv:()=>compraStatus(el.dataset.cid,"solicitada","Compra enviada de novo para aprovação."),
-    ccanc:()=>compraCancelarModal(el.dataset.cid), oexcluir:()=>onbExcluirModal(id), cexcluir:()=>compraExcluirModal(el.dataset.cid), ccancok:()=>compraStatus(el.dataset.cid,"cancelada","Compra cancelada."),
+    ccanc:()=>compraCancelarModal(el.dataset.cid), erepor:()=>estReporForm(el.dataset.k), eexport:()=>exportEstoque(), etodas:()=>{ EST.todas=!EST.todas; render(); }, oexcluir:()=>onbExcluirModal(id), cexcluir:()=>compraExcluirModal(el.dataset.cid), ccancok:()=>compraStatus(el.dataset.cid,"cancelada","Compra cancelada."),
   };
   if(!H[a]) return false; H[a](); return true;
 }
@@ -2228,6 +2244,7 @@ function onbSubmit(f){
   if(f.id==="cDecForm"){ submitDecisao(f); return true; }
   if(f.id==="cDecTodas"){ submitAprovarTodas(f); return true; }
   if(f.id==="cCompForm"){ submitComprar(f); return true; }
+  if(f.id==="eRepForm"){ submitReposicao(f); return true; }
   if(f.id==="oExcForm"){ submitExcluirOnb(f); return true; }
   if(f.id==="cExcForm"){ submitExcluirCompra(f); return true; }
   if(f.id==="cfgEmailForm"){ salvarCfg("compras_email", document.getElementById("cfg_email").value.trim()); return true; }
@@ -2245,6 +2262,7 @@ function onbChange(t){
   if(t.id==="ode"){ OB.de=v; updateOnbList(); return true; }
   if(t.id==="oate"){ OB.ate=v; updateOnbList(); return true; }
   if(t.id==="cr_tipo"){ compraRecLinhas(); return true; }
+  if(t.classList && t.classList.contains("estmin")){ estSalvarMin(t); return true; }
   if(t.classList && t.classList.contains("cesel")){ if(CEM){ t.checked?CEM.sel.add(+t.value):CEM.sel.delete(+t.value); compraTextoAtualiza(); } return true; }
   if(t.id==="oStatusSel"){ const o=S.onb.find(x=>x.id===t.dataset.id); if(o&&v!==o.status) onbUpd(o.id,{status:v},`Status: ${OST[v][0]}.`).then(ok=>{ if(!ok) onbRedetalhe(); }); return true; }
   if(t.dataset && t.dataset.ck){ onbCheckToggle(+t.dataset.ck, t.checked); return true; }
@@ -2302,7 +2320,7 @@ function compraBotoes(c, o, ti){
   if(ti && ["aprovada","comprada"].includes(c.status)) x.push(b("creceber","check","Receber","primary"));
   if(ti && c.status==="reprovada") x.push(b("creenv","undo","Reenviar para aprovação"));
   if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("cedit","edit","Editar"));
-  if(ti && pend) x.push(b("cemail","mail","E-mail"));
+  if(ti && pend && c.onboarding_id) x.push(b("cemail","mail","E-mail"));
   if(ti && (CABERTAS.includes(c.status)||c.status==="reprovada")) x.push(b("ccanc","x","Cancelar","ghost"));
   if(SB_ROLE==="admin" && !["aprovada","comprada","recebida"].includes(c.status)) x.push(b("cexcluir","trash","Excluir","ghost del"));
   return x.length?`<div class="cacts">${x.join("")}</div>`:"";
@@ -2320,7 +2338,7 @@ function compraPainel(o){
   </section>`;
 }
 function compraForm(oid, cid, pedido){
-  const c=cid?S.onbCompras.find(x=>x.id===+cid):null, o=S.onb.find(x=>x.id===(c?c.onboarding_id:oid)); if(!o) return;
+  const c=cid?S.onbCompras.find(x=>x.id===+cid):null, o=c&&!c.onboarding_id?{id:"",nome:"reposição de estoque"}:S.onb.find(x=>x.id===(c?c.onboarding_id:oid)); if(!o) return;
   const op=!c&&pedido?opcEquip(pedido):null;
   const d=c||{item:pedido||"",tipo_ativo:op?op.tipo_ativo:"",subtipo:op?op.subtipo:"",quantidade:1,link:"",fornecedor:"",valor_unit:null,obs:"",pedido:"",previsao:null,status:"solicitada"};
   const stOps=[...CABERTAS,"reprovada","cancelada"];
@@ -2414,10 +2432,10 @@ function nextNames(t, n){
   return Array.from({length:n},(_,i)=>p+String(max+1+i).padStart(3,"0"));
 }
 function compraReceber(cid){
-  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const o=S.onb.find(x=>x.id===c.onboarding_id);
+  const c=S.onbCompras.find(x=>x.id===+cid); if(!c) return; const o=S.onb.find(x=>x.id===c.onboarding_id)||{status:"",nome:""};
   const tipo=c.tipo_ativo||(opcEquip(c.item)||{}).tipo_ativo||"";
   openModal(`<h2>Receber compra: ${c.quantidade}× ${esc(c.item)}</h2><form class="f" id="oRecForm" data-cid="${c.id}">
-    <p style="margin:0">Cadastre ${c.quantidade>1?"os equipamentos que chegaram":"o equipamento que chegou"}. ${OST_ABERTOS.includes(o.status)?`Ele${c.quantidade>1?"s":""} entra${c.quantidade>1?"m":""} no inventário como <b>Disponível</b> e já fica${c.quantidade>1?"m":""} <b>reservado${c.quantidade>1?"s":""}</b> para ${esc(o.nome)}.`:`A solicitação de ${esc(o.nome)} está encerrada, então ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>, sem vínculo.`}</p>
+    <p style="margin:0">Cadastre ${c.quantidade>1?"os equipamentos que chegaram":"o equipamento que chegou"}. ${!c.onboarding_id?`Reposição de estoque: ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>.`:OST_ABERTOS.includes(o.status)?`Ele${c.quantidade>1?"s":""} entra${c.quantidade>1?"m":""} no inventário como <b>Disponível</b> e já fica${c.quantidade>1?"m":""} <b>reservado${c.quantidade>1?"s":""}</b> para ${esc(o.nome)}.`:`A solicitação de ${esc(o.nome)} está encerrada, então ${c.quantidade>1?"eles entram":"ele entra"} no inventário como <b>Disponível</b>, sem vínculo.`}</p>
     <fieldset>
       <label class="fld"><span>Categoria <i>*</i></span><select id="cr_tipo" required><option value="">Escolha…</option>${Object.entries(TYPES).map(([k,t])=>`<option value="${k}" ${tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
       <label class="fld"><span>Fabricante (todos)</span><input id="cr_fab" maxlength="60"></label>
@@ -2438,7 +2456,7 @@ function compraDecidir(cid, tipo){
       <p class="cdet">${esc([c.fornecedor, c.valor_unit!=null?brl(c.valor_unit)+"/un.":""].filter(Boolean).join(" · ")||"Sem fornecedor ou valor informado")}</p>
       ${linkSeguro(c.link)?`<p class="cdet"><a href="${esc(linkSeguro(c.link))}" target="_blank" rel="noopener noreferrer">${ICON("link")}Abrir link da loja</a></p>`:""}
       ${c.obs?`<p class="cdet" style="white-space:pre-wrap">${esc(c.obs)}</p>`:""}
-      <p class="cdet muted">Para ${esc(o?o.nome:"")}${o&&o.data_admissao?` · admissão ${esc(fDia(o.data_admissao))}`:""} · pedido por ${esc(nomeDe(c.criado_por))}</p></div>
+      <p class="cdet muted">${c.onboarding_id?"Para ":""}${esc(o?o.nome:"Reposição de estoque")}${o&&o.data_admissao?` · admissão ${esc(fDia(o.data_admissao))}`:""} · pedido por ${esc(nomeDe(c.criado_por))}</p></div>
     <label class="fld"><span>${tipo==="aprovar"?"Observação (opcional)":"Motivo da reprovação <i>*</i>"}</span><textarea id="cd_obs" maxlength="500" ${tipo==="aprovar"?"":"required"} placeholder="${tipo==="aprovar"?"Ex.: pode comprar no cartão corporativo":"Ex.: usar o equipamento disponível na filial"}"></textarea></label>
     <div class="foot"><button type="button" class="btn ghost" data-act="close">Voltar</button><button class="btn ${tipo==="aprovar"?"primary":"danger"}" id="cdBtn">${tipo==="aprovar"?ICON("check")+"Aprovar":ICON("x")+"Reprovar"}</button></div>
   </form>`,"sm");
@@ -2492,6 +2510,7 @@ function compraCancelarModal(cid){
 function aprovHTML(){
   const pend=S.onbCompras.filter(c=>CPEND.includes(c.status)), grupos=new Map();
   pend.forEach(c=>{ if(!grupos.has(c.onboarding_id)) grupos.set(c.onboarding_id,[]); grupos.get(c.onboarding_id).push(c); });
+  const repo=grupos.get(null)||[]; grupos.delete(null);
   const lista=[...grupos].map(([oid,cs])=>({o:S.onb.find(o=>o.id===oid),cs})).filter(g=>g.o).sort((a,b)=>String(a.o.data_admissao||"9").localeCompare(String(b.o.data_admissao||"9")));
   const totGeral=pend.reduce((s,c)=>s+(c.valor_unit!=null?c.valor_unit*c.quantidade:0),0);
   const dec=S.onbCompras.filter(c=>c.aprovado_por&&!CPEND.includes(c.status)).sort((a,b)=>String(b.aprovado_em).localeCompare(String(a.aprovado_em))).slice(0,15);
@@ -2503,9 +2522,11 @@ function aprovHTML(){
       ${tot?`<p style="margin:6px 0 0;font-size:14px">Total: <b>${esc(brl(tot))}</b></p>`:""}</section>`; };
   return `<div class="head"><div><h1>Aprovações de compra</h1><div class="sub">${pend.length?`${pend.length} ${pend.length===1?"compra aguardando":"compras aguardando"} aprovação${totGeral?` · ${brl(totGeral)}`:""}`:"Nenhuma compra aguardando aprovação"}</div></div></div>
   ${!podeAprovar()?`<p class="note" style="margin:0 0 18px">Só o aprovador de compras e os administradores podem aprovar. Aqui você acompanha o que está pendente.</p>`:""}
-  ${lista.length?lista.map(card).join(""):`<div class="card empty"><b>Tudo em dia</b>Quando a TI pedir a compra de um equipamento para um novo colaborador, ela aparece aqui para você aprovar.</div>`}
+  ${repo.length?`<section class="card panel apr"><div class="panelhead"><div><h2 style="margin:0">Reposição de estoque</h2><div class="muted" style="font-size:14px">Compras para manter o mínimo de equipamentos disponíveis, sem colaborador definido</div></div>${!SO_ONB()?`<div class="rowacts"><button class="btn sm" data-act="go" data-v="estoque">${ICON("box")}Ver estoque</button></div>`:""}</div>
+    ${repo.map(c=>compraRow(c,{id:""},false)).join("")}</section>`:""}
+  ${lista.length||repo.length?lista.map(card).join(""):`<div class="card empty"><b>Tudo em dia</b>Quando a TI pedir a compra de um equipamento para um novo colaborador, ela aparece aqui para você aprovar.</div>`}
   ${dec.length?`<section class="card panel" style="margin-top:20px"><h2>Decisões recentes</h2><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>Data</th><th>Colaborador</th><th>Item</th><th>Decisão</th><th>Por</th></tr></thead><tbody>
-    ${dec.map(c=>{ const o=S.onb.find(o=>o.id===c.onboarding_id)||{}; return `<tr class="click" data-act="oopen" data-id="${o.id||""}"><td>${esc(fDH(c.aprovado_em))}</td><td class="dev">${esc(o.nome||"—")}</td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}${c.decisao_obs?`<br><span class="muted" style="font-size:13px">${esc(c.decisao_obs)}</span>`:""}</td><td>${esc(nomeDe(c.aprovado_por))}</td></tr>`; }).join("")}
+    ${dec.map(c=>{ const o=S.onb.find(o=>o.id===c.onboarding_id)||{nome:c.onboarding_id?"—":"Reposição de estoque"}; return `<tr class="click" data-act="oopen" data-id="${o.id||""}"><td>${esc(fDH(c.aprovado_em))}</td><td class="dev">${esc(o.nome||"—")}</td><td>${c.quantidade}× ${esc(c.item)}</td><td>${cPill(c)}${c.decisao_obs?`<br><span class="muted" style="font-size:13px">${esc(c.decisao_obs)}</span>`:""}</td><td>${esc(nomeDe(c.aprovado_por))}</td></tr>`; }).join("")}
   </tbody></table></div></section>`:""}`;
 }
 
@@ -2544,6 +2565,131 @@ async function submitExcluirCompra(f){
   const {error}=await sb.rpc("onboarding_compra_excluir",{p_id:+f.dataset.cid,p_motivo:document.getElementById("cx_mot").value.trim()});
   if(error){ btn.disabled=false; onbErr(error); return; }
   closeModal(); await onbReload(); if(S.view==="aprovacoes") render(); toast("Compra excluída.");
+}
+
+// ---------- estoque e ressuprimento ----------
+// Estoque = ativos "Disponível" de cada categoria (periféricos: por tipo). Nada é digitado à parte.
+// Demanda = itens pedidos em onboardings abertos que ainda não têm ativo vinculado nem compra própria.
+// Projetado = disponível + reposição em andamento − demanda.
+const EST = { hist:null, carregando:false, todas:false };
+const estChave = (t, sub) => t==="periferico" ? `periferico:${sub||"Outro"}` : t;
+const estSub = x => (x && String(x).trim()) || "Outro";
+const estDaCat = (r, t, sub) => t===r.t && (t!=="periferico" || estSub(sub)===r.sub);
+async function estLoadHist(){
+  if(!sb || EST.carregando || SO_ONB()) return; EST.carregando=true;
+  try{
+    const desde=new Date(Date.now()-90*864e5).toISOString();
+    const rows=await pageAll(()=>sb.from("ativos_historico").select("ativo_id,em").eq("campo","status").eq("para","Em uso").gte("em",desde).order("id"));
+    EST.hist=rows;
+  }catch(e){ console.error(e); EST.hist=[]; }
+  EST.carregando=false;
+}
+function estLinhas(){
+  const subs=new Set([...S.items.filter(i=>i.tipo==="periferico").map(i=>estSub(i.subtipo)),
+    ...S.onbOpc.filter(o=>o.grupo==="equipamento"&&o.tipo_ativo==="periferico"&&o.subtipo).map(o=>o.subtipo),
+    ...S.estMin.filter(m=>m.tipo_ativo==="periferico").map(m=>estSub(m.subtipo))]);
+  const cats=[...Object.keys(TYPES).filter(k=>k!=="periferico").map(k=>({k,t:k,sub:null,nome:TYPES[k].label,um:TYPES[k].one})),
+    ...[...subs].sort((a,b)=>a.localeCompare(b,"pt-BR")).map(s=>({k:estChave("periferico",s),t:"periferico",sub:s,nome:`${s} (periférico)`,um:s}))];
+  const dem=[]; S.onb.filter(o=>OST_ABERTOS.includes(o.status)).forEach(o=>casar(o).ped.forEach(r=>{ if(!r.links.length&&!r.compra&&r.op&&r.op.tipo_ativo) dem.push({o,t:r.op.tipo_ativo,sub:r.op.subtipo}); }));
+  const rep=S.onbCompras.filter(c=>c.origem==="reposicao"&&CABERTAS.includes(c.status));
+  const porId=new Map(S.items.map(i=>[i.id,i]));
+  return cats.map(r=>{
+    const it=S.items.filter(i=>estDaCat(r,i.tipo,i.subtipo)), n=st=>it.filter(i=>i.status===st).length;
+    const disp=n("Disponível"), resv=n("Reservado"), man=n("Manutenção"), uso=n("Em uso");
+    const emRep=rep.filter(c=>estDaCat(r,c.tipo_ativo,c.subtipo)).reduce((s,c)=>s+c.quantidade,0);
+    const ds=dem.filter(d=>estDaCat(r,d.t,d.sub));
+    const m=S.estMin.find(m=>m.chave===r.k), temMin=!!m&&(m.minimo>0||m.ideal!=null);
+    const min=temMin?m.minimo:null, ideal=temMin?(m.ideal!=null?m.ideal:m.minimo):null;
+    const proj=disp+emRep-ds.length;
+    const cons=EST.hist?EST.hist.filter(h=>{ const i=porId.get(h.ativo_id); return i&&estDaCat(r,i.tipo,i.subtipo); }).length:null;
+    let sit="ok";
+    if(min==null) sit=ds.length>disp?"falta":"sem";
+    else if(proj<min) sit="repor";
+    else if(disp-ds.length<min) sit="chegando";
+    const alvo=ideal!=null?ideal:(min||0), sug=Math.max(0, alvo-proj, ds.length-disp-emRep);
+    return {...r,disp,resv,man,uso,emRep,demanda:ds.length,dem:ds,proj,min,ideal:temMin?m.ideal:null,sit,sug,total:it.length,cons};
+  });
+}
+const ESIT = { repor:["Repor","st-bad"], falta:["Vai faltar","st-bad"], chegando:["Reposição a caminho","st-res"], ok:["OK","st-ok"], sem:["Sem mínimo","st-sol"] };
+const estPrecisa = () => sb && !SO_ONB() ? estLinhas().filter(r=>r.sit==="repor"||r.sit==="falta") : [];
+function estAlertHTML(){
+  const L=estPrecisa(); if(!L.length) return "";
+  return `<div class="panelhead"><h2>Estoque para repor (${L.length})</h2><button class="linkbtn" data-act="go" data-v="estoque">Ver estoque</button></div>
+  <div class="list">${L.map(r=>`<div class="al late" data-act="go" data-v="estoque"><i></i><b>${esc(r.nome)}</b><span>${r.disp} ${r.disp===1?"disponível":"disponíveis"}${r.min!=null?` · mínimo ${r.min}`:""}${r.demanda?` · ${r.demanda} pedido(s) de onboarding`:""}${r.emRep?` · ${r.emRep} em reposição`:""}</span>${ICON("eye")}</div>`).join("")}</div>`;
+}
+function estoqueHTML(){
+  if(!sb) return `<div class="head"><div><h1>Estoque</h1><div class="sub">Disponível na versão com login.</div></div></div>`;
+  const ti=isTI(), L=estLinhas(), vis=EST.todas?L:L.filter(r=>r.total||r.min!=null||r.demanda||r.emRep);
+  const prec=L.filter(r=>r.sit==="repor"||r.sit==="falta");
+  const reps=S.onbCompras.filter(c=>c.origem==="reposicao"&&(CABERTAS.includes(c.status)||c.status==="reprovada"));
+  const num=(r,campo,v)=>ti?`<input type="number" min="0" max="999" class="estmin" data-k="${esc(r.k)}" data-t="${r.t}" data-sub="${esc(r.sub||"")}" data-campo="${campo}" value="${v==null?"":v}" aria-label="${campo==="minimo"?"Mínimo":"Ideal"} de ${esc(r.nome)}" placeholder="—">`:(v==null?`<span class="muted">—</span>`:v);
+  const sit=r=>{ const [l,c]=ESIT[r.sit]; return `<span class="pill ${c}">${l}</span>`; };
+  const tit=(t,txt)=>`<th title="${esc(txt)}">${t}</th>`;
+  return `<div class="head"><div><h1>Estoque</h1><div class="sub">${prec.length?`${prec.length} ${prec.length===1?"categoria precisa":"categorias precisam"} de reposição`:"Nenhuma categoria abaixo do mínimo"}${reps.length?` · ${reps.length} ${reps.length===1?"reposição em andamento":"reposições em andamento"}`:""}</div></div>
+    <div class="actions"><button class="btn" data-act="eexport">${ICON("down")}Exportar Excel</button></div></div>
+  <div class="card tablewrap"><table class="esttab"><thead><tr><th>Categoria</th>${tit("Disponível","Ativos com status Disponível")}${tit("Reservado","Separados para um onboarding")}
+    ${tit("Pedidos","Itens pedidos em onboardings abertos que ainda não têm ativo nem compra própria")}${tit("Em reposição","Compras de reposição aprovadas ou aguardando aprovação")}${tit("Projetado","Disponível + em reposição − pedidos")}
+    ${tit("Mínimo","Quando o projetado ficar abaixo, o sistema pede reposição")}${tit("Ideal","Até quanto repor (vazio = o mínimo)")}${tit("Saídas 90 dias","Quantas vezes um ativo desta categoria passou para Em uso nos últimos 90 dias")}<th>Situação</th><th class="th-r">Ação</th></tr></thead>
+  <tbody>${vis.map(r=>`<tr class="${r.sit==="repor"||r.sit==="falta"?"elow":""}">
+    <td class="dev">${TYPES[r.t]?`<button class="linkbtn" style="padding:0;text-align:left" data-act="go" data-v="${r.t}">${esc(r.nome)}</button>`:esc(r.nome)}<small class="esub">${r.uso} em uso${r.man?` · ${r.man} em manutenção`:""}</small></td>
+    <td class="num"><b>${r.disp}</b></td><td class="num">${r.resv||`<span class="muted">0</span>`}</td>
+    <td class="num">${r.demanda?`<span title="${esc(r.dem.map(d=>d.o.nome).join(", "))}">${r.demanda}</span>`:`<span class="muted">0</span>`}</td>
+    <td class="num">${r.emRep||`<span class="muted">0</span>`}</td>
+    <td class="num"><b class="${r.min!=null&&r.proj<r.min?"neg":""}">${r.proj}</b></td>
+    <td>${num(r,"minimo",r.min)}</td><td>${num(r,"ideal",r.ideal)}</td>
+    <td class="num">${r.cons==null?`<span class="muted">…</span>`:r.cons}</td>
+    <td>${sit(r)}</td>
+    <td><div class="rowacts">${ti&&r.sug>0?`<button class="btn sm primary" data-act="erepor" data-k="${esc(r.k)}">${ICON("cart")}Repor ${r.sug}</button>`:ti?`<button class="btn sm ghost" data-act="erepor" data-k="${esc(r.k)}">${ICON("cart")}Repor</button>`:""}</div></td>
+  </tr>`).join("")}</tbody></table></div>
+  <p class="muted" style="font-size:13px;margin:10px 0 0">${L.length>vis.length?`<button class="linkbtn" data-act="etodas">${EST.todas?"Ocultar categorias vazias":`Mostrar todas as categorias (${L.length-vis.length} vazias)`}</button> · `:""}Projetado = disponível + em reposição − pedidos de onboarding. Defina o <b>mínimo</b> de cada categoria; o <b>ideal</b> é até quanto repor.</p>
+  <section class="card panel" style="margin-top:20px"><div class="panelhead"><h2>Reposições em andamento</h2></div>
+    ${reps.length?reps.map(c=>compraRow(c,{id:""},ti)).join(""):`<p class="muted" style="margin:0">Nenhuma reposição em andamento. Use “Repor” na categoria: o pedido vai para o aprovador em <b>Aprovações</b>.</p>`}
+  </section>`;
+}
+async function estSalvarMin(el){
+  const tr=el.closest("tr"), get=c=>tr.querySelector(`.estmin[data-campo=${c}]`).value.trim();
+  const mi=get("minimo"), id=get("ideal");
+  const row={chave:el.dataset.k,tipo_ativo:el.dataset.t,subtipo:el.dataset.t==="periferico"&&el.dataset.sub!=="Outro"?el.dataset.sub:null,
+    minimo:Math.max(0,parseInt(mi,10)||0), ideal:id===""?null:Math.max(0,parseInt(id,10)||0)};
+  const {error}=await sb.from("estoque_minimos").upsert(row); if(error){ onbErr(error); return; }
+  await sbLoad("estmin"); toast("Mínimo salvo.");
+}
+function estReporForm(k){
+  const r=estLinhas().find(x=>x.k===k); if(!r) return;
+  const just=`Reposição de estoque: ${r.disp} ${r.disp===1?"disponível":"disponíveis"}${r.min!=null?`, mínimo ${r.min}`:""}${r.ideal!=null?`, ideal ${r.ideal}`:""}${r.demanda?`, ${r.demanda} ${r.demanda===1?"pedido":"pedidos"} de onboarding aguardando (${r.dem.map(d=>d.o.nome).join(", ")})`:""}${r.emRep?`, ${r.emRep} já em reposição`:""}${r.cons!=null?`, ${r.cons} ${r.cons===1?"saída":"saídas"} nos últimos 90 dias`:""}.`;
+  openModal(`<h2>Repor estoque · ${esc(r.nome)}</h2>
+  <form class="f" id="eRepForm" data-k="${esc(r.k)}">
+    <div class="osum" style="margin:0"><div class="card"><label>Disponível</label><b>${r.disp}</b></div><div class="card"><label>Pedidos</label><b>${r.demanda}</b></div><div class="card"><label>Projetado</label><b>${r.proj}</b></div><div class="card"><label>Mínimo / ideal</label><b>${r.min==null?"—":r.min}${r.ideal!=null?` / ${r.ideal}`:""}</b></div></div>
+    <fieldset>
+      <label class="fld"><span>Item <i>*</i></span><input name="item" required maxlength="150" value="${esc(r.um)}"></label>
+      <label class="fld"><span>Quantidade</span><input name="quantidade" type="number" min="1" max="50" value="${Math.max(1,r.sug)}"></label>
+      <label class="fld wide"><span>Link do produto</span><input name="link" type="url" maxlength="1000" placeholder="https://"></label>
+      <label class="fld"><span>Fornecedor / loja</span><input name="fornecedor" maxlength="100"></label>
+      <label class="fld"><span>Valor unitário (R$)</span><input name="valor_unit" inputmode="decimal" maxlength="15" placeholder="0,00"></label>
+      <label class="fld wide"><span>Justificativa</span><textarea name="obs" maxlength="1000">${esc(just)}</textarea></label>
+    </fieldset>
+    <p class="muted" style="margin:0;font-size:13px">O pedido vai para o aprovador em <b>Aprovações</b>. Quando chegar, use “Receber”: os equipamentos entram no inventário como Disponível.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="erBtn">${ICON("cart")}Enviar para aprovação</button></div>
+  </form>`,"md");
+}
+async function submitReposicao(f){
+  const r=estLinhas().find(x=>x.k===f.dataset.k); if(!r) return;
+  const fd=new FormData(f), g=k=>String(fd.get(k)||"").trim();
+  const vs=g("valor_unit").replace(/[^\d,.-]/g,""), valor=vs?Number(vs.includes(",")?vs.replace(/\./g,"").replace(",","."):vs):null;
+  if(vs&&(isNaN(valor)||valor<0)){ toast("Valor inválido."); return; }
+  const link=g("link"); if(link&&!linkSeguro(link)){ toast("O link precisa começar com http:// ou https://"); return; }
+  const btn=document.getElementById("erBtn"); btn.disabled=true;
+  const {error}=await sb.from("onboarding_compras").insert({onboarding_id:null,item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),
+    tipo_ativo:r.t,subtipo:r.t==="periferico"&&r.sub!=="Outro"?r.sub:null,link,fornecedor:g("fornecedor"),valor_unit:valor,obs:g("obs")});
+  if(error){ btn.disabled=false; onbErr(error); return; }
+  closeModal(); await sbLoad("onb"); toast("Reposição enviada para aprovação.");
+}
+function exportEstoque(){
+  if(!window.XLSX){ toast("A biblioteca de Excel não carregou. Recarregue a página."); return; }
+  const rows=estLinhas().map(r=>({"Categoria":r.nome,"Disponível":r.disp,"Reservado":r.resv,"Manutenção":r.man,"Em uso":r.uso,"Pedidos de onboarding":r.demanda,"Em reposição":r.emRep,"Projetado":r.proj,
+    "Mínimo":r.min==null?"":r.min,"Ideal":r.ideal==null?"":r.ideal,"Saídas 90 dias":r.cons==null?"":r.cons,"Situação":ESIT[r.sit][0],"Sugestão de compra":r.sug}));
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),"Estoque");
+  saveFile(`estoque_TI_${hojeISO()}.xlsx`,new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})])).then(ok=>{ if(ok) toast("Estoque exportado."); });
 }
 function compraRecLinhas(){
   const f=document.getElementById("oRecForm"); if(!f) return; const c=S.onbCompras.find(x=>x.id===+f.dataset.cid); const t=document.getElementById("cr_tipo").value;
@@ -2971,7 +3117,7 @@ document.addEventListener("change", e=>{
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape" && document.querySelector(".overlay")) closeModal(); });
 
-try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding","aprovacoes"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
+try{ const v=localStorage.getItem("ga-view"); if(v && (["dashboard","usuarios","etiquetas","inventario","termos","onboarding","aprovacoes","estoque"].includes(v)||TYPES[v])) S.view=v; }catch(e){}
 if (!S.view || S.view==="") S.view="dashboard";
 render();
 initCaps();
