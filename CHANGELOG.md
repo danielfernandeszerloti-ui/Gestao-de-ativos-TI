@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.10.0] — 2026-10-20
+### Adicionado
+- **Compras pedidas em chamados do helpdesk** entram em **Aprovações**:
+  - um card por chamado, com título, solicitante e setor, **Abrir chamado** e **Aprovar todas**;
+  - aprovar, reprovar, registrar a compra e receber funcionam como nas outras compras, e cada passo volta para o chamado;
+  - o solicitante recebe e-mail quando a compra é aprovada, reprovada e quando chega.
+- Seção **Compras de chamados em andamento** na tela Aprovações (aprovadas, compradas e reprovadas), com **Receber** para a TI.
+- **Receber** de compra de chamado cadastra o equipamento como **Reservado** para o solicitante. Para item que não é patrimônio (cabo, toner, licença), a opção **Não entra no inventário** só marca como recebida.
+- A ficha do equipamento mostra para quem ele está reservado, com link para o chamado.
+- Banco: colunas `chamado_id` e `chamado_info` em `onboarding_compras`, origem `chamado` (migração `20261020_compras_de_chamados.sql`, a mesma do helpdesk).
+
 ## [2.9.0] — 2026-10-13
 ### Adicionado
 - **Infraestrutura nas Aprovações**: botão **Solicitar compra** na ficha de cada equipamento de infra e **Nova compra** na Visão geral. Finalidades:
