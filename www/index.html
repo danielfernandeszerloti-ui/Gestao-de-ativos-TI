@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.10.0"></script>
+<script src="termo-pdf.js?v=2.10.1"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -949,6 +949,7 @@ function listShell(t){
     <div class="actions">
       <button class="btn" data-act="import">${ICON("up")}Importar Excel</button>
       <button class="btn" data-act="export">${ICON("down")}Exportar Excel</button>
+      ${T.infra&&S.canWrite?`<button class="btn" data-act="icompra" data-id="" data-tipo="${t}">${ICON("cart")}Solicitar compra</button>`:""}
       <button class="btn primary" data-act="new">${ICON("plus")}Novo ${T.one}</button>
     </div></div>
   <div class="card filters">
@@ -3181,20 +3182,20 @@ function abrirSistema(sid){ IF.sisSel=+sid; closeModal(); go("sistemas"); setTim
 
 const FINAL = {novo:"Equipamento novo",substituicao:"Substituição",renovacao:"Renovação",manutencao:"Manutenção"};
 const CAMPO_REN = {garantia_ate:"garantia",licenca_ate:"licença",suporte:"contrato de suporte"};
-function infraCompraForm(ativoId){
-  const x=ativoId?ativoDe(ativoId):null;
+function infraCompraForm(ativoId, tipo){
+  const x=ativoId?ativoDe(ativoId):null; tipo=x?x.tipo:(TYPES[tipo]&&TYPES[tipo].infra?tipo:"");
   const sp=x?substPrev(x):"";
   const just=x?[sp?`Substituição prevista para ${fDia(sp)}`:"", x.garantia_ate?`garantia ${diasAte(x.garantia_ate)<0?"vencida em":"até"} ${fDia(x.garantia_ate)}`:"", x.licenca_ate?`licença ${diasAte(x.licenca_ate)<0?"vencida em":"até"} ${fDia(x.licenca_ate)}`:"",
     x.data_aquisicao?`adquirido em ${fDia(x.data_aquisicao)}`:"", sistemasDe(x.id).length?`atende ${sistemasDe(x.id).map(s=>s.nome).join(", ")}`:""].filter(Boolean).join("; "):"";
   const nome=x?`${tipoUm(x.tipo)} ${x.dispositivo}${x.hostname?` (${x.hostname})`:""}`:"";
-  const fins=x?["substituicao","renovacao","manutencao"]:["novo"];
-  const sug={substituicao:x?`Substituição de ${nome}`:"",renovacao:x?`Renovação de garantia · ${nome}`:"",manutencao:x?`Peça/serviço para ${nome}`:"",novo:""};
-  openModal(`<h2>Solicitar compra${x?` · ${esc(x.dispositivo)}`:" de infraestrutura"}</h2>
-  <form class="f" id="iCompraForm" data-id="${x?x.id:""}" data-sug='${esc(JSON.stringify(sug))}'>
+  const fins=x?["substituicao","renovacao","manutencao","novo"]:["novo"];
+  const sug={substituicao:x?`Substituição de ${nome}`:"",renovacao:x?`Renovação de garantia · ${nome}`:"",manutencao:x?`Peça/serviço para ${nome}`:"",novo:x?`${tipoUm(x.tipo)} ${[x.fabricante,x.modelo].filter(Boolean).join(" ")}`.trim():""};
+  openModal(`<h2>Solicitar compra${x?` · ${esc(x.dispositivo)}`:tipo?` · ${esc(tipoUm(tipo))} novo`:" de infraestrutura"}</h2>
+  <form class="f" id="iCompraForm" data-id="${x?x.id:""}" data-sug='${esc(JSON.stringify(sug))}' data-just="${esc(just)}">
     ${x?`<div class="seg" role="radiogroup" aria-label="Finalidade">${fins.map((k,i)=>`<label><input type="radio" name="finalidade" value="${k}" ${i===0?"checked":""}>${FINAL[k]}</label>`).join("")}</div>`:`<input type="hidden" name="finalidade" value="novo">`}
     <fieldset>
       <label class="fld" id="ic_campo" hidden><span>O que renovar</span><select name="campo_renovacao">${Object.entries(CAMPO_REN).map(([k,l])=>`<option value="${k}">${l[0].toUpperCase()+l.slice(1)}</option>`).join("")}</select></label>
-      <label class="fld" id="ic_tipo" ${x?"hidden":""}><span>Categoria</span><select name="tipo_ativo">${Object.entries(TYPES).filter(([k,t])=>t.infra).map(([k,t])=>`<option value="${k}" ${x&&x.tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
+      <label class="fld" id="ic_tipo" ${x?"hidden":""}><span>Categoria</span><select name="tipo_ativo">${Object.entries(TYPES).filter(([k,t])=>t.infra).map(([k,t])=>`<option value="${k}" ${tipo===k?"selected":""}>${t.one}</option>`).join("")}</select></label>
       <label class="fld wide"><span>Item <i>*</i></span><input name="item" required maxlength="150" value="${esc(x?sug.substituicao:"")}" placeholder="Ex.: Switch 24 portas PoE gerenciável"></label>
       <label class="fld"><span>Quantidade</span><input name="quantidade" type="number" min="1" max="50" value="1"></label>
       <label class="fld"><span>Valor unitário (R$)</span><input name="valor_unit" inputmode="decimal" maxlength="15" placeholder="0,00"></label>
@@ -3209,7 +3210,8 @@ function infraCompraForm(ativoId){
 function infraCompraFin(f){
   const fin=(f.querySelector("input[name=finalidade]:checked")||f.querySelector("input[name=finalidade]")).value, sug=JSON.parse(f.dataset.sug||"{}");
   f.querySelector("#ic_campo").hidden=fin!=="renovacao";
-  f.querySelector("#ic_tipo").hidden=!["novo","substituicao"].includes(fin)||(fin==="substituicao");
+  f.querySelector("#ic_tipo").hidden=fin!=="novo";
+  const ob=f.querySelector("[name=obs]"), just=f.dataset.just||""; if(fin==="novo"&&ob.value===just) ob.value=""; else if(fin!=="novo"&&!ob.value) ob.value=just;
   const it=f.querySelector("[name=item]"); if(Object.values(sug).includes(it.value)||!it.value) it.value=sug[fin]||"";
   if(fin==="renovacao"){ const cr=f.querySelector("[name=campo_renovacao]").value; const x=ativoDe(f.dataset.id); if(x&&Object.values(sug).includes(it.value)||it.value.startsWith("Renovação de")) it.value=`Renovação de ${CAMPO_REN[cr]} · ${x?`${tipoUm(x.tipo)} ${x.dispositivo}`:""}`; }
 }
@@ -3218,7 +3220,7 @@ async function submitInfraCompra(f){
   const vs=g("valor_unit").replace(/[^\d,.-]/g,""), valor=vs?Number(vs.includes(",")?vs.replace(/\./g,"").replace(",","."):vs):null;
   if(vs&&(isNaN(valor)||valor<0)){ toast("Valor inválido."); return; }
   const link=g("link"); if(link&&!linkSeguro(link)){ toast("O link precisa começar com http:// ou https://"); return; }
-  const row={onboarding_id:null,finalidade:fin,ativo_ref:x?x.id:null,item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),
+  const row={onboarding_id:null,finalidade:fin,ativo_ref:x&&fin!=="novo"?x.id:null,item:g("item"),quantidade:Math.min(50,Math.max(1,parseInt(g("quantidade"),10)||1)),
     tipo_ativo:fin==="substituicao"?x.tipo:fin==="novo"?g("tipo_ativo"):null,campo_renovacao:fin==="renovacao"?g("campo_renovacao"):null,link,fornecedor:g("fornecedor"),valor_unit:valor,obs:g("obs")};
   document.getElementById("icpBtn").disabled=true;
   const {error}=await sb.from("onboarding_compras").insert(row);
@@ -3249,7 +3251,7 @@ function infraClick(a, el){
     imant:()=>mantForm(id), imantrm:()=>infraRemover("ativos_manutencoes",el.dataset.mid,id,"Manutenção removida."),
     irack:()=>rackForm(el.dataset.rid), irackrm:()=>{ closeModal(); infraRemover("infra_racks",el.dataset.rid,null,"Rack removido."); },
     isis:()=>abrirSistema(el.dataset.sid), isisedit:()=>sisForm(el.dataset.sid), isisrm:()=>{ closeModal(); infraRemover("infra_sistemas",el.dataset.sid,null,"Sistema removido."); },
-    isisdep:()=>sisDepForm(el.dataset.sid), icompra:()=>infraCompraForm(id||null), cconcluir:()=>compraConcluirForm(el.dataset.cid), isisdeprm:()=>infraRemover("infra_sistema_itens",el.dataset.did,null,"Dependência removida."),
+    isisdep:()=>sisDepForm(el.dataset.sid), icompra:()=>infraCompraForm(id||null, el.dataset.tipo), cconcluir:()=>compraConcluirForm(el.dataset.cid), isisdeprm:()=>infraRemover("infra_sistema_itens",el.dataset.did,null,"Dependência removida."),
   };
   if(!H[a]) return false; H[a](); return true;
 }

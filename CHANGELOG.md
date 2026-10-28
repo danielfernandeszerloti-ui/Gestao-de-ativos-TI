@@ -1,5 +1,9 @@
 # Changelog
 
+## [2.10.1] — 2026-10-28
+### Adicionado
+- Compra de **equipamento novo** de infraestrutura direto da tela de cada categoria (botão **Solicitar compra** em Switches, Access points etc., com a categoria já escolhida) e pela ficha de um equipamento (opção **Equipamento novo**, sugerindo o mesmo fabricante e modelo).
+
 ## [2.10.0] — 2026-10-20
 ### Adicionado
 - **Compras pedidas em chamados do helpdesk** entram em **Aprovações**:
