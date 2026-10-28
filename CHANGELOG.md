@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.11.0] — 2026-10-28
+### Adicionado
+- **Compras centralizadas**: a tela Aprovações virou **Compras** para a TI (o aprovador continua vendo “Aprovações”), com o botão **Nova compra**:
+  - **Equipamento (patrimônio)** de qualquer categoria: notebook, celular, monitor, periférico… entra como reposição de estoque (aparece na tela Estoque); categorias de infraestrutura entram no grupo Infraestrutura. Quando chega, **Receber** cadastra como Disponível.
+  - **Material / avulso** (cabo de rede, adaptador, toner, ferramenta…): novo grupo **Compras avulsas**. Quando chega, **Receber** só marca como recebida, sem cadastrar no inventário (ou cadastra, se escolher uma categoria).
+- Botão **Solicitar compra** na lista de todas as categorias, com a categoria já escolhida.
+- Seção **Em andamento** com as compras aprovadas, compradas ou reprovadas de todas as origens (onboarding, chamado, estoque, infraestrutura e avulsas).
+
 ## [2.10.1] — 2026-10-28
 ### Adicionado
 - Compra de **equipamento novo** de infraestrutura direto da tela de cada categoria (botão **Solicitar compra** em Switches, Access points etc., com a categoria já escolhida) e pela ficha de um equipamento (opção **Equipamento novo**, sugerindo o mesmo fabricante e modelo).
