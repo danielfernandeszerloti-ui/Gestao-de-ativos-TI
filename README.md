@@ -25,6 +25,7 @@ Todos usam o mesmo banco (Supabase), com login e atualização em tempo real.
 | Termos | **Termo de responsabilidade digital**: gerado na ficha do equipamento, assinado pelo colaborador por link ou QR Code (sem login) e exportado em PDF com página de evidências |
 | Etiquetas | PDF para gráfica (1 etiqueta por página), folha A4 de teste e CSV, com QR Code e código de barras Code128 |
 | Inventário | Conferência bipando as etiquetas com o coletor; pendentes, conferidos e códigos sem cadastro |
+| Domínio | Inventário automático dos computadores do Active Directory (coletor agendado, mesmo inventário em lote da Central de Diagnóstico). Atualiza sozinho fabricante, modelo, série, processador, geração, RAM, armazenamento e Windows dos ativos ligados; lista máquinas sem cadastro e alertas (BitLocker suspenso, disco C cheio, Windows 10, sem responder há 30 dias, usuário logado diferente do cadastro) |
 
 ### Status possíveis
 `Em uso` · `Disponível` · `Reservado` (separado para um onboarding) · `Manutenção` · `Descartado`
@@ -35,8 +36,8 @@ Todas as categorias têm estes campos: Nome do Dispositivo, Status, Usuário, Se
 
 | Categoria | Prefixo | Campos específicos (coluna `specs`) |
 |---|---|---|
-| Notebook | `LAP` | Processador, Geração, RAM, Tipo de Sistema, Sistema Operacional, Duração da Bateria, Teclado, Mouse, Monitor |
-| Desktop | `DSK` | Processador, Geração, RAM, Armazenamento, Tipo de Sistema, Sistema Operacional |
+| Notebook | `LAP` | Processador, Geração, RAM, Armazenamento, Tipo de Sistema, Sistema Operacional, Nome no domínio, Duração da Bateria, Teclado, Mouse, Monitor |
+| Desktop | `DSK` | Processador, Geração, RAM, Armazenamento, Tipo de Sistema, Sistema Operacional, Nome no domínio |
 | Celular | `CEL` | Número/Linha, Operadora, IMEI, Armazenamento, Sistema Operacional, Capa/Película |
 | Tablet | `TAB` | Tamanho da tela, Armazenamento, RAM, Sistema Operacional, Conectividade, Número/Linha, IMEI, Capa/Película, Carregador |
 | Impressora | `IMP` | Tipo, Endereço IP, Conexão, Toner/Ribbon |
@@ -72,6 +73,26 @@ Também há:
 - **Configurar** (só administradores): opções do formulário e modelo do checklist.
 
 **LGPD:** o CPF fica numa tabela separada (`onboarding_privado`), visível só para o RH e administradores. Ele não aparece na exportação para Excel.
+
+## Inventário do domínio
+
+O coletor (`www/coletor/Enviar-InventarioGestao.ps1`, baixado pela tela **Domínio**) roda numa máquina do domínio que fica ligada, como tarefa agendada diária.
+
+1. Lê os computadores ativos do AD (Windows, sem servidores, com logon nos últimos 90 dias), sem precisar de RSAT.
+2. Roda o mesmo inventário em lote da Central de Diagnóstico (16 em paralelo, WinRM ou WMI/DCOM). Somente consulta.
+3. Envia para `dominio_receber()`, autenticado por uma **chave do coletor** que o administrador gera na tela Domínio (o banco guarda só o hash; na máquina ela fica criptografada com DPAPI e o arquivo só é legível por Administradores e SYSTEM).
+4. Cada computador é ligado ao ativo pelo **nº de série**, pelo **nome** (igual ao código do dispositivo ou ao campo "Nome no domínio") ou pelo **patrimônio gravado na BIOS**. Os que não ligam aparecem como **Sem cadastro**, com **Vincular** (sugere os ativos do mesmo usuário), **Cadastrar** (formulário já preenchido) ou **Ignorar** (servidor, VM, máquina de terceiro).
+5. Nos ativos ligados, fabricante, modelo, série, processador, geração, RAM, armazenamento e Windows são **atualizados sozinhos** a cada coleta, com registro no histórico do ativo. Usuário, setor, unidade e status continuam manuais. A ficha mostra a seção **Domínio** (usuário logado, IP, MAC, último boot, disco C, BitLocker).
+
+Instalação, no PC escolhido, com o PowerShell aberto como administrador na pasta do arquivo:
+
+```powershell
+.\Enviar-InventarioGestao.ps1 -Instalar      # pede a chave, o horário e a conta de suporte; cria a tarefa
+.\Enviar-InventarioGestao.ps1                # coleta e envia agora
+.\Enviar-InventarioGestao.ps1 -Teste         # coleta sem enviar
+```
+
+Os logs ficam em `C:\ProgramData\ColetorGestao\logs` (30 dias).
 
 ## Termo de responsabilidade digital
 

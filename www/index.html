@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.11.0"></script>
+<script src="termo-pdf.js?v=2.12.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -496,6 +496,7 @@ tr.click{cursor:pointer}
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 2h6v4H9zM9 14l2 2 4-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
   <symbol id="i-sign" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 17c1.5-2 2.5-2 3 0s1.5 2 3 0 2-1 3 0"/></symbol>
@@ -551,12 +552,12 @@ const INFRA_VIDA = [
   {k:"suporte",l:"Contrato de suporte / fornecedor",g:GV}];
 const TYPES = {
   notebook:{label:"Notebooks", one:"Notebook", prefix:"LAP", icon:"laptop", extra:[
-    {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
-    {k:"so",l:"Sistema Operacional"},{k:"bateria",l:"Duração da Bateria"},
+    {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"armazenamento",l:"Armazenamento"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
+    {k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"},{k:"bateria",l:"Duração da Bateria"},
     {k:"teclado",l:"Teclado",opts:SIMNAO,trio:true},{k:"mouse",l:"Mouse",opts:SIMNAO,trio:true},{k:"monitor",l:"Monitor",opts:SIMNAO,trio:true}]},
   desktop:{label:"Desktops", one:"Desktop", prefix:"DSK", icon:"desktop", extra:[
     {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"armazenamento",l:"Armazenamento"},
-    {k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},{k:"so",l:"Sistema Operacional"}]},
+    {k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},{k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"}]},
   celular:{label:"Celulares", one:"Celular", prefix:"CEL", icon:"phone", extra:[
     {k:"linha",l:"Número / Linha"},{k:"operadora",l:"Operadora"},{k:"imei",l:"IMEI"},{k:"armazenamento",l:"Armazenamento"},
     {k:"so",l:"Sistema Operacional"},{k:"capa",l:"Capa / Película",opts:SIMNAO}]},
@@ -618,7 +619,7 @@ const OBS = {k:"obs", l:"Observações"};
 const fieldsOf = t => [...COMMON, ...TYPES[t].extra, OBS];
 
 // ---------- estado ----------
-const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, estMin:[], racks:[], conex:[], vms:[], sist:[], sistItens:[], manut:[], uq:"", ready:false, mode:"loading", canWrite:true };
+const S = { view:"dashboard", q:"", fStatus:"", fSetor:"", items:[], users:[], termos:[], onb:[], onbAtivos:[], onbCheck:[], onbOpc:[], onbMod:[], onbCompras:[], cfg:{}, estMin:[], racks:[], conex:[], vms:[], sist:[], sistItens:[], manut:[], dom:[], domCol:null, uq:"", ready:false, mode:"loading", canWrite:true };
 const cap = { db:null, assets:null, downloads:null };
 let pendingPhoto = null; // {blob, dataUrl}
 let importRows = null;
@@ -703,6 +704,7 @@ async function sbLoad(which){
   if((!which||which==="onbcfg")) jobs.push(onbLoadCfg());
   if(!inv){ await Promise.all(jobs); if(S.ready) refresh(); return; }
   if(!which||which==="infra") jobs.push(infraLoad());
+  if(!which||which==="dominio") jobs.push(domLoad());
   if(!which||which==="estmin") jobs.push(sb.from("estoque_minimos").select("*").then(({data,error})=>{ if(!error) S.estMin=data||[]; }));
   if(!which||which==="ativos") jobs.push(sb.from("ativos").select("*").then(({data,error})=>{ if(!error) S.items=(data||[]).map(rowToItem); }));
   if(!which||which==="usuarios") jobs.push(sb.from("usuarios").select("*").then(({data,error})=>{ if(!error) S.users=data||[]; }));
@@ -751,6 +753,8 @@ async function startSession(session){
       .on("postgres_changes",{event:"*",schema:"public",table:"infra_sistemas"},()=>sbDeb("infra"))
       .on("postgres_changes",{event:"*",schema:"public",table:"infra_sistema_itens"},()=>sbDeb("infra"))
       .on("postgres_changes",{event:"*",schema:"public",table:"ativos_manutencoes"},()=>sbDeb("infra"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"ativos_dominio"},()=>sbDeb("dominio"))
+      .on("postgres_changes",{event:"*",schema:"public",table:"dominio_coletas"},()=>sbDeb("dominio"))
       .on("postgres_changes",{event:"INSERT",schema:"public",table:"onboarding_eventos"},p=>{ if(OB.sel && p.new && p.new.onboarding_id===OB.sel) sbDeb("onbev"); })
       .subscribe();
   }
@@ -866,7 +870,7 @@ function renderMenu(){
   const infra = [["infra","Visão geral","layers",nInf], ...Object.entries(TYPES).filter(([k,t])=>t.infra).map(([k,t])=>[k,t.label,t.icon,byType(k).length]), ["racks","Racks","rack",null], ["sistemas","Sistemas","layers",null]];
   const pend = S.termos.filter(t=>tStatus(t)==="pendente").length;
   const nEst = sb ? (estPrecisa().length||null) : null;
-  const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Compras","cart",nApr],["estoque","Estoque","box",nEst],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null]];
+  const tools = [["onboarding","Onboarding","onb",nOnb],["aprovacoes","Compras","cart",nApr],["estoque","Estoque","box",nEst],["termos","Termos","sign",sb?(pend||null):null],["etiquetas","Etiquetas","tag",null],["inventario","Inventário","check",null],["dominio","Domínio","server",sb?(domSemCadastro().length||null):null]];
   document.getElementById("menu").innerHTML = items.map(btn).join("") + `<div class="navsep">Infraestrutura</div>` + infra.map(btn).join("") + `<div class="navsep">Ferramentas</div>` + tools.map(btn).join("");
 }
 function go(v){ if(SO_ONB() && !viewsPermitidas().includes(v)) v=viewsPermitidas()[0]; S.view=v; OB.sel=null; if(v==="onboarding"){ try{ if(/^#onb-/.test(location.hash)) history.replaceState(null,"",location.pathname+location.search); }catch(e){} } S.q=""; S.fStatus=""; S.fSetor=""; S.uq=""; render(); window.scrollTo(0,0); try{localStorage.setItem("ga-view",v);}catch(e){} }
@@ -887,6 +891,7 @@ function render(){
   else if (S.view==="infra") m.innerHTML = infraHTML();
   else if (S.view==="racks") m.innerHTML = racksHTML();
   else if (S.view==="sistemas") m.innerHTML = sistemasHTML();
+  else if (S.view==="dominio") m.innerHTML = dominioHTML();
   else if (S.view==="estoque"){ m.innerHTML = estoqueHTML(); if(!EST.hist) estLoadHist().then(()=>{ if(S.view==="estoque") refresh(); }); }
   else if (TYPES[S.view]){ m.innerHTML = listShell(S.view); updateTable(); }
   else { S.view="dashboard"; m.innerHTML = dashboardHTML(); }
@@ -903,6 +908,7 @@ function refresh(){
   else if (S.view==="onbconfig") {}
   else if (S.view==="aprovacoes") document.getElementById("main").innerHTML = aprovHTML();
   else if (["infra","racks","sistemas"].includes(S.view)){ const y=window.scrollY; render(); window.scrollTo(0,y); }
+  else if (S.view==="dominio"){ const ae=document.activeElement; if(ae&&ae.id==="domq") domUpdate(); else { const y=window.scrollY; document.getElementById("main").innerHTML = dominioHTML(); window.scrollTo(0,y); } }
   else if (S.view==="estoque"){ const ae=document.activeElement; if(!(ae&&ae.classList&&ae.classList.contains("estmin"))){ const y=window.scrollY; document.getElementById("main").innerHTML = estoqueHTML(); window.scrollTo(0,y); } }
   else updateTable();
   const tb=document.getElementById("termoBox"); if(tb) tb.innerHTML=termoBoxHTML(tb.dataset.ativo);
@@ -1015,6 +1021,7 @@ function viewItem(id){
       ${trio.length?`<div class="kv three">${trio.map(f=>`<div><label>${f.l}</label>${val(x[f.k])}</div>`).join("")}</div>`:""}
       ${grupos}
       <div class="obs"><label>Observações</label><p>${esc(x.obs||"—")}</p></div>
+      ${sb?dominioFichaHTML(x):""}
       ${sb?infraFichaHTML(x):""}
       ${(()=>{ const l=S.onbAtivos.find(l=>l.ativo_id===x.id&&!l.removido&&!l.entregue); const o=l&&S.onb.find(o=>o.id===l.onboarding_id); if(o) return `<div class="resnote">Reservado para o onboarding <b>#${o.numero} · ${esc(o.nome)}</b>${o.data_admissao?` (admissão ${esc(fDia(o.data_admissao))})`:""}. <button class="linkbtn" data-act="oopen" data-id="${o.id}">Abrir solicitação</button></div>`;
         const cc=x.status==="Reservado"&&S.onbCompras.find(c=>c.origem==="chamado"&&(c.ativos||[]).includes(x.id)), h=chamadoDe(cc);
@@ -1034,14 +1041,14 @@ function fieldHTML(f, v){
   if (f.opts) return `<label class="fld">${lab}<select id="${id}" name="${f.k}"><option value="">—</option>${f.opts.map(o=>`<option ${v===o?"selected":""}>${o}</option>`).join("")}${v&&!f.opts.includes(v)?`<option selected>${esc(v)}</option>`:""}</select></label>`;
   return `<label class="fld">${lab}<input id="${id}" name="${f.k}" value="${esc(v)}" ${f.req?"required":""} ${f.list?`list="dl-${f.list}"`:""} autocomplete="off"></label>`;
 }
-function editItem(id, tipo){
+function editItem(id, tipo, pre){
   const x = id ? S.items.find(i=>i.id===id) : null;
   const t = x ? x.tipo : tipo; const T=TYPES[t];
-  const d = x || {status:T.infra?"Em uso":"Disponível", dispositivo:nextName(t), setor:"TI", ...(T.infra?{u_altura:"1"}:{})};
-  if (t==="notebook" && !x){ d.tipoSistema="64 bits"; d.teclado="Não"; d.mouse="Não"; d.monitor="Não"; }
+  const d = x || {status:T.infra?"Em uso":"Disponível", dispositivo:nextName(t), setor:"TI", ...(T.infra?{u_altura:"1"}:{}), ...(pre||{})};
+  if (t==="notebook" && !x){ d.tipoSistema=d.tipoSistema||"64 bits"; d.teclado="Não"; d.mouse="Não"; d.monitor="Não"; }
   pendingPhoto=null;
   openModal(`<h2>${x?`Editar ${T.one}: ${esc(x.dispositivo)}`:`Novo ${T.one}`}</h2>
-  <form class="f" id="itemForm" data-id="${x?x.id:""}" data-tipo="${t}">
+  <form class="f" id="itemForm" data-id="${x?x.id:""}" data-tipo="${t}" data-dom="${esc(!x&&pre&&pre.hostname||"")}">
     <datalist id="dl-usuarios">${S.users.map(u=>`<option value="${esc(u.login)}">${esc(u.nome||"")}</option>`).join("")}</datalist>
     <datalist id="dl-setores">${setores().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
     <datalist id="dl-unidades">${unidades().map(s=>`<option value="${esc(s)}">`).join("")}</datalist>
@@ -1067,6 +1074,7 @@ async function submitItem(form){
   const dup=S.items.find(i=>i.tipo===t && i.id!==id && norm(i.dispositivo)===norm(data.dispositivo));
   if (dup){ toast(`Já existe um ${TYPES[t].one.toLowerCase()} chamado ${data.dispositivo}.`); btn.disabled=false; return; }
   const prev = id ? S.items.find(i=>i.id===id) : null;
+  if (prev) for (const [k,v] of Object.entries(prev)) if (!(k in data) && !COLS.includes(k) && k!=="criadoEm" && k!=="atualizadoEm") data[k]=v;   // ex.: dados do inventário do domínio
   try{
     if (pendingPhoto){
       if (sb){ const path=`${newId()}.jpg`; const {error}=await sb.storage.from("fotos").upload(path,pendingPhoto.blob,{contentType:"image/jpeg"}); if(error) throw error; data.foto="sb:"+path; }
@@ -1074,7 +1082,8 @@ async function submitItem(form){
       else data.foto=pendingPhoto.small;
     }
     data.atualizadoEm=new Date().toISOString(); if(!prev) data.criadoEm=data.atualizadoEm; else data.criadoEm=prev.criadoEm||"";
-    await store.put("ativos", id, data);
+    const salvoId = await store.put("ativos", id, data);
+    if (!prev && form.dataset.dom && sb){ const {error}=await sb.rpc("dominio_vincular",{p_computador:form.dataset.dom, p_ativo:salvoId}); if(error) writeErr(error); else await Promise.all([sbLoad("dominio"),sbLoad("ativos")]); }
     if (prev && prev.foto && prev.foto!==data.foto) dropAsset(prev.foto);
     closeModal(); toast(prev?"Alterações salvas.":`${data.dispositivo} cadastrado.`);
   }catch(e){ btn.disabled=false; if(e&&e.code&&e.code!=="invalid_argument"&&cap.assets&&pendingPhoto) toast("Não foi possível enviar a foto. Tente uma imagem menor."); else writeErr(e); }
@@ -3137,6 +3146,149 @@ function infraHTML(){
   </div>`;
 }
 
+// ---------- inventário do domínio (coletor agendado da Central de Diagnóstico) ----------
+const DOM = { f:"todos", q:"" };
+function domLoad(){ return Promise.all([
+  sb.from("ativos_dominio").select("*").then(({data,error})=>{ if(!error) S.dom=data||[]; }),
+  sb.from("dominio_coletas").select("*").order("id",{ascending:false}).limit(1).then(({data,error})=>{ if(!error) S.domCol=(data||[])[0]||null; })]); }
+const DOM_OFF = 30;   // dias sem responder para virar alerta
+const diasDesde = iso => iso ? Math.floor((Date.now()-new Date(iso).getTime())/864e5) : null;
+const domLogin = u => String(u||"").split("\\").pop().trim().toLowerCase();
+const domDe = id => (S.dom||[]).find(d=>d.ativo_id===id);
+const domFab = f => { const u=String(f||"").toUpperCase(); return /^LENOVO/.test(u)?"Lenovo":/^DELL/.test(u)?"Dell":/^(HP|HEWLETT)/.test(u)?"HP":/^SAMSUNG/.test(u)?"Samsung":/^ACER/.test(u)?"Acer":/^POSITIVO/.test(u)?"Positivo":String(f||"").replace(/,?\s*Inc\.?$/i,"").trim(); };
+const domGB = v => v==null?"—":v.toLocaleString("pt-BR",{maximumFractionDigits:1});
+const domNum = v => { const n=parseFloat(String(v??"").replace(",",".")); return isNaN(n)?null:n; };
+function domSemCadastro(){ return (S.dom||[]).filter(d=>!d.ignorado&&!d.ativo_id&&d.online_em&&diasDesde(d.online_em)<=DOM_OFF); }
+function domAlertas(d){
+  const j=d.dados||{}, a=[], x=d.ativo_id?ativoDe(d.ativo_id):null; if(d.ignorado) return a;
+  const off=diasDesde(d.online_em);
+  if(!d.online_em) a.push(["Nunca respondeu","st-desc"]); else if(off>DOM_OFF) a.push([`Sem responder há ${off} dias`,"st-man"]);
+  const bl=j["BitLocker C:"]; if(bl==="SUSPENSO") a.push(["BitLocker suspenso","st-man"]); else if(bl==="Não criptografado") a.push(["Sem BitLocker","st-man"]);
+  const tot=domNum(j["Disco C (GB)"]), liv=domNum(j["C livre (GB)"]);
+  if(tot&&liv!=null&&(liv<10||liv/tot<0.1)) a.push([`Disco C: ${domGB(liv)} GB livres`,"st-man"]);
+  if(/Windows 10/i.test(j.Windows||"")) a.push(["Windows 10 (sem suporte)","st-man"]);
+  const up=parseInt(j["Uptime (dias)"],10); if(d.status==="Online"&&up>30) a.push([`Ligado há ${up} dias`,"st-desc"]);
+  const lg=domLogin(d.usuario_logado); if(x&&lg&&x.usuario&&norm(lg)!==norm(x.usuario)) a.push([`Logado: ${lg} (cadastro: ${x.usuario})`,"st-res"]);
+  return a;
+}
+function domLista(){
+  const q=norm(DOM.q), L=(S.dom||[]).filter(d=>{
+    if(DOM.f==="ign") { if(!d.ignorado) return false; } else if(d.ignorado) return false;
+    if(DOM.f==="sem"&&d.ativo_id) return false;
+    if(DOM.f==="alertas"&&!domAlertas(d).length) return false;
+    if(DOM.f==="off"&&!(d.online_em==null||diasDesde(d.online_em)>DOM_OFF)) return false;
+    if(!q) return true; const x=d.ativo_id?ativoDe(d.ativo_id):null, j=d.dados||{};
+    return norm([d.computador,d.usuario_logado,d.serie,j.Modelo,j.Fabricante,j.IP,x&&x.dispositivo,x&&x.usuario].join(" ")).includes(q); });
+  return L.sort((a,b)=>(!!a.ativo_id-!!b.ativo_id)||(domAlertas(b).length-domAlertas(a).length)||a.computador.localeCompare(b.computador));
+}
+function domLinha(d){
+  const j=d.dados||{}, x=d.ativo_id?ativoDe(d.ativo_id):null, al=domAlertas(d), ti=S.canWrite;
+  const st=d.status==="Online"?`<span class="pill st-disp">Online</span>`:d.status==="Offline"?`<span class="pill st-desc">Offline</span>`:`<span class="pill st-man">${esc(d.status||"—")}</span>`;
+  const tot=domNum(j["Disco C (GB)"]), liv=domNum(j["C livre (GB)"]);
+  return `<tr>
+    <td><b>${esc(d.computador)}</b><div style="margin-top:4px">${st}</div>${d.online_em?`<div class="muted" style="font-size:12.5px;margin-top:3px">${d.status==="Online"?"respondeu":"última resposta"} ${esc(fDH(d.online_em))}</div>`:""}</td>
+    <td>${x?`<button class="linkbtn" style="padding:0;font-weight:700" data-act="view" data-id="${x.id}">${esc(x.dispositivo)}</button><div class="muted" style="font-size:13px">${esc(tipoUm(x.tipo))}${x.usuario?` · ${esc(x.usuario)}`:""}</div>`
+          :d.ignorado?`<span class="muted">Ignorado</span>`:`<span class="pill st-res">Sem cadastro</span>`}</td>
+    <td>${esc(domLogin(d.usuario_logado)||"—")}</td>
+    <td>${esc([domFab(j.Fabricante),j.Modelo].filter(Boolean).join(" ")||"—")}<div class="muted" style="font-size:13px">${d.serie?`Série ${esc(d.serie)}`:""}</div></td>
+    <td>${esc([j.Windows,j["Versão"]].filter(Boolean).join(" ")||"—")}<div class="muted" style="font-size:13px">${tot?`C: ${esc(domGB(liv))} GB livres de ${esc(domGB(tot))}`:""}${j["BitLocker C:"]?` · BitLocker ${esc(String(j["BitLocker C:"]).toLowerCase())}`:""}</div></td>
+    <td><div class="chips">${al.map(([t,c])=>`<span class="pill ${c}">${esc(t)}</span>`).join("")||`<span class="muted">—</span>`}</div></td>
+    <td class="td-r"><div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:210px;margin-left:auto">${ti?(d.ignorado?`<button class="btn sm" data-act="domign" data-c="${esc(d.computador)}" data-v="0">Reativar</button>`
+      :x?`<button class="btn sm ghost" data-act="domdesv" data-c="${esc(d.computador)}">Desvincular</button>`
+      :`<button class="btn sm" data-act="domvinc" data-c="${esc(d.computador)}">${ICON("link")}Vincular</button><button class="btn sm" data-act="domcad" data-c="${esc(d.computador)}">${ICON("plus")}Cadastrar</button><button class="btn sm ghost" data-act="domign" data-c="${esc(d.computador)}" data-v="1" title="Não é um ativo da TI (servidor, VM, máquina de terceiro)">Ignorar</button>`):""}</div></td></tr>`;
+}
+function domUpdate(){ const tb=document.getElementById("domtb"); if(!tb) return; const L=domLista();
+  tb.innerHTML = L.length ? L.map(domLinha).join("") : `<tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Nenhum computador neste filtro.</td></tr>`; }
+function dominioHTML(){
+  const L=S.dom||[], at=L.filter(d=>!d.ignorado), lig=at.filter(d=>d.ativo_id), sem=domSemCadastro(), al=at.filter(d=>domAlertas(d).length), col=S.domCol;
+  const admin=SB_ROLE==="admin";
+  const acoes=`<div class="actions">${admin?`<button class="btn" data-act="domchave">${ICON("lock")}Gerar chave do coletor</button>`:""}<a class="btn" style="text-decoration:none" href="coletor/Enviar-InventarioGestao.ps1" download>${ICON("down")}Baixar coletor</a></div>`;
+  const sub=col?`Última coleta: ${esc(fDH(col.recebido_em))}${col.origem?` (de ${esc(col.origem)})`:""} · ${col.online} online, ${col.offline} offline · ${col.atualizados} cadastro(s) atualizado(s)`:"Nenhuma coleta recebida ainda";
+  if(!L.length) return `<div class="head"><div><h1>Domínio</h1><div class="sub">${sub}</div></div>${acoes}</div>
+    <section class="card panel"><h2>Como ligar o inventário do domínio</h2><ol style="margin:0;padding-left:20px;line-height:1.7">
+      <li>${admin?`Clique em <b>Gerar chave do coletor</b> e copie a chave.`:"Peça a um administrador para gerar a chave do coletor."}</li>
+      <li>Clique em <b>Baixar coletor</b> e salve o arquivo num PC do domínio que fique ligado (pode ser o mesmo da Central de Diagnóstico).</li>
+      <li>Nesse PC, abra o PowerShell <b>como administrador</b> na pasta do arquivo e rode <code>.\\Enviar-InventarioGestao.ps1 -Instalar</code>. Cole a chave, escolha o horário e informe a conta de suporte com admin nas estações.</li>
+      <li>A primeira coleta aparece aqui em alguns minutos. Depois, todo dia no horário escolhido.</li></ol>
+      <p class="muted" style="margin:14px 0 0">O coletor lê os computadores do Active Directory, roda o mesmo inventário em lote da Central de Diagnóstico e envia o resultado. Nos computadores ligados a um ativo, fabricante, modelo, série, processador, geração, RAM, disco e Windows são atualizados sozinhos; usuário, setor e status continuam manuais.</p></section>`;
+  const tile=(n,l,mini,f)=>`<button class="card tile" data-act="domf" data-v="${f}"><span class="ti">${l}</span><span class="big">${n}</span><span class="mini">${mini}</span></button>`;
+  const chip=(f,l,n)=>`<button class="btn sm ${DOM.f===f?"primary":""}" data-act="domf" data-v="${f}">${l}${n!=null?` (${n})`:""}</button>`;
+  return `<div class="head"><div><h1>Domínio</h1><div class="sub">${sub}</div></div>${acoes}</div>
+  <div class="tiles">
+    ${tile(at.length,"Computadores","no domínio (ativos e recentes)","todos")}
+    ${tile(lig.length,"Ligados a ativos","atualizados a cada coleta","todos")}
+    ${tile(sem.length,"Sem cadastro","responderam nos últimos 30 dias","sem")}
+    ${tile(al.length,"Com alertas","BitLocker, disco, Windows 10…","alertas")}
+  </div>
+  <section class="card panel">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      ${chip("todos","Todos",at.length)}${chip("sem","Sem cadastro",at.filter(d=>!d.ativo_id).length)}${chip("alertas","Com alertas",al.length)}${chip("off","Sem responder",at.filter(d=>d.online_em==null||diasDesde(d.online_em)>DOM_OFF).length)}${chip("ign","Ignorados",L.length-at.length)}
+      <input id="domq" type="search" placeholder="Buscar computador, usuário, série, modelo…" value="${esc(DOM.q)}" style="margin-left:auto;min-width:240px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit">
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>Computador</th><th>Ativo</th><th>Usuário logado</th><th>Fabricante / modelo</th><th>Windows e disco</th><th>Alertas</th><th class="th-r">Ações</th></tr></thead>
+      <tbody id="domtb">${domLista().map(domLinha).join("")||`<tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Nenhum computador neste filtro.</td></tr>`}</tbody></table></div>
+  </section>`;
+}
+function dominioFichaHTML(x){
+  const d=domDe(x.id); if(!d) return "";
+  const j=d.dados||{}, al=domAlertas(d), tot=domNum(j["Disco C (GB)"]), liv=domNum(j["C livre (GB)"]);
+  const kv=(l,v)=>v?`<div><label>${l}</label><p>${esc(v)}</p></div>`:"";
+  return `<div class="hist"><label>Domínio · ${esc(d.computador)} <span class="pill ${d.status==="Online"?"st-disp":"st-desc"}" style="margin-left:6px">${esc(d.status||"—")}</span></label>
+    <div class="kv">${kv("Usuário logado",domLogin(d.usuario_logado))}${kv("Respondeu em",d.online_em&&fDH(d.online_em))}${kv("Windows",[j.Windows,j["Versão"],j.Build&&`build ${j.Build}`].filter(Boolean).join(" "))}${kv("Windows instalado em",j["Windows instalado"])}
+      ${kv("Último boot",j["Último boot"]&&`${j["Último boot"]}${j["Uptime (dias)"]!==undefined&&j["Uptime (dias)"]!==""?` (${j["Uptime (dias)"]} dias)`:""}`)}${kv("Disco C",tot&&`${domGB(liv)} GB livres de ${domGB(tot)} GB${j["Tipo disco"]?` · ${j["Tipo disco"]}`:""}`)}
+      ${kv("BitLocker C:",j["BitLocker C:"])}${kv("IP",j.IP)}${kv("MAC",j.MAC)}${kv("BIOS",j.BIOS)}${kv("Domínio",j["Domínio"])}</div>
+    ${al.length?`<div class="chips" style="margin-top:10px">${al.map(([t,c])=>`<span class="pill ${c}">${esc(t)}</span>`).join("")}</div>`:""}
+    <p class="muted" style="margin:10px 0 0;font-size:13px">Coletado pela última vez em ${esc(fDH(d.coletado_em))}. Fabricante, modelo, série, processador, RAM, armazenamento e Windows deste ativo são atualizados a cada coleta.</p></div>`;
+}
+function domVincForm(c){
+  const d=(S.dom||[]).find(x=>x.computador===c); if(!d) return; const j=d.dados||{}, lg=domLogin(d.usuario_logado);
+  const usados=new Set((S.dom||[]).filter(x=>x.ativo_id&&x.computador!==c).map(x=>x.ativo_id));
+  const cand=S.items.filter(x=>["notebook","desktop","tablet"].includes(x.tipo)&&x.status!=="Descartado"&&!usados.has(x.id)).sort((a,b)=>a.dispositivo.localeCompare(b.dispositivo,"pt-BR",{numeric:true}));
+  const sug=cand.filter(x=>lg&&norm(x.usuario)===norm(lg));
+  openModal(`<h2>Vincular ${esc(c)} a um ativo</h2><form class="f" id="domVincForm" data-c="${esc(c)}">
+    <p class="muted" style="grid-column:1/-1;margin:0">Lido no domínio: <b>${esc([j.Fabricante,j.Modelo].filter(Boolean).join(" ")||"—")}</b>${d.serie?` · série ${esc(d.serie)}`:""}${lg?` · usuário <b>${esc(lg)}</b>`:""}</p>
+    ${sug.length?`<div style="grid-column:1/-1"><span class="muted" style="font-size:14px">Ativos do mesmo usuário:</span> <div class="chips" style="margin-top:6px">${sug.map(x=>`<button type="button" class="chip" style="border:0;cursor:pointer" data-act="domsug" data-id="${x.id}">${esc(x.dispositivo)} · ${esc(tipoUm(x.tipo))}${x.modelo?` · ${esc(x.modelo)}`:""}</button>`).join("")}</div></div>`:""}
+    <label class="fld wide"><span>Ativo <i>*</i></span><select name="ativo" id="dom_ativo" required><option value="">Escolha…</option>${cand.map(x=>`<option value="${x.id}" ${sug.length===1&&sug[0].id===x.id?"selected":""}>${esc(x.dispositivo)} · ${esc(tipoUm(x.tipo))} · ${esc(x.usuario||"sem usuário")}${x.modelo?` · ${esc(x.modelo)}`:""}</option>`).join("")}</select></label>
+    <p class="muted" style="grid-column:1/-1;margin:0;font-size:14px">Ao vincular, fabricante, modelo, série, processador, RAM, armazenamento e Windows do ativo são atualizados agora e a cada coleta. A mudança fica no histórico do ativo.</p>
+    <div class="foot"><button type="button" class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" id="domVincBtn">${ICON("link")}Vincular</button></div></form>`,"md");
+}
+async function domVincular(f){
+  const b=document.getElementById("domVincBtn"); b.disabled=true;
+  const {error}=await sb.rpc("dominio_vincular",{p_computador:f.dataset.c, p_ativo:f.querySelector("[name=ativo]").value});
+  if(error){ b.disabled=false; writeErr(error); return; }
+  closeModal(); await Promise.all([sbLoad("dominio"),sbLoad("ativos")]); toast(`${f.dataset.c} vinculado. Dados técnicos atualizados.`);
+}
+function domCadastrar(c){
+  const d=(S.dom||[]).find(x=>x.computador===c); if(!d) return; const j=d.dados||{};
+  const t=/Tablet/i.test(j.Tipo||"")?"tablet":/Notebook|Portátil|Conversível|Destacável/i.test(j.Tipo||"")?"notebook":"desktop";
+  const lg=domLogin(d.usuario_logado), u=S.users.find(u=>norm(u.login)===norm(lg));
+  const pre={hostname:c, fabricante:domFab(j.Fabricante), modelo:j.Modelo||"", serie:d.serie||"", status:lg?"Em uso":"Disponível", usuario:lg||"", setor:(u&&u.setor)||(lg?"":"TI"),
+    processador:String(j.CPU||"").replace(/\((R|TM)\)/gi,"").replace(/\s+(CPU|@).*$/i,"").replace(/^\d+th Gen\s+/i,"").trim(), ram:j["RAM (GB)"]?`${j["RAM (GB)"]} GB`:"",
+    armazenamento:j["Disco C (GB)"]?`${j["Disco C (GB)"]} GB ${j["Tipo disco"]||""}`.trim():"", so:[j.Windows,j["Versão"]].filter(Boolean).join(" ")};
+  editItem(null, t, pre);
+}
+async function domChave(){
+  const {data,error}=await sb.rpc("dominio_gerar_chave"); if(error){ writeErr(error); return; }
+  openModal(`<h2>Chave do coletor</h2><div class="msg"><p>Copie agora: ela aparece <b>uma única vez</b>. Use na instalação do coletor (<code>-Instalar</code>). A chave anterior, se havia, deixou de funcionar.</p>
+    <p><input id="domKey" readonly value="${esc(data)}" style="width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:10px;font:600 15px ui-monospace,Consolas,monospace;background:var(--surface-2);color:var(--ink)"></p></div>
+    <div class="foot"><button class="btn" data-act="domcopy">${ICON("copy")}Copiar</button><button class="btn primary" data-act="close">Concluir</button></div>`,"sm");
+  setTimeout(()=>{ const i=document.getElementById("domKey"); if(i) i.select(); },50);
+}
+function domClick(a, el){
+  if(a==="domf"){ DOM.f=el.dataset.v; if(S.view==="dominio") render(); return true; }
+  if(a==="domvinc"){ domVincForm(el.dataset.c); return true; }
+  if(a==="domsug"){ const s=document.getElementById("dom_ativo"); if(s) s.value=el.dataset.id; return true; }
+  if(a==="domcad"){ domCadastrar(el.dataset.c); return true; }
+  if(a==="domchave"){ openModal(`<h2>Gerar nova chave do coletor?</h2><div class="msg"><p>Se o coletor já estiver instalado, ele vai parar de enviar até você rodar <code>-Instalar</code> de novo com a chave nova.</p></div>
+    <div class="foot"><button class="btn ghost" data-act="close">Cancelar</button><button class="btn primary" data-act="domchaveok">${ICON("lock")}Gerar chave</button></div>`,"sm"); return true; }
+  if(a==="domchaveok"){ domChave(); return true; }
+  if(a==="domcopy"){ const i=document.getElementById("domKey"); if(i){ i.select(); (navigator.clipboard?navigator.clipboard.writeText(i.value):Promise.reject()).then(()=>toast("Chave copiada."),()=>{ document.execCommand("copy"); toast("Chave copiada."); }); } return true; }
+  if(a==="domign"||a==="domdesv"){ const c=el.dataset.c;
+    const p = a==="domign" ? sb.rpc("dominio_ignorar",{p_computador:c, p_ignorar:el.dataset.v==="1"}) : sb.rpc("dominio_vincular",{p_computador:c, p_ativo:null});
+    p.then(({error})=>{ if(error) writeErr(error); else { sbLoad("dominio"); toast(a==="domdesv"?`${c} desvinculado.`:el.dataset.v==="1"?`${c} ignorado.`:`${c} reativado.`); } }); return true; }
+  return false;
+}
+
 // ---------- racks ----------
 function racksHTML(){
   const ti=S.canWrite;
@@ -3628,6 +3780,7 @@ document.addEventListener("click", e=>{
   if(a==="close") return closeModal();
   if(onbClick(a,el,id)) return;
   if(infraClick(a,el)) return;
+  if(domClick(a,el)) return;
   if(a==="view") return viewItem(id);
   if(a==="edit") return editItem(id);
   if(a==="new") return editItem(null,S.view);
@@ -3679,6 +3832,7 @@ document.addEventListener("submit", e=>{
   e.preventDefault();
   if(onbSubmit(e.target)) return;
   if(infraSubmit(e.target)) return;
+  if(e.target.id==="domVincForm") return domVincular(e.target);
   if(e.target.id==="itemForm") submitItem(e.target);
   if(e.target.id==="userForm") submitUser(e.target);
   if(e.target.id==="gForm") gateSubmit(e.target);
@@ -3692,6 +3846,7 @@ document.addEventListener("input", e=>{
   if(onbInput(e.target)) return;
   if(e.target.id==="q"){ S.q=e.target.value; updateTable(); }
   if(e.target.id==="uq"){ S.uq=e.target.value; updateUsers(); }
+  if(e.target.id==="domq"){ DOM.q=e.target.value; domUpdate(); }
   if(e.target.id==="tq"){ TF.q=e.target.value; updateTermos(); }
   if(e.target.classList && (e.target.classList.contains("impcod")||e.target.classList.contains("implog"))) impCampo(e.target);
   if(e.target.id==="t_login"){ const u=S.users.find(u=>norm(u.login)===norm(e.target.value)); if(u){ const n=document.getElementById("t_nome"), m=document.getElementById("t_email"); if(n&&u.nome) n.value=u.nome; if(m&&u.email) m.value=u.email; } }

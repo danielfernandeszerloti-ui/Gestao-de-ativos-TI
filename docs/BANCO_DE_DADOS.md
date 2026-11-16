@@ -158,6 +158,15 @@ Os equipamentos de infraestrutura ficam em `ativos` (`tipo` = `switch`, `servido
 
 Nessas tabelas nada é apagado: `removido = true`. Leitura para quem acessa o inventário; gravação para TI e admin.
 
+### Inventário do domínio
+
+- `ativos_dominio`: um registro por computador do AD (`computador`, em maiúsculas), com a última leitura completa em `dados` (as colunas do inventário em lote), `status` (Online, Offline, Parcial, Erro), `serie`, `usuario_logado`, `ativo_id` e `vinculo` (`serie`, `nome`, `patrimonio` ou `manual`), `ignorado`, `primeiro_visto`, `coletado_em` e `online_em`. Leitura para quem acessa o inventário; escrita só pelas funções abaixo.
+- `dominio_coletas`: resumo de cada envio do coletor (origem, total, online, offline, ligados, atualizados, novos).
+- `dominio_receber(p_chave, p_maquinas, p_origem)`: chamada pelo coletor (papel `anon`). Confere o SHA-256 da chave com `ga_config.dominio_chave_hash`, grava cada computador, procura o ativo (`dom_procurar`) e aplica a leitura no cadastro (`dom_aplicar`): fabricante, modelo, série, processador, geração, RAM, armazenamento, Windows e hostname. Cada mudança entra em `ativos_historico` com `campo = 'inventario'`.
+- `dominio_gerar_chave()` (admin): gera uma chave nova, guarda só o hash e devolve a chave uma vez.
+- `dominio_vincular(p_computador, p_ativo)` (TI): liga ou desliga (`p_ativo = null`) um computador de um ativo e aplica a leitura na hora. `dominio_ignorar(p_computador, p_ignorar)` (TI).
+- Normalização: `dom_fabricante` (LENOVO → Lenovo, Dell Inc. → Dell…), `dom_cpu` (sem "(R)", "(TM)", "CPU @ …"), `dom_geracao` (i5-1135G7 → 11ª geração), `dom_serie_valida` (descarta "To be filled by O.E.M." e afins).
+
 ## Regras de acesso (RLS)
 
 | Tabela | Ler | Gravar |

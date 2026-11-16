@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.12.0] — 2026-11-16
+### Adicionado
+- **Inventário do domínio**: coletor agendado (`coletor/Enviar-InventarioGestao.ps1`) que lê os computadores do Active Directory, roda o inventário em lote da Central de Diagnóstico e envia para o sistema.
+- Tela **Domínio** (Ferramentas): computadores do AD, ligados a ativos ou sem cadastro, com **Vincular**, **Cadastrar** (formulário preenchido com os dados lidos) e **Ignorar**; filtros e busca; alertas de BitLocker suspenso ou ausente, disco C com pouco espaço, Windows 10, máquina sem responder há 30 dias, ligada há mais de 30 dias e usuário logado diferente do cadastro.
+- Nos ativos ligados, fabricante, modelo, série, processador, geração, RAM, armazenamento e Windows são **atualizados sozinhos** a cada coleta, com registro no histórico. Usuário, setor, unidade e status continuam manuais.
+- Seção **Domínio** na ficha do ativo (usuário logado, IP, MAC, Windows e build, último boot, disco C, BitLocker, BIOS).
+- Campos **Armazenamento** (notebook) e **Nome no domínio** (notebook e desktop).
+- **Gerar chave do coletor** (administrador): a chave aparece uma única vez; o banco guarda só o hash.
+
+### Corrigido
+- Editar um ativo não apaga mais campos que não aparecem no formulário da categoria.
+
 ## [2.11.0] — 2026-10-28
 ### Adicionado
 - **Compras centralizadas**: a tela Aprovações virou **Compras** para a TI (o aprovador continua vendo “Aprovações”), com o botão **Nova compra**:
