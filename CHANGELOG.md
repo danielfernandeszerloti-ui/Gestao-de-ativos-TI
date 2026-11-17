@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.13.0] — 2026-11-17
+### Adicionado
+- **Importar CSV da Central** na tela Domínio: carrega o CSV do "Inventário em lote" da Central de Diagnóstico (um ou vários arquivos) e aplica igual ao coletor agendado.
+- Campos **BitLocker** e **MAC** no cadastro de notebooks e desktops, atualizados a cada coleta. MAC de adaptador virtual (VPN, loopback) é ignorado.
+
+### Alterado
+- Geração gravada no padrão do cadastro ("12° geração").
+- Computador offline já fica ligado ao ativo pelo nome, sem alterar o cadastro.
+
 ## [2.12.0] — 2026-11-16
 ### Adicionado
 - **Inventário do domínio**: coletor agendado (`coletor/Enviar-InventarioGestao.ps1`) que lê os computadores do Active Directory, roda o inventário em lote da Central de Diagnóstico e envia para o sistema.

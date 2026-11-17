@@ -76,6 +76,8 @@ Também há:
 
 ## Inventário do domínio
 
+> Sem o coletor instalado, dá para carregar o CSV exportado pelo **Inventário em lote** da Central em **Domínio → Importar CSV da Central**.
+
 O coletor (`www/coletor/Enviar-InventarioGestao.ps1`, baixado pela tela **Domínio**) roda numa máquina do domínio que fica ligada, como tarefa agendada diária.
 
 1. Lê os computadores ativos do AD (Windows, sem servidores, com logon nos últimos 90 dias), sem precisar de RSAT.

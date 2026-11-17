@@ -20,7 +20,7 @@
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="vendor/jspdf.umd.min.js"></script>
 <script src="vendor/qrcode.js"></script>
-<script src="termo-pdf.js?v=2.12.0"></script>
+<script src="termo-pdf.js?v=2.13.0"></script>
 <style>
 /* Layout: sidebar fixa de TI à esquerda + área de trabalho com cabeçalho, barra de filtros e tabela; vira barra superior no celular */
 :root{
@@ -553,11 +553,11 @@ const INFRA_VIDA = [
 const TYPES = {
   notebook:{label:"Notebooks", one:"Notebook", prefix:"LAP", icon:"laptop", extra:[
     {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"armazenamento",l:"Armazenamento"},{k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},
-    {k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"},{k:"bateria",l:"Duração da Bateria"},
+    {k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"},{k:"bitlocker",l:"BitLocker"},{k:"mac",l:"MAC"},{k:"bateria",l:"Duração da Bateria"},
     {k:"teclado",l:"Teclado",opts:SIMNAO,trio:true},{k:"mouse",l:"Mouse",opts:SIMNAO,trio:true},{k:"monitor",l:"Monitor",opts:SIMNAO,trio:true}]},
   desktop:{label:"Desktops", one:"Desktop", prefix:"DSK", icon:"desktop", extra:[
     {k:"processador",l:"Processador"},{k:"geracao",l:"Geração"},{k:"ram",l:"RAM"},{k:"armazenamento",l:"Armazenamento"},
-    {k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},{k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"}]},
+    {k:"tipoSistema",l:"Tipo de Sistema",opts:["64 bits","32 bits"]},{k:"so",l:"Sistema Operacional"},{k:"hostname",l:"Nome no domínio"},{k:"bitlocker",l:"BitLocker"},{k:"mac",l:"MAC"}]},
   celular:{label:"Celulares", one:"Celular", prefix:"CEL", icon:"phone", extra:[
     {k:"linha",l:"Número / Linha"},{k:"operadora",l:"Operadora"},{k:"imei",l:"IMEI"},{k:"armazenamento",l:"Armazenamento"},
     {k:"so",l:"Sistema Operacional"},{k:"capa",l:"Capa / Película",opts:SIMNAO}]},
@@ -3202,7 +3202,7 @@ function domUpdate(){ const tb=document.getElementById("domtb"); if(!tb) return;
 function dominioHTML(){
   const L=S.dom||[], at=L.filter(d=>!d.ignorado), lig=at.filter(d=>d.ativo_id), sem=domSemCadastro(), al=at.filter(d=>domAlertas(d).length), col=S.domCol;
   const admin=SB_ROLE==="admin";
-  const acoes=`<div class="actions">${admin?`<button class="btn" data-act="domchave">${ICON("lock")}Gerar chave do coletor</button>`:""}<a class="btn" style="text-decoration:none" href="coletor/Enviar-InventarioGestao.ps1" download>${ICON("down")}Baixar coletor</a></div>`;
+  const acoes=`<div class="actions">${admin?`<button class="btn" data-act="domchave">${ICON("lock")}Gerar chave do coletor</button>`:""}${S.canWrite?`<button class="btn" data-act="domcsv">${ICON("up")}Importar CSV da Central</button><input type="file" id="domCsvFile" accept=".csv,text/csv" multiple hidden>`:""}<a class="btn" style="text-decoration:none" href="coletor/Enviar-InventarioGestao.ps1" download>${ICON("down")}Baixar coletor</a></div>`;
   const sub=col?`Última coleta: ${esc(fDH(col.recebido_em))}${col.origem?` (de ${esc(col.origem)})`:""} · ${col.online} online, ${col.offline} offline · ${col.atualizados} cadastro(s) atualizado(s)`:"Nenhuma coleta recebida ainda";
   if(!L.length) return `<div class="head"><div><h1>Domínio</h1><div class="sub">${sub}</div></div>${acoes}</div>
     <section class="card panel"><h2>Como ligar o inventário do domínio</h2><ol style="margin:0;padding-left:20px;line-height:1.7">
@@ -3238,7 +3238,7 @@ function dominioFichaHTML(x){
       ${kv("Último boot",j["Último boot"]&&`${j["Último boot"]}${j["Uptime (dias)"]!==undefined&&j["Uptime (dias)"]!==""?` (${j["Uptime (dias)"]} dias)`:""}`)}${kv("Disco C",tot&&`${domGB(liv)} GB livres de ${domGB(tot)} GB${j["Tipo disco"]?` · ${j["Tipo disco"]}`:""}`)}
       ${kv("BitLocker C:",j["BitLocker C:"])}${kv("IP",j.IP)}${kv("MAC",j.MAC)}${kv("BIOS",j.BIOS)}${kv("Domínio",j["Domínio"])}</div>
     ${al.length?`<div class="chips" style="margin-top:10px">${al.map(([t,c])=>`<span class="pill ${c}">${esc(t)}</span>`).join("")}</div>`:""}
-    <p class="muted" style="margin:10px 0 0;font-size:13px">Coletado pela última vez em ${esc(fDH(d.coletado_em))}. Fabricante, modelo, série, processador, RAM, armazenamento e Windows deste ativo são atualizados a cada coleta.</p></div>`;
+    <p class="muted" style="margin:10px 0 0;font-size:13px">Coletado pela última vez em ${esc(fDH(d.coletado_em))}. Fabricante, modelo, série, processador, RAM, armazenamento, Windows, BitLocker e MAC deste ativo são atualizados a cada coleta.</p></div>`;
 }
 function domVincForm(c){
   const d=(S.dom||[]).find(x=>x.computador===c); if(!d) return; const j=d.dados||{}, lg=domLogin(d.usuario_logado);
@@ -3267,6 +3267,30 @@ function domCadastrar(c){
     armazenamento:j["Disco C (GB)"]?`${j["Disco C (GB)"]} GB ${j["Tipo disco"]||""}`.trim():"", so:[j.Windows,j["Versão"]].filter(Boolean).join(" ")};
   editItem(null, t, pre);
 }
+// importa o CSV do "Inventário em lote" da Central de Diagnóstico (separador ;, com aspas)
+function domCsvParse(txt){
+  txt=txt.replace(/^\uFEFF/,""); const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<txt.length;i++){ const ch=txt[i];
+    if(q){ if(ch==='"'){ if(txt[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
+    else if(ch==='"') q=true; else if(ch===";"){ row.push(cur); cur=""; }
+    else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&txt[i+1]==="\n") i++; row.push(cur); cur=""; if(row.some(c=>c!=="")) rows.push(row); row=[]; }
+    else cur+=ch; }
+  row.push(cur); if(row.some(c=>c!=="")) rows.push(row);
+  const h=(rows.shift()||[]).map(c=>c.trim());
+  return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]||"").trim()])));
+}
+async function domImportar(files){
+  if(!files||!files.length) return; let lista=[], nomes=[];
+  for(const f of files){
+    let t=new TextDecoder("utf-8").decode(await f.arrayBuffer()); if(t.includes("\uFFFD")) t=new TextDecoder("windows-1252").decode(await f.arrayBuffer());
+    const r=domCsvParse(t); if(!r.length||!("Computador" in r[0])||!("Status" in r[0])){ toast(`${f.name}: não parece o CSV do Inventário em lote da Central.`); return; }
+    lista=lista.concat(r); nomes.push(f.name); }
+  const m=new Map(); lista.forEach(x=>{ const c=String(x.Computador||"").toUpperCase(); if(c&&(!m.has(c)||x.Status==="Online")) m.set(c,x); });
+  const {data,error}=await sb.rpc("dominio_importar",{p_maquinas:[...m.values()], p_arquivo:nomes.join(", ").slice(0,90)});
+  if(error){ writeErr(error); return; }
+  await Promise.all([sbLoad("dominio"),sbLoad("ativos")]);
+  toast(`Importado: ${data.total} computadores · ${data.online} online · ${data.ligados} ligados a ativos · ${data.atualizados} cadastros atualizados.`);
+}
 async function domChave(){
   const {data,error}=await sb.rpc("dominio_gerar_chave"); if(error){ writeErr(error); return; }
   openModal(`<h2>Chave do coletor</h2><div class="msg"><p>Copie agora: ela aparece <b>uma única vez</b>. Use na instalação do coletor (<code>-Instalar</code>). A chave anterior, se havia, deixou de funcionar.</p>
@@ -3277,6 +3301,7 @@ async function domChave(){
 function domClick(a, el){
   if(a==="domf"){ DOM.f=el.dataset.v; if(S.view==="dominio") render(); return true; }
   if(a==="domvinc"){ domVincForm(el.dataset.c); return true; }
+  if(a==="domcsv"){ const i=document.getElementById("domCsvFile"); if(i){ i.value=""; i.onchange=()=>domImportar(i.files); i.click(); } return true; }
   if(a==="domsug"){ const s=document.getElementById("dom_ativo"); if(s) s.value=el.dataset.id; return true; }
   if(a==="domcad"){ domCadastrar(el.dataset.c); return true; }
   if(a==="domchave"){ openModal(`<h2>Gerar nova chave do coletor?</h2><div class="msg"><p>Se o coletor já estiver instalado, ele vai parar de enviar até você rodar <code>-Instalar</code> de novo com a chave nova.</p></div>
